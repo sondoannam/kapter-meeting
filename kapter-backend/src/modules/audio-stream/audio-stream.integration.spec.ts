@@ -125,6 +125,9 @@ const createService = () => {
     meetingArtifactExtraction as unknown as ConstructorParameters<
       typeof TranscriptPersistenceService
     >[1],
+    logger as unknown as ConstructorParameters<
+      typeof TranscriptPersistenceService
+    >[2],
   );
   const aiWorkerClient = new AiWorkerClient(
     config as unknown as ConstructorParameters<typeof AiWorkerClient>[0],

@@ -5,13 +5,13 @@ import { NotFoundException } from "@nestjs/common";
 import { MeetingsService } from "./meetings.service";
 
 const createService = () => {
-  const findMany = mock.fn(async () => []);
-  const findFirst = mock.fn(async () => null);
-  const findUnique = mock.fn(async () => null);
-  const create = mock.fn(async () => undefined);
-  const update = mock.fn(async () => undefined);
-  const projectFindUnique = mock.fn(async () => null);
-  const projectCreate = mock.fn(async () => undefined);
+  const findMany = mock.fn(async (_args: unknown) => [] as unknown[]);
+  const findFirst = mock.fn(async (_args: unknown) => null as unknown);
+  const findUnique = mock.fn(async (_args: unknown) => null as unknown);
+  const create = mock.fn(async (_args: unknown) => undefined as unknown);
+  const update = mock.fn(async (_args: unknown) => undefined as unknown);
+  const projectFindUnique = mock.fn(async (_args: unknown) => null as unknown);
+  const projectCreate = mock.fn(async (_args: unknown) => undefined as unknown);
 
   const prisma = {
     meeting: {
@@ -133,7 +133,9 @@ void describe("MeetingsService", () => {
 
     assert.equal(project.findUnique.mock.callCount(), 0);
     assert.equal(project.create.mock.callCount(), 1);
-    const projectCreateArgs = project.create.mock.calls[0]?.arguments[0] as {
+    const projectCreateCall = project.create.mock.calls[0];
+    assert.ok(projectCreateCall);
+    const projectCreateArgs = projectCreateCall.arguments[0] as {
       data: {
         userId: string;
         title: string;
@@ -150,7 +152,9 @@ void describe("MeetingsService", () => {
       id: true,
     });
     assert.equal(meeting.create.mock.callCount(), 1);
-    const meetingCreateArgs = meeting.create.mock.calls[0]?.arguments[0] as {
+    const meetingCreateCall = meeting.create.mock.calls[0];
+    assert.ok(meetingCreateCall);
+    const meetingCreateArgs = meetingCreateCall.arguments[0] as {
       data: {
         userId: string;
         title: string;

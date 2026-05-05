@@ -5,10 +5,10 @@ import { NotFoundException } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 
 const createService = () => {
-  const findMany = mock.fn(async () => []);
-  const findFirst = mock.fn(async () => null);
-  const create = mock.fn(async () => undefined);
-  const update = mock.fn(async () => undefined);
+  const findMany = mock.fn(async (_args: unknown) => [] as unknown[]);
+  const findFirst = mock.fn(async (_args: unknown) => null as unknown);
+  const create = mock.fn(async (_args: unknown) => undefined as unknown);
+  const update = mock.fn(async (_args: unknown) => undefined as unknown);
 
   const prisma = {
     project: {
@@ -103,7 +103,9 @@ void describe("ProjectsService", () => {
     });
 
     assert.equal(project.create.mock.callCount(), 1);
-    assert.deepEqual(project.create.mock.calls[0]?.arguments[0], {
+    const projectCreateCall = project.create.mock.calls[0];
+    assert.ok(projectCreateCall);
+    assert.deepEqual(projectCreateCall.arguments[0], {
       data: {
         title: "Platform Revamp",
         description: "Q2 planning",

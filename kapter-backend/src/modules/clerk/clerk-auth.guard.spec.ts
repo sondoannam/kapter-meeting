@@ -21,7 +21,7 @@ void describe("ClerkAuthGuard", () => {
     const guard = new ClerkAuthGuard(
       {
         getAllAndOverride: mock.fn(() => false),
-      } as ConstructorParameters<typeof ClerkAuthGuard>[0],
+      } as unknown as ConstructorParameters<typeof ClerkAuthGuard>[0],
       {
         verifySessionToken,
         getOrSyncLocalUser,

@@ -7,7 +7,13 @@ import { AudioStreamService } from "./audio-stream.service";
 
 const createService = () => {
   const createRecordingMeeting = mock.fn(
-    async ({ userId, externalMeetingId }) => ({
+    async ({
+      userId,
+      externalMeetingId,
+    }: {
+      userId: string;
+      externalMeetingId?: string | null;
+    }) => ({
       id: "meeting_backend_1",
       externalMeetingId: externalMeetingId ?? null,
       status: "RECORDING",
@@ -15,11 +21,19 @@ const createService = () => {
       userId,
     }),
   );
-  const updateRecordingMeetingCaptureState = mock.fn(async () => undefined);
-  const markMeetingProcessing = mock.fn(async () => undefined);
-  const markMeetingCompleted = mock.fn(async () => undefined);
-  const markMeetingFailed = mock.fn(async () => undefined);
-  const processAudioBatch = mock.fn(async (request) => ({
+  const updateRecordingMeetingCaptureState = mock.fn(
+    async (_meetingId: string, _state: unknown) => undefined as unknown,
+  );
+  const markMeetingProcessing = mock.fn(
+    async (_meetingId: string) => undefined as unknown,
+  );
+  const markMeetingCompleted = mock.fn(
+    async (_meetingId: string) => undefined as unknown,
+  );
+  const markMeetingFailed = mock.fn(
+    async (_meetingId: string, _errorMessage?: string) => undefined as unknown,
+  );
+  const processAudioBatch = mock.fn(async (request: any) => ({
     batchId: "batch_1",
     request,
     response: {
@@ -31,8 +45,12 @@ const createService = () => {
       segments: [],
     },
   }));
-  const persistWorkerBatch = mock.fn(async () => undefined);
-  const notifyMeetingCaptureCompleted = mock.fn(async () => undefined);
+  const persistWorkerBatch = mock.fn(
+    async (_batch: unknown) => undefined as unknown,
+  );
+  const notifyMeetingCaptureCompleted = mock.fn(
+    async (_meetingId: string) => undefined as unknown,
+  );
   const logger = {
     info: mock.fn(() => undefined),
     debug: mock.fn(() => undefined),

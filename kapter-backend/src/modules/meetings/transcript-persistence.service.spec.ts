@@ -4,18 +4,18 @@ import { describe, it, mock } from "node:test";
 import { TranscriptPersistenceService } from "./transcript-persistence.service";
 
 const createService = () => {
-  const findUnique = mock.fn(async () => ({
+  const findUnique = mock.fn(async (_args: unknown) => ({
     status: "PROCESSING",
   }));
-  const findMany = mock.fn(async () => []);
-  const upsert = mock.fn(async ({ where, create }) => ({
+  const findMany = mock.fn(async (_args: unknown) => [] as unknown[]);
+  const upsert = mock.fn(async ({ where, create }: any) => ({
     id: `${where.meetingId_aiLabel.aiLabel}_id`,
     aiLabel: where.meetingId_aiLabel.aiLabel,
     meetingId: create.meetingId,
   }));
-  const createMany = mock.fn(async () => ({ count: 2 }));
-  const updateMany = mock.fn(async () => ({ count: 0 }));
-  const update = mock.fn(async () => undefined);
+  const createMany = mock.fn(async (_args: unknown) => ({ count: 2 }));
+  const updateMany = mock.fn(async (_args: unknown) => ({ count: 0 }));
+  const update = mock.fn(async (_args: unknown) => undefined as unknown);
   const notifyTranscriptPersisted = mock.fn(() => undefined);
   const logger = {
     info: mock.fn(() => undefined),
@@ -98,8 +98,10 @@ void describe("TranscriptPersistenceService", () => {
     assert.equal(speakerProfile.upsert.mock.callCount(), 2);
     assert.equal(transcriptSegment.createMany.mock.callCount(), 1);
 
-    const transcriptRows =
-      transcriptSegment.createMany.mock.calls[0]?.arguments[0].data;
+    const createManyCall = transcriptSegment.createMany.mock.calls[0];
+    assert.ok(createManyCall);
+    const transcriptRows = (createManyCall.arguments[0] as { data: unknown })
+      .data;
     assert.deepEqual(transcriptRows, [
       {
         meetingId: "meeting_backend_1",
@@ -130,13 +132,19 @@ void describe("TranscriptPersistenceService", () => {
     assert.equal(transcriptSegment.updateMany.mock.callCount(), 0);
 
     assert.equal(meetingAudioBatch.update.mock.callCount(), 1);
+    const meetingAudioBatchUpdateCall = meetingAudioBatch.update.mock.calls[0];
+    assert.ok(meetingAudioBatchUpdateCall);
     assert.equal(
-      meetingAudioBatch.update.mock.calls[0]?.arguments[0].data.status,
+      (meetingAudioBatchUpdateCall.arguments[0] as { data: { status: string } })
+        .data.status,
       "COMPLETED",
     );
     assert.ok(
-      meetingAudioBatch.update.mock.calls[0]?.arguments[0].data
-        .processedAt instanceof Date,
+      (
+        meetingAudioBatchUpdateCall.arguments[0] as {
+          data: { processedAt: unknown };
+        }
+      ).data.processedAt instanceof Date,
     );
     assert.equal(
       meetingArtifactExtraction.notifyTranscriptPersisted.mock.callCount(),
@@ -246,7 +254,9 @@ void describe("TranscriptPersistenceService", () => {
 
     assert.equal(transcriptSegment.findMany.mock.callCount(), 1);
     assert.equal(transcriptSegment.updateMany.mock.callCount(), 1);
-    assert.deepEqual(transcriptSegment.updateMany.mock.calls[0]?.arguments[0], {
+    const updateManyCall = transcriptSegment.updateMany.mock.calls[0];
+    assert.ok(updateManyCall);
+    assert.deepEqual(updateManyCall.arguments[0], {
       where: {
         id: {
           in: ["tab_seg_1"],
@@ -254,16 +264,19 @@ void describe("TranscriptPersistenceService", () => {
       },
       data: {
         isSuppressed: true,
-        suppressedAt:
-          transcriptSegment.updateMany.mock.calls[0]?.arguments[0].data
-            .suppressedAt,
+        suppressedAt: (
+          updateManyCall.arguments[0] as { data: { suppressedAt: unknown } }
+        ).data.suppressedAt,
         mergeStrategy: "PREFERRED_SELF_MIC_DUPLICATE",
         mergeSourceType: "SELF_MIC",
       },
     });
 
-    const transcriptRows =
-      transcriptSegment.createMany.mock.calls[0]?.arguments[0].data;
+    const selfMicCreateManyCall = transcriptSegment.createMany.mock.calls[0];
+    assert.ok(selfMicCreateManyCall);
+    const transcriptRows = (
+      selfMicCreateManyCall.arguments[0] as { data: unknown }
+    ).data;
     assert.deepEqual(transcriptRows, [
       {
         meetingId: "meeting_backend_1",
@@ -328,8 +341,11 @@ void describe("TranscriptPersistenceService", () => {
     });
 
     assert.equal(transcriptSegment.updateMany.mock.callCount(), 0);
-    const transcriptRows =
-      transcriptSegment.createMany.mock.calls[0]?.arguments[0].data;
+    const ambiguousCreateManyCall = transcriptSegment.createMany.mock.calls[0];
+    assert.ok(ambiguousCreateManyCall);
+    const transcriptRows = (
+      ambiguousCreateManyCall.arguments[0] as { data: unknown }
+    ).data;
     assert.deepEqual(transcriptRows, [
       {
         meetingId: "meeting_backend_1",
