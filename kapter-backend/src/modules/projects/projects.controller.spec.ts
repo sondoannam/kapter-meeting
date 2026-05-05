@@ -19,12 +19,18 @@ void describe("ProjectsController", () => {
       },
     ]);
 
-    const controller = new ProjectsController({
-      listProjects,
-      createProject: mock.fn(async () => undefined),
-      getProjectDetail: mock.fn(async () => undefined),
-      updateProject: mock.fn(async () => undefined),
-    } as never);
+    const controller = new ProjectsController(
+      {
+        listProjects,
+        createProject: mock.fn(async () => undefined),
+        getProjectDetail: mock.fn(async () => undefined),
+        updateProject: mock.fn(async () => undefined),
+      } as never,
+      {
+        configureProjectDestination: mock.fn(async () => undefined),
+        clearProjectDestination: mock.fn(async () => undefined),
+      } as never,
+    );
 
     const response = await controller.getProjectsForUser({
       userId: "clerk_user_1",
@@ -67,12 +73,18 @@ void describe("ProjectsController", () => {
       recentMeetings: [],
     }));
 
-    const controller = new ProjectsController({
-      listProjects: mock.fn(async () => []),
-      createProject,
-      getProjectDetail: mock.fn(async () => undefined),
-      updateProject: mock.fn(async () => undefined),
-    } as never);
+    const controller = new ProjectsController(
+      {
+        listProjects: mock.fn(async () => []),
+        createProject,
+        getProjectDetail: mock.fn(async () => undefined),
+        updateProject: mock.fn(async () => undefined),
+      } as never,
+      {
+        configureProjectDestination: mock.fn(async () => undefined),
+        clearProjectDestination: mock.fn(async () => undefined),
+      } as never,
+    );
 
     const response = await controller.createProjectForUser(
       {
@@ -127,12 +139,18 @@ void describe("ProjectsController", () => {
       recentMeetings: [],
     }));
 
-    const controller = new ProjectsController({
-      listProjects: mock.fn(async () => []),
-      createProject: mock.fn(async () => undefined),
-      getProjectDetail,
-      updateProject: mock.fn(async () => undefined),
-    } as never);
+    const controller = new ProjectsController(
+      {
+        listProjects: mock.fn(async () => []),
+        createProject: mock.fn(async () => undefined),
+        getProjectDetail,
+        updateProject: mock.fn(async () => undefined),
+      } as never,
+      {
+        configureProjectDestination: mock.fn(async () => undefined),
+        clearProjectDestination: mock.fn(async () => undefined),
+      } as never,
+    );
 
     const response = await controller.getProjectDetailForUser(
       {
@@ -181,12 +199,18 @@ void describe("ProjectsController", () => {
       recentMeetings: [],
     }));
 
-    const controller = new ProjectsController({
-      listProjects: mock.fn(async () => []),
-      createProject: mock.fn(async () => undefined),
-      getProjectDetail: mock.fn(async () => undefined),
-      updateProject,
-    } as never);
+    const controller = new ProjectsController(
+      {
+        listProjects: mock.fn(async () => []),
+        createProject: mock.fn(async () => undefined),
+        getProjectDetail: mock.fn(async () => undefined),
+        updateProject,
+      } as never,
+      {
+        configureProjectDestination: mock.fn(async () => undefined),
+        clearProjectDestination: mock.fn(async () => undefined),
+      } as never,
+    );
 
     const response = await controller.updateProjectForUser(
       {

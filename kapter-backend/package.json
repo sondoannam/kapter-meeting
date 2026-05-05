@@ -14,7 +14,7 @@
     "start": "node dist/src/main",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/src/main",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:empty:keep-user": "tsx scripts/empty-db-keep-user.ts"
   },

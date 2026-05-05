@@ -37,7 +37,9 @@ def create_client() -> TestClient:
     return TestClient(app)
 
 
-def test_process_audio_endpoint_returns_worker_contract_shape() -> None:
+def test_process_audio_endpoint_returns_worker_contract_shape(monkeypatch) -> None:
+    monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
+
     with create_client() as client:
         response = client.post(
             "/api/v1/process-audio",
@@ -65,7 +67,9 @@ def test_process_audio_endpoint_returns_worker_contract_shape() -> None:
     assert isinstance(payload["segments"], list)
 
 
-def test_process_audio_endpoint_accepts_raw_pcm_batches() -> None:
+def test_process_audio_endpoint_accepts_raw_pcm_batches(monkeypatch) -> None:
+    monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
+
     with create_client() as client:
         response = client.post(
             "/api/v1/process-audio",

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
+import type { WorkerAudioBatchRequest } from "@kapter/contracts";
 
 import { AiWorkerClient } from "./ai-worker.client";
 
@@ -45,7 +46,7 @@ const createClient = (sharedSecret?: string) => {
   };
 };
 
-const request = {
+const request: WorkerAudioBatchRequest = {
   streamId: "stream_1",
   backendMeetingId: "meeting_backend_1",
   captureContext: "google_meet_room",
@@ -104,8 +105,9 @@ void describe("AiWorkerClient", () => {
     assert.equal(fetchMock.mock.callCount(), 1);
 
     const fetchOptions = fetchMock.mock.calls[0]?.arguments[1];
+    const headers = fetchOptions?.headers as Record<string, string> | undefined;
     assert.equal(fetchOptions?.method, "POST");
-    assert.equal(fetchOptions?.headers?.["content-type"], "application/json");
+    assert.equal(headers?.["content-type"], "application/json");
     assert.deepEqual(JSON.parse(fetchOptions?.body as string), request);
 
     assert.equal(result.batchId, "batch_1");
@@ -137,10 +139,8 @@ void describe("AiWorkerClient", () => {
     await client.processAudioBatch(request);
 
     const fetchOptions = fetchMock.mock.calls[0]?.arguments[1];
-    assert.equal(
-      fetchOptions?.headers?.authorization,
-      "Bearer super-secret-token",
-    );
+    const headers = fetchOptions?.headers as Record<string, string> | undefined;
+    assert.equal(headers?.authorization, "Bearer super-secret-token");
   });
 
   void it("retries once on a transient network failure", async () => {

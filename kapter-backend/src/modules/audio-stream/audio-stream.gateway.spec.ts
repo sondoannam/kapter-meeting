@@ -5,7 +5,9 @@ import { AudioStreamGateway } from "./audio-stream.gateway";
 
 void describe("AudioStreamGateway", () => {
   void it("forwards disconnect finalization to the audio stream service", () => {
-    const handleClientDisconnect = mock.fn(async () => undefined);
+    const handleClientDisconnect = mock.fn(
+      async (_clientId: string) => undefined,
+    );
     const audioStreamService = { handleClientDisconnect };
     const config = {
       wsAudioNamespace: "/audio-stream",
@@ -87,7 +89,7 @@ void describe("AudioStreamGateway", () => {
         query: {},
       },
       data: {},
-    } as Parameters<AudioStreamGateway["handleConnection"]>[0];
+    } as unknown as Parameters<AudioStreamGateway["handleConnection"]>[0];
 
     let nextError: Error | undefined;
 
