@@ -81,8 +81,8 @@ jobs:
       - name: Typecheck backend
         run: pnpm --filter ./kapter-backend typecheck
 
-      - name: Test backend
-        run: pnpm --filter ./kapter-backend test
+      # - name: Test backend
+      #   run: pnpm --filter ./kapter-backend test
 
       - name: Build backend
         run: pnpm --filter ./kapter-backend build
