@@ -69,7 +69,7 @@ jobs:
         run: pnpm install --frozen-lockfile --prod=false
 
       - name: Generate Prisma client
-        run: pnpm exec prisma generate
+        run: pnpm dlx prisma generate
 
       - name: Build shared contracts
         run: pnpm --filter @kapter/contracts build
