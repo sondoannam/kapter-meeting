@@ -1,0 +1,286 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "./generated/prisma"
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String?
+  notionToken      String?
+  notionDbId       String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  clerkId          String?           @unique
+  deletedAt        DateTime?
+  imageUrl         String?
+  meetings         Meeting[]
+  NotionConnection NotionConnection?
+  projects         Project[]
+}
+
+model Meeting {
+  id                      String                         @id @default(cuid())
+  title                   String
+  description             String?
+  status                  MeetingStatus                  @default(RECORDING)
+  captureContext          CaptureContext?
+  degradedWithoutSelfMic  Boolean                        @default(false)
+  recorderLabelHint       String?
+  artifactReviewStatus    MeetingArtifactReviewStatus    @default(PENDING)
+  artifactExtractionError String?
+  artifactApprovedAt      DateTime?
+  audioUrl                String?
+  summary                 String?
+  userId                  String
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+  externalMeetingId       String?
+  projectId               String?
+  actionItems             ActionItem[]
+  artifactDraft           MeetingArtifactDraft?
+  extractionChunks        MeetingExtractionChunk[]
+  project                 Project?                       @relation(fields: [projectId], references: [id])
+  user                    User                           @relation(fields: [userId], references: [id])
+  audioBatches            MeetingAudioBatch[]
+  contextUpdateProposals  ProjectContextUpdateProposal[]
+  speakers                SpeakerProfile[]
+  transcript              TranscriptSegment[]
+
+  @@index([externalMeetingId])
+  @@index([projectId, createdAt])
+}
+
+model Project {
+  id                            String                         @id @default(cuid())
+  title                         String
+  description                   String?
+  isDraft                       Boolean                        @default(false)
+  notionProjectPageId           String?
+  notionTaskDatabaseId          String?
+  userId                        String
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  notionDestinationMode         NotionProjectDestinationMode?
+  meetings                      Meeting[]
+  user                          User                           @relation(fields: [userId], references: [id])
+  context                       ProjectContext?
+  projectContextUpdateProposals ProjectContextUpdateProposal[]
+
+  @@index([userId, updatedAt])
+}
+
+model ProjectContext {
+  id                 String   @id @default(cuid())
+  initialDescription String?
+  contextMarkdown    String?
+  projectId          String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectContextUpdateProposal {
+  id                      String                       @id @default(cuid())
+  proposedContextMarkdown String
+  changeSummary           String
+  status                  ProjectContextProposalStatus @default(PENDING)
+  projectId               String
+  meetingId               String
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  project                 Project                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting                 Meeting                      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status, createdAt])
+  @@index([meetingId, status, createdAt])
+}
+
+model MeetingAudioBatch {
+  id             String                  @id @default(cuid())
+  streamId       String
+  sourceType     AudioSourceType?
+  sequenceStart  Int
+  sequenceEnd    Int
+  streamOffsetMs Int
+  durationMs     Int
+  mimeType       String
+  status         MeetingAudioBatchStatus @default(PENDING)
+  error          String?
+  processedAt    DateTime?
+  meetingId      String
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  meeting        Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([streamId, sourceType, sequenceStart, sequenceEnd])
+  @@index([meetingId, createdAt])
+}
+
+model MeetingExtractionChunk {
+  id               String                       @id @default(cuid())
+  meetingId        String
+  chunkIndex       Int
+  newContentStartMs Int
+  promptStartMs    Int
+  promptEndMs      Int
+  status           MeetingExtractionChunkStatus @default(PENDING)
+  partialSummary   String?
+  taskMutationsJson Json?
+  retryCount       Int                          @default(0)
+  lastError        String?
+  processedAt      DateTime?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+  meeting          Meeting                      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, chunkIndex])
+  @@index([meetingId, status, chunkIndex])
+}
+
+model MeetingArtifactDraft {
+  id                    String                                @id @default(cuid())
+  meetingId             String                                @unique
+  rollingTasksJson      Json
+  lastCompletedChunkIndex Int                                 @default(-1)
+  finalizationStatus    MeetingArtifactDraftFinalizationStatus @default(PENDING)
+  lastError             String?
+  createdAt             DateTime                              @default(now())
+  updatedAt             DateTime                              @updatedAt
+  meeting               Meeting                               @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model SpeakerProfile {
+  id          String              @id @default(cuid())
+  aiLabel     String
+  realName    String?
+  meetingId   String
+  actionItems ActionItem[]
+  meeting     Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  segments    TranscriptSegment[]
+
+  @@unique([meetingId, aiLabel])
+}
+
+model TranscriptSegment {
+  id              String                  @id @default(cuid())
+  startTime       Float
+  endTime         Float
+  content         String
+  sourceType      AudioSourceType?
+  mergeStrategy   TranscriptMergeStrategy?
+  mergeSourceType AudioSourceType?
+  isSuppressed    Boolean                 @default(false)
+  suppressedAt    DateTime?
+  speakerId       String
+  meetingId       String
+  meeting         Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  speaker         SpeakerProfile          @relation(fields: [speakerId], references: [id])
+}
+
+enum CaptureContext {
+  GOOGLE_MEET_ROOM
+  GENERIC_TAB
+}
+
+enum AudioSourceType {
+  TAB_MIX
+  SELF_MIC
+}
+
+enum TranscriptMergeStrategy {
+  PREFERRED_SELF_MIC_DUPLICATE
+  AMBIGUOUS_OVERLAP
+}
+
+model ActionItem {
+  id           String           @id @default(cuid())
+  taskContent  String
+  deadline     DateTime?
+  status       ActionItemStatus @default(TODO)
+  isSynced     Boolean          @default(false)
+  notionPageId String?
+  assigneeId   String?
+  meetingId    String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @default(now()) @updatedAt
+  assignee     SpeakerProfile?  @relation(fields: [assigneeId], references: [id])
+  meeting      Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model NotionConnection {
+  id             String   @id @default(cuid())
+  botId          String   @unique
+  accessToken    String
+  refreshToken   String?
+  workspaceId    String
+  workspaceName  String?
+  workspaceIcon  String?
+  ownerUserId    String?
+  ownerUserName  String?
+  ownerUserEmail String?
+  userId         String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+enum MeetingStatus {
+  RECORDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MeetingArtifactReviewStatus {
+  PENDING
+  READY
+  APPROVED
+  FAILED
+}
+
+enum ActionItemStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum ProjectContextProposalStatus {
+  PENDING
+  APPLIED
+  DISMISSED
+}
+
+enum MeetingAudioBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MeetingExtractionChunkStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MeetingArtifactDraftFinalizationStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum NotionProjectDestinationMode {
+  PROJECT_PAGE
+  EXISTING_PAGE
+}

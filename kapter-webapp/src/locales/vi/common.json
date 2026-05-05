@@ -1,0 +1,71 @@
+{
+  "appName": "Kapter",
+  "languages": {
+    "vi": "Tiếng Việt",
+    "en": "Tiếng Anh"
+  },
+  "languageSwitcher": {
+    "ariaLabel": "Ngôn ngữ hiển thị",
+    "useLanguage": "Dùng ngôn ngữ {{language}}"
+  },
+  "themeToggle": {
+    "groupLabel": "Chế độ giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "useMode": "Dùng chế độ {{mode}}"
+  },
+  "actions": {
+    "openDashboard": "Mở dashboard",
+    "openDashboardCapitalized": "Mở Dashboard",
+    "signIn": "Đăng nhập",
+    "signInWithClerk": "Đăng nhập với Clerk",
+    "signInAndStart": "Đăng nhập và bắt đầu",
+    "viewWorkflow": "Xem quy trình",
+    "installExtension": "Cài extension",
+    "installExtensionTesting": "Cài extension để kiểm thử",
+    "refresh": "Làm mới",
+    "close": "Đóng",
+    "retry": "Thử lại",
+    "cancel": "Hủy",
+    "saveChanges": "Lưu thay đổi",
+    "clearFilters": "Xóa lọc",
+    "viewDetails": "Xem chi tiết",
+    "backToDashboard": "Quay lại dashboard",
+    "addTask": "Thêm việc",
+    "remove": "Xóa",
+    "search": "Tìm kiếm"
+  },
+  "loading": {
+    "eyebrow": "Kapter workspace sync",
+    "title": "Đang dựng buồng điều phối cuộc họp",
+    "description": "Kapter đang dựng dashboard điều phối, đồng bộ phiên đăng nhập và làm nóng các bề mặt review để bạn có thể tiếp tục làm việc ngay khi dữ liệu sẵn sàng.",
+    "controlRoomLabel": "Buồng điều phối",
+    "commandSurfaceLabel": "Bề mặt điều hành Kapter",
+    "stageLabel": "Giai đoạn {{index}}",
+    "liveSyncLabel": "Đồng bộ trực tiếp",
+    "bringingPanelsOnline": "Đang đưa các panel lên",
+    "transcriptBusLabel": "Luồng transcript",
+    "transcriptBusValue": "Bộ định tuyến phân đoạn đã sẵn sàng",
+    "reviewEngineLabel": "Bộ máy duyệt",
+    "deliveryMeshLabel": "Lưới bàn giao",
+    "signals": {
+      "authBridge": {
+        "label": "Cầu nối xác thực",
+        "value": "Phiên sẵn sàng"
+      },
+      "meetingGraph": {
+        "label": "Đồ thị cuộc họp",
+        "value": "Đồng bộ thời gian thực"
+      },
+      "reviewRail": {
+        "label": "Thanh duyệt",
+        "value": "Panel đã sẵn sàng"
+      }
+    },
+    "steps": [
+      "Xác thực phiên làm việc và khóa quyền truy cập an toàn",
+      "Khôi phục không gian dự án, bộ lọc và trạng thái phiên gần nhất",
+      "Làm nóng luồng transcript, review và đồng bộ Notion"
+    ]
+  }
+}

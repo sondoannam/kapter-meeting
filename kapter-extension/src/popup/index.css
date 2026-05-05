@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-kapter-bg: #12111a;
+  --color-kapter-surface: #1c1b28;
+  --color-kapter-accent: #7c6ff5;
+  --color-kapter-success: #7ef5a0;
+  --color-kapter-danger: rgba(255, 80, 80, 0.7);
+  --color-kapter-warning: #FAC975;
+  
+  --color-kapter-text-primary: rgba(255, 255, 255, 0.85);
+  --color-kapter-text-secondary: rgba(255, 255, 255, 0.45);
+  --color-kapter-text-tertiary: rgba(255, 255, 255, 0.28);
+  
+  --color-kapter-border: rgba(255, 255, 255, 0.08);
+  --color-kapter-border-hover: rgba(255, 255, 255, 0.15);
+
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+@layer utilities {
+  .pulse-dot {
+    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+body {
+  @apply bg-kapter-bg text-kapter-text-primary font-sans antialiased;
+  width: 320px;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+/* Hide scrollbar for a cleaner look */
+body::-webkit-scrollbar {
+  display: none;
+}

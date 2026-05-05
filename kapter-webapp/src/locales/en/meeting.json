@@ -1,0 +1,253 @@
+{
+  "status": {
+    "RECORDING": "Recording",
+    "PROCESSING": "Processing",
+    "COMPLETED": "Completed",
+    "FAILED": "Failed"
+  },
+  "reviewStatus": {
+    "PENDING": "Extracting",
+    "READY": "Needs review",
+    "FAILED": "Retry needed",
+    "APPROVED": "Approved"
+  },
+  "history": {
+    "title": "Meeting history",
+    "description": "Meeting history from the backend with project context and review status.",
+    "loadError": "Unable to load meeting history.",
+    "emptyFiltered": "No meetings match the current filters. Clear or widen the filters and try again.",
+    "emptyDefault": "No meetings yet. The first extension recording will appear here.",
+    "columns": {
+      "meeting": "Meeting",
+      "project": "Project",
+      "date": "Date",
+      "duration": "Duration",
+      "review": "Review"
+    },
+    "missingMeetingId": "No meeting id",
+    "draftProject": "Draft project",
+    "assignedProject": "Assigned to a project",
+    "needsProject": "Needs project assignment",
+    "retryExtraction": "Extraction must be retried before approval."
+  },
+  "activeSession": {
+    "emptyTitle": "No active session",
+    "emptyDescription": "Open the extension in Google Meet to start recording.",
+    "recording": "Recording",
+    "processing": "Processing",
+    "recordingDescription": "The extension is streaming Google Meet audio into the backend pipeline.",
+    "processingDescription": "Recording has stopped and the backend is finishing the meeting artifacts.",
+    "untitledMeeting": "Untitled meeting",
+    "googleMeet": "Google Meet",
+    "genericTab": "Generic tab",
+    "unknownCapture": "Unknown capture",
+    "selfMic": "self mic",
+    "tabMix": "tab mix",
+    "noSourceMetadata": "No source metadata",
+    "recorderMicUnavailable": "recorder mic unavailable",
+    "duration": "Duration",
+    "startedAt": "Started",
+    "backendSnapshot": "Backend snapshot",
+    "apiUpdated": "Updated from the meeting API"
+  },
+  "overview": {
+    "googleMeet": "Google Meet",
+    "genericTab": "Generic tab",
+    "unknownCapture": "Unknown capture",
+    "noSourceMetadata": "No source metadata yet",
+    "selfMic": "self mic",
+    "tabMix": "tab mix",
+    "workflowDescription": "Review-first layout. This header keeps only the minimum meeting context visible.",
+    "batchProgress": "Batch progress",
+    "batchProgressHelper": "{{completed}}/{{total}} complete",
+    "speakers": "Speakers",
+    "speakersHelper": "Detected profiles",
+    "transcript": "Transcript",
+    "transcriptHelper": "Merged turns",
+    "latestBatch": "Latest batch",
+    "latestBatchHelper": "Artifact extraction progress",
+    "waiting": "Waiting",
+    "project": "Project",
+    "draftProject": "Draft project",
+    "tasks": "Tasks",
+    "tasksValue": "{{count}} extracted",
+    "pendingSync": "Pending sync",
+    "pendingSyncValue": "{{count}} tasks",
+    "captureMode": "Capture mode",
+    "audioLanes": "Audio lanes",
+    "transcriptValue": "{{turns}} turns / {{fragments}} fragments",
+    "identifiers": "Identifiers",
+    "missingExternalId": "No external meeting id",
+    "approval": "Approval",
+    "approved": "Approved",
+    "waitingForApproval": "Waiting for approval",
+    "workflowStages": {
+      "extracting": "Extraction running",
+      "review": "Needs review",
+      "project-memory": "Project memory",
+      "notion-sync": "Ready to sync",
+      "complete": "Complete"
+    },
+    "micDegraded": "Mic degraded",
+    "recorderMicActive": "Recorder mic active",
+    "tabOnlyCapture": "Tab-only capture",
+    "liveRefreshEnabled": "Live refresh enabled"
+  },
+  "workflow": {
+    "statusEyebrow": "Workflow status",
+    "statusDescription": "Kapter review follows this sequence. Keep it visible above the editing workspace as the operating guideline.",
+    "guideTitle": "Workflow guide",
+    "guideDescription": "Kapter follows a fixed review sequence before memory updates and external sync can run.",
+    "current": "Current",
+    "done": "Done",
+    "next": "Next",
+    "stepLabel": "Step {{index}}",
+    "steps": {
+      "extracting": {
+        "title": "Extraction",
+        "description": "Wait for capture, transcript batches, and chunked artifact extraction."
+      },
+      "review": {
+        "title": "Review",
+        "description": "Edit the summary and tasks before locking the meeting record."
+      },
+      "project-memory": {
+        "title": "Project memory",
+        "description": "Accept or dismiss the proposed context update for future meetings."
+      },
+      "notion-sync": {
+        "title": "Notion sync",
+        "description": "Manually sync approved tasks once the project destination is ready."
+      },
+      "complete": {
+        "title": "Complete",
+        "description": "The approved meeting has no pending memory or sync work left."
+      }
+    }
+  },
+  "notionSync": {
+    "title": "Notion sync",
+    "description": "Sync stays manual. Kapter creates Notion tasks only after review approval and project setup are complete.",
+    "workspace": "Workspace",
+    "destination": "Destination",
+    "syncableTasks": "Syncable tasks",
+    "connectedWorkspace": "Connected workspace",
+    "notConnected": "Not connected",
+    "configured": "Configured",
+    "autoCreate": "Auto-create on sync",
+    "missing": "Missing",
+    "pendingSummary": "{{pending}} pending, {{synced}} synced",
+    "workspaceConnected": "Workspace connected",
+    "workspaceMissing": "Notion not connected",
+    "destinationReady": "Destination ready",
+    "destinationWillBeCreated": "Destination will be created",
+    "destinationMissing": "Destination missing",
+    "syncResult": "Synced {{synced}} task(s) and skipped {{skipped}} already synced task(s).",
+    "destinationCreated": " Kapter created the project destination automatically during this run.",
+    "approveBeforeSync": "Approve the meeting before syncing any tasks to Notion.",
+    "resolveProposalBeforeSync": "Resolve the project-memory proposal first. Sync becomes available after you apply it or dismiss it.",
+    "connectPrompt": "Connect Notion now. Sync stays locked until the meeting is approved and the project setup is ready.",
+    "connectNotion": "Connect Notion",
+    "missingDestinationNotice": "This project does not have a Notion destination yet. Configure it on the dashboard before syncing tasks.",
+    "autoCreateDestinationNotice": "This project does not have a Notion destination yet. Kapter will create the project page and Action Items database automatically during sync.",
+    "syncError": "Unable to sync to Notion.",
+    "connectError": "Unable to connect the Notion workspace.",
+    "syncApprovedItems": "Sync approved items to Notion",
+    "taskQueueTitle": "Notion task queue",
+    "emptyTaskQueue": "No approved action items are available for Notion sync yet.",
+    "unassigned": "Unassigned",
+    "deadline": "Due {{value}}",
+    "syncedBadge": "Synced",
+    "pendingBadge": "Pending sync",
+    "manageConnections": "Manage project connections from the",
+    "dashboardLink": "dashboard",
+    "syncDisabledNotice": ". Sync stays disabled until the meeting is approved, Notion is connected, and project-memory work is resolved."
+  },
+  "projectMemory": {
+    "title": "Project memory",
+    "description": "Promote extracted context into the project profile only when the new information will help future meetings.",
+    "currentProject": "Current project",
+    "draftProject": "Draft project",
+    "projectDescription": "Context updates from this meeting will be applied to the current project record after review.",
+    "changeSummary": "Change summary",
+    "apply": "Apply to project memory",
+    "dismiss": "Dismiss proposal",
+    "noProposal": "No pending memory proposal for this meeting.",
+    "mutationError": "Unable to update project memory."
+  },
+  "speakerRoster": {
+    "title": "Speaker roster",
+    "description": "AI speaker labels discovered for this meeting so far.",
+    "empty": "No speaker profiles have been created yet.",
+    "awaitingNameMapping": "Awaiting name mapping",
+    "segments": "{{count}} transcript segments",
+    "actionItems": "{{count}} action items"
+  },
+  "reviewPanel": {
+    "title": "Review workspace",
+    "description": "The summary stays on the left, action items on the right, and both remain editable without a long vertical scroll.",
+    "chunks": "Chunks",
+    "pending": "Pending",
+    "latestWork": "Latest work",
+    "waiting": "Waiting",
+    "pendingNotice": "Extraction is still running in the background. This workspace will refresh automatically while chunks complete.",
+    "approvedPrefix": "Approved for project memory and Notion sync",
+    "approvedFallback": "just now",
+    "saveError": "Unable to update the review.",
+    "saveReview": "Save changes",
+    "retryExtraction": "Try again",
+    "approveReview": "Approve reviewed meeting",
+    "summaryTitle": "Summary",
+    "summaryDescription": "Keep the narrative concise and decision-ready.",
+    "summaryPlaceholder": "Extraction has not produced a summary yet.",
+    "actionItemsTitle": "Action items",
+    "actionItemsDescription": "Follow-ups stay beside the summary, not below it.",
+    "taskPlaceholder": "Describe the follow-up task",
+    "taskStatusPlaceholder": "Task status",
+    "assigneePlaceholder": "Assignee",
+    "unassigned": "Unassigned",
+    "setDeadline": "Set deadline",
+    "emptyTasks": "No action items yet. Add one manually if the transcript contains a concrete follow-up.",
+    "actionItemStatuses": {
+      "TODO": "Todo",
+      "IN_PROGRESS": "In progress",
+      "DONE": "Done"
+    }
+  },
+  "transcript": {
+    "title": "Transcript reference",
+    "descriptionLive": "Use this when you need evidence for a review decision or task edit. The snapshot updates live as source batches finish.",
+    "descriptionStatic": "Use this when you need evidence for a review decision or task edit. The snapshot is stable for manual provenance review.",
+    "visibleTurns": "Visible turns",
+    "storedFragments": "Stored fragments",
+    "selfMicTurns": "Self mic turns",
+    "mergeFlags": "Merge flags",
+    "emptyLive": "The meeting is still being processed. Transcript turns will appear here as batches complete.",
+    "emptyStatic": "No transcript has been persisted for this meeting yet.",
+    "mergedFragments": "Merged {{count}} fragments",
+    "lane": "Lane {{value}}",
+    "selfMic": "self mic",
+    "tabMix": "tab mix",
+    "mergeStrategies": {
+      "PREFERRED_SELF_MIC_DUPLICATE": "Self mic won duplicate",
+      "AMBIGUOUS_OVERLAP": "Ambiguous overlap"
+    },
+    "comparedWith": "Compared with {{value}}"
+  },
+  "detailExperience": {
+    "refreshSnapshot": "Refresh snapshot",
+    "transcriptEyebrow": "Transcript evidence",
+    "transcriptDescription": "Keep the transcript last. Use it only when you need evidence for a summary or task decision.",
+    "transcriptSummary": "{{turns}} merged turns from {{fragments}} fragments",
+    "loadingTitle": "Building the review workspace",
+    "loadingDescription": "Kapter is preparing the meeting review workspace, loading the merged speaker transcript, and warming the approval panels so you can start reviewing as soon as the snapshot is ready.",
+    "loadingSteps": [
+      "Lock the latest meeting snapshot and verify access",
+      "Merge transcript fragments into readable speaker turns for evidence",
+      "Initialize the review, project memory, and Notion sync panels"
+    ],
+    "unavailableTitle": "Meeting unavailable",
+    "unavailableDescription": "The requested meeting detail could not be loaded.",
+    "unavailableFallback": "The meeting may not exist or may not belong to the current user."
+  }
+}

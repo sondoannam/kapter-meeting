@@ -1,0 +1,11 @@
+node_modules
+dist
+logs
+.git
+.gitignore
+.env
+.env.local
+.env.compose
+coverage
+npm-debug.log
+pnpm-debug.log

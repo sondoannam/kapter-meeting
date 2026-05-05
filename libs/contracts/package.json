@@ -1,0 +1,52 @@
+{
+  "name": "@kapter/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./audio-stream": {
+      "types": "./dist/audio-stream.d.ts",
+      "import": "./dist/audio-stream.js",
+      "require": "./dist/audio-stream.cjs"
+    },
+    "./capture": {
+      "types": "./dist/capture.d.ts",
+      "import": "./dist/capture.js",
+      "require": "./dist/capture.cjs"
+    },
+    "./domain": {
+      "types": "./dist/domain.d.ts",
+      "import": "./dist/domain.js",
+      "require": "./dist/domain.cjs"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js",
+      "require": "./dist/worker.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

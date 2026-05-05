@@ -1,0 +1,246 @@
+{
+  "layout": {
+    "brandTagline": "Speaker-aware meeting intelligence",
+    "nav": {
+      "workflow": "Workflow",
+      "signals": "Capabilities",
+      "fit": "Product scope",
+      "extensionSetup": "Install extension"
+    },
+    "footer": {
+      "summary": "Built for small technical teams that want meeting outcomes to survive the call, keep ownership explicit, and reach Notion only after a human review step.",
+      "chips": [
+        "Record Google Meet",
+        "Speaker-aware summaries",
+        "Sync after review"
+      ],
+      "discoverHeading": "Explore",
+      "accessHeading": "Access",
+      "access": {
+        "dashboard": "Use the dashboard to review meetings and track active sessions.",
+        "clerk": "Connect through Clerk so the web app can hand an auth token to the extension.",
+        "copyright": "© {{year}} Kapter."
+      }
+    }
+  },
+  "hero": {
+    "eyebrow": "Operations center for meeting outcomes",
+    "title": "Turn Google Meet into accountable follow-through.",
+    "description": "Kapter records meetings directly in Chrome, separates who said what, prepares review-ready action items, and gives small technical teams one place to confirm ownership before anything reaches Notion.",
+    "ctas": {
+      "extensionTesting": "Install test extension"
+    },
+    "signals": [
+      "Record Google Meet directly in Chrome",
+      "Separate speakers and summarize by speaker",
+      "Keep a human review step before Notion sync"
+    ],
+    "metricsLabel": "Project targets",
+    "metrics": [
+      {
+        "value": "70%",
+        "label": "handoff time reduction target",
+        "detail": "Measured from the end of the meeting to the point where the task list is ready in Notion."
+      },
+      {
+        "value": "80%+",
+        "label": "target assignment accuracy",
+        "detail": "Speaker recognition plus review helps assign responsibility to the right person."
+      },
+      {
+        "value": "3-10",
+        "label": "people in the target team",
+        "detail": "Kapter is designed for small technical teams that need speed more than process overhead."
+      }
+    ]
+  },
+  "showcase": {
+    "transcript": {
+      "eyebrow": "Live meeting analysis",
+      "title": "Speaker-separated transcript",
+      "lines": [
+        {
+          "speaker": "Speaker A",
+          "time": "00:04",
+          "content": "We can ship the review workflow this week if ownership is clear before sync starts."
+        },
+        {
+          "speaker": "Speaker B",
+          "time": "00:17",
+          "content": "Good. Keep a human in control, then push reviewed tasks into Notion after the meeting ends."
+        },
+        {
+          "speaker": "Speaker C",
+          "time": "00:31",
+          "content": "Capture decision context, not just a bullet list, so follow-through still makes sense tomorrow."
+        }
+      ]
+    },
+    "confidence": {
+      "eyebrow": "Assignment confidence",
+      "title": "Suggested owners with visible uncertainty",
+      "items": [
+        {
+          "task": "Review copy and polish",
+          "owner": "Lan",
+          "confidence": "91%"
+        },
+        {
+          "task": "Verify transcript mapping",
+          "owner": "Minh",
+          "confidence": "84%"
+        },
+        {
+          "task": "Approve Notion sync fields",
+          "owner": "Quang",
+          "confidence": "76%"
+        }
+      ]
+    },
+    "reviewGate": {
+      "eyebrow": "Review gate",
+      "title": "Nothing syncs without a human decision",
+      "items": [
+        "Rewrite action items when the wording is off.",
+        "Map AI labels to real teammate names.",
+        "Confirm the queue before Notion becomes the source of truth."
+      ]
+    },
+    "handoff": {
+      "eyebrow": "Final handoff",
+      "title": "From review surface to the Notion queue",
+      "badge": "One-tap sync",
+      "items": [
+        {
+          "title": "Summary",
+          "description": "Under 200 words, grounded in the real discussion flow."
+        },
+        {
+          "title": "Owner",
+          "description": "Mapped to a real person before the queue leaves review."
+        },
+        {
+          "title": "Action item",
+          "description": "Structured for follow-through instead of cleanup after the meeting."
+        }
+      ]
+    }
+  },
+  "workflow": {
+    "eyebrow": "How it works",
+    "title": "From direct capture to confirmed task handoff.",
+    "description": "The system is intentionally simple: listen during the meeting, organize afterward, then let the team approve the outcome before leaving the review surface.",
+    "stepLabel": "Step {{step}}",
+    "steps": [
+      {
+        "step": "01",
+        "title": "Capture the real conversation",
+        "description": "Start and stop from the extension while Google Meet audio streams from the active Chrome tab. No bot joins the room and no one has to talk while typing notes."
+      },
+      {
+        "step": "02",
+        "title": "Separate who said what",
+        "description": "The pipeline produces timestamped text with speaker tracks so work can stay attached to the right person instead of disappearing into anonymous notes."
+      },
+      {
+        "step": "03",
+        "title": "Prepare a review queue",
+        "description": "Kapter extracts summaries, action items, and suggested owners into a clean review surface so the team can edit quickly instead of rebuilding the outcome from scratch."
+      },
+      {
+        "step": "04",
+        "title": "Confirm and sync to Notion",
+        "description": "The team makes the final decision on content, ownership, and deadlines before any task is written to Notion. Human-in-the-loop is a product rule, not a fallback plan."
+      }
+    ]
+  },
+  "signalsSection": {
+    "eyebrow": "What Kapter protects",
+    "title": "Keep the parts ordinary notes usually lose.",
+    "description": "Kapter is designed for the messiest part of collaboration: who owns the next step, why the team chose it, and how to hand work off without creating another cleanup loop.",
+    "callout": {
+      "title": "Every action item keeps its meeting context.",
+      "description": "That means the review step can decide from evidence instead of guessing what someone meant after the call ends."
+    },
+    "cards": [
+      {
+        "title": "Speaker accountability stays intact",
+        "description": "Normal notes flatten the conversation into vague bullet points. Kapter preserves who drove the decision so assignment review keeps enough context."
+      },
+      {
+        "title": "Reasoning survives the meeting",
+        "description": "You keep the critical reasoning behind a task, not just the final checkbox. That makes follow-through less likely to drift later."
+      },
+      {
+        "title": "Review happens before handoff",
+        "description": "The product is built to surface uncertainty and let the team fix it before tasks enter the system of record."
+      }
+    ]
+  },
+  "fitSection": {
+    "eyebrow": "Designed on purpose",
+    "title": "One capture point. One review surface. One destination.",
+    "description": "Kapter deliberately keeps scope narrow so the workflow stays clear: Google Meet in, reviewed action-item handoff out. That focus is a product strategy, not a temporary limitation.",
+    "chips": [
+      "No meeting bot required",
+      "Designed for small technical teams",
+      "Review required before sync"
+    ],
+    "boundaries": [
+      {
+        "label": "Input",
+        "value": "Google Meet in Chrome",
+        "detail": "A narrow scope keeps capture predictable and prevents the product from bloating."
+      },
+      {
+        "label": "Review surface",
+        "value": "Kapter web dashboard",
+        "detail": "One place to inspect transcripts, summaries, and the action-item queue after each meeting."
+      },
+      {
+        "label": "Final destination",
+        "value": "Notion database",
+        "detail": "The handoff ends where many small technical teams already manage work."
+      },
+      {
+        "label": "Authentication",
+        "value": "Clerk session bridge",
+        "detail": "The web app is the trusted browser-side identity source for the extension."
+      }
+    ]
+  },
+  "extensionSetup": {
+    "eyebrow": "Extension test access",
+    "title": "Install the Kapter extension before the official launch.",
+    "description": "Kapter is still in development, so extension testing currently uses Chrome developer mode instead of the Chrome Web Store.",
+    "downloadCta": "Download test extension (.zip)",
+    "missingDownload": "No direct download link is configured in this environment. Use the local build instructions on the right, or provide <code>VITE_EXTENSION_TEST_BUILD_URL</code> to publish a zip link for testers.",
+    "afterDownload": "After installing the extension, sign in to the dashboard and start recording from the popup to validate the full workflow.",
+    "stepsHeading": "Manual install checklist",
+    "stepsWithDownload": [
+      "Download the latest test build zip and extract it locally.",
+      "Open chrome://extensions in Chrome.",
+      "Turn on Developer mode.",
+      "Click Load unpacked and select the extracted extension folder."
+    ],
+    "stepsWithoutDownload": [
+      "Build the extension locally (or ask the team for a build zip).",
+      "Open chrome://extensions in Chrome.",
+      "Turn on Developer mode.",
+      "Click Load unpacked and select kapter-extension/dist (or the extracted folder)."
+    ],
+    "localBuildHeading": "Local build command"
+  },
+  "finalCta": {
+    "eyebrow": "Ready for the next meeting",
+    "title": "Make every meeting end with named owners and a clean handoff into Notion.",
+    "description": "Kapter keeps the nuance of the conversation, then gives the team the final say before follow-through becomes a written task.",
+    "signedInCta": "Go to dashboard",
+    "secondaryCta": "Install extension for testing",
+    "steps": [
+      "Record with the extension",
+      "Review in the dashboard",
+      "Send approved tasks to Notion"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "name": "kapter-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone NestJS orchestrator backend for Kapter AI Meeting Assistant",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "nest build",
+    "test": "tsx --test \"src/**/*.spec.ts\"",
+    "start": "node dist/src/main",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/src/main",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "db:empty:keep-user": "tsx scripts/empty-db-keep-user.ts"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.2.9",
+    "@google/genai": "^1.50.1",
+    "@kapter/contracts": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/platform-socket.io": "^11.0.0",
+    "@nestjs/swagger": "^11.0.0",
+    "@nestjs/websockets": "^11.0.0",
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "nest-winston": "^1.10.2",
+    "openai": "^6.34.0",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
+    "svix": "^1.90.0",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@nestjs/cli": "^11.0.0",
+    "@types/express": "^5.0.2",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "globals": "^16.4.0",
+    "prisma": "^7.7.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.35.1"
+  }
+}

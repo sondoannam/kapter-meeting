@@ -1,0 +1,246 @@
+{
+  "layout": {
+    "brandTagline": "Phân tích cuộc họp theo người nói",
+    "nav": {
+      "workflow": "Quy trình",
+      "signals": "Tính năng",
+      "fit": "Phạm vi sản phẩm",
+      "extensionSetup": "Cài extension"
+    },
+    "footer": {
+      "summary": "Xây dựng cho các nhóm kỹ thuật nhỏ muốn kết quả cuộc họp sống sót qua cuộc gọi, giữ quyền sở hữu rõ ràng và đưa vào Notion chỉ sau khi con người đã duyệt.",
+      "chips": [
+        "Ghi âm Google Meet",
+        "Tóm tắt theo người nói",
+        "Đồng bộ sau khi duyệt"
+      ],
+      "discoverHeading": "Khám phá",
+      "accessHeading": "Truy cập",
+      "access": {
+        "dashboard": "Dashboard để duyệt cuộc họp và theo dõi phiên đang hoạt động.",
+        "clerk": "Kết nối qua Clerk để trao token xác thực cho extension.",
+        "copyright": "© {{year}} Kapter."
+      }
+    }
+  },
+  "hero": {
+    "eyebrow": "Trung tâm điều hành kết quả cuộc họp",
+    "title": "Biến Google Meet thành kết quả thực sự có trách nhiệm.",
+    "description": "Kapter ghi âm cuộc họp ngay trong Chrome, phân tách ai nói gì, tạo đầu việc sẵn sàng duyệt, và cho các nhóm kỹ thuật nhỏ một nơi xác nhận từng người chịu trách nhiệm trước khi đưa vào Notion.",
+    "ctas": {
+      "extensionTesting": "Cài đặt extension thử nghiệm"
+    },
+    "signals": [
+      "Ghi âm Google Meet trực tiếp trên Chrome",
+      "Phân tách giọng nói và tóm tắt theo người nói",
+      "Con người xem xét trước khi đồng bộ Notion"
+    ],
+    "metricsLabel": "Mục tiêu dự án",
+    "metrics": [
+      {
+        "value": "70%",
+        "label": "mục tiêu giảm thời gian bàn giao",
+        "detail": "Đo từ khi cuộc họp kết thúc đến khi danh sách việc cần làm sẵn sàng trên Notion."
+      },
+      {
+        "value": "80%+",
+        "label": "độ chính xác phân công mục tiêu",
+        "detail": "Nhận diện người nói kết hợp luồng duyệt giúp gán đúng người chịu trách nhiệm."
+      },
+      {
+        "value": "3-10",
+        "label": "người trong nhóm mục tiêu",
+        "detail": "Kapter được thiết kế cho các nhóm kỹ thuật nhỏ cần tốc độ hơn quy trình phức tạp."
+      }
+    ]
+  },
+  "showcase": {
+    "transcript": {
+      "eyebrow": "Phân tích cuộc họp trực tiếp",
+      "title": "Bản ghi phân tách giọng nói",
+      "lines": [
+        {
+          "speaker": "Speaker A",
+          "time": "00:04",
+          "content": "Chúng ta có thể ra mắt luồng duyệt tuần này nếu quyền sở hữu rõ ràng trước khi đồng bộ."
+        },
+        {
+          "speaker": "Speaker B",
+          "time": "00:17",
+          "content": "Tốt. Giữ con người trong vòng kiểm soát, rồi đẩy các đầu việc đã duyệt vào Notion sau khi cuộc họp kết thúc."
+        },
+        {
+          "speaker": "Speaker C",
+          "time": "00:31",
+          "content": "Hãy ghi lại ngữ cảnh quyết định chứ không chỉ danh sách bullet, để việc theo dõi vẫn có ý nghĩa vào ngày mai."
+        }
+      ]
+    },
+    "confidence": {
+      "eyebrow": "Độ tin cậy phân công",
+      "title": "Người được đề xuất, hiển thị rõ sự không chắc chắn",
+      "items": [
+        {
+          "task": "Review copy and polish",
+          "owner": "Lan",
+          "confidence": "91%"
+        },
+        {
+          "task": "Verify transcript mapping",
+          "owner": "Minh",
+          "confidence": "84%"
+        },
+        {
+          "task": "Approve Notion sync fields",
+          "owner": "Quang",
+          "confidence": "76%"
+        }
+      ]
+    },
+    "reviewGate": {
+      "eyebrow": "Cổng duyệt",
+      "title": "Không có gì được đồng bộ khi chưa có quyết định của con người",
+      "items": [
+        "Viết lại đầu việc nếu cách diễn đạt chưa đúng.",
+        "Map nhãn AI vào tên thật của thành viên.",
+        "Xác nhận hàng đợi trước khi Notion trở thành nguồn của sự thật."
+      ]
+    },
+    "handoff": {
+      "eyebrow": "Bàn giao cuối",
+      "title": "Từ giao diện duyệt đến hàng đợi Notion",
+      "badge": "Đồng bộ một chạm",
+      "items": [
+        {
+          "title": "Tóm tắt",
+          "description": "Dưới 200 từ, xây dựng từ luồng thảo luận thực tế."
+        },
+        {
+          "title": "Người đảm nhiệm",
+          "description": "Map vào người thật trước khi hàng đợi rời duyệt."
+        },
+        {
+          "title": "Đầu việc",
+          "description": "Cấu trúc để theo dõi được thay vì dọn lại sau cuộc họp."
+        }
+      ]
+    }
+  },
+  "workflow": {
+    "eyebrow": "Cách hoạt động",
+    "title": "Từ ghi âm trực tiếp đến bàn giao đầu việc được xác nhận.",
+    "description": "Hệ thống cố ý đơn giản: nghe trong cuộc họp, sắp xếp sau đó, rồi để nhóm phê duyệt kết quả trước khi rời khỏi giao diện duyệt.",
+    "stepLabel": "Bước {{step}}",
+    "steps": [
+      {
+        "step": "01",
+        "title": "Ghi lại cuộc trò chuyện thực",
+        "description": "Bắt đầu và dừng từ extension trong khi audio Google Meet được stream từ tab Chrome đang mở. Không có bot tham gia phòng họp, không ai phải vừa nói vừa gõ phím."
+      },
+      {
+        "step": "02",
+        "title": "Phân tách ai nói gì",
+        "description": "Pipeline tạo ra văn bản có dấu thời gian kèm theo track từng người nói, giúp theo dõi công việc gắn với đúng người thay vì chìm vào ghi chú ẩn danh."
+      },
+      {
+        "step": "03",
+        "title": "Tạo danh sách việc cần duyệt",
+        "description": "Kapter trích xuất tóm tắt, đầu việc và người chịu trách nhiệm vào một giao diện duyệt sạch sẽ để chỉnh sửa nhanh thay vì phải tái tạo lại sau cuộc họp."
+      },
+      {
+        "step": "04",
+        "title": "Xác nhận và đồng bộ vào Notion",
+        "description": "Nhóm ra quyết định cuối cùng về nội dung, người chịu trách nhiệm và deadline trước khi bất kỳ đầu việc nào được ghi vào Notion. Con người trong vòng lặp là nguyên tắc sản phẩm, không phải phương án dự phòng."
+      }
+    ]
+  },
+  "signalsSection": {
+    "eyebrow": "Kapter bảo vệ điều gì",
+    "title": "Giữ lại những phần mà ghi chú thông thường thường bỏ qua.",
+    "description": "Kapter được thiết kế cho phần lộn xộn nhất của cộng tác: ai sở hữu bước tiếp theo, tại sao nhóm chọn nó, và cách bàn giao mà không tạo thêm một vòng dọn dẹp nữa.",
+    "callout": {
+      "title": "Mỗi đầu việc đi kèm ngữ cảnh cuộc họp.",
+      "description": "Điều đó có nghĩa là bước duyệt có thể ra quyết định dựa trên bằng chứng thay vì phải đoán ý người sau khi cuộc gọi kết thúc."
+    },
+    "cards": [
+      {
+        "title": "Trách nhiệm người nói được bảo toàn",
+        "description": "Ghi chú thông thường làm phẳng cuộc hội thoại thành những gạch đầu dòng mơ hồ. Kapter lưu lại ai đã dẫn dắt quyết định để việc xem xét phân công có đủ ngữ cảnh."
+      },
+      {
+        "title": "Lý luận sống sót qua cuộc họp",
+        "description": "Bạn giữ lại lập luận quan trọng đằng sau đầu việc thay vì chỉ có ô checkbox cuối cùng. Điều đó giúp việc theo dõi ít dễ bị sai lệch về sau."
+      },
+      {
+        "title": "Duyệt xảy ra trước khi bàn giao",
+        "description": "Sản phẩm được thiết kế để đưa ra sự không chắc chắn và cho phép nhóm sửa nó trước khi đẩy đầu việc vào hệ thống lưu trữ."
+      }
+    ]
+  },
+  "fitSection": {
+    "eyebrow": "Thiết kế có chủ đích",
+    "title": "Một điểm ghi âm. Một giao diện duyệt. Một đích đến.",
+    "description": "Kapter cố ý giữ phạm vi hẹp để quy trình rõ ràng: Google Meet vào, bàn giao đầu việc đã duyệt ra. Sự tập trung này là chiến lược sản phẩm, không phải giới hạn tạm thời.",
+    "chips": [
+      "Không cần bot trong cuộc họp",
+      "Thiết kế cho nhóm kỹ thuật nhỏ",
+      "Bắt buộc duyệt trước khi đồng bộ"
+    ],
+    "boundaries": [
+      {
+        "label": "Đầu vào",
+        "value": "Google Meet trên Chrome",
+        "detail": "Phạm vi hẹp giúp việc ghi âm dễ đoán và tránh tình trạng sản phẩm phình ra."
+      },
+      {
+        "label": "Giao diện duyệt",
+        "value": "Kapter web dashboard",
+        "detail": "Một nơi để xem bản ghi, tóm tắt và hàng đợi đầu việc sau cuộc họp."
+      },
+      {
+        "label": "Đích cuối",
+        "value": "Notion database",
+        "detail": "Bàn giao kết thúc ở nơi nhiều nhóm kỹ thuật nhỏ đã quản lý công việc."
+      },
+      {
+        "label": "Xác thực",
+        "value": "Clerk session bridge",
+        "detail": "Web app là nguồn xác thực đáng tin cậy phía trình duyệt cho extension."
+      }
+    ]
+  },
+  "extensionSetup": {
+    "eyebrow": "Truy cập thử nghiệm extension",
+    "title": "Cài đặt Kapter extension trước khi ra mắt chính thức.",
+    "description": "Kapter đang trong quá trình phát triển, nên việc kiểm thử extension hiện dùng chế độ nhà phát triển Chrome thay vì Chrome Web Store.",
+    "downloadCta": "Tải extension thử nghiệm (.zip)",
+    "missingDownload": "Chưa có liên kết tải trực tiếp trong môi trường này. Dùng hướng dẫn build cục bộ ở bên phải, hoặc cung cấp <code>VITE_EXTENSION_TEST_BUILD_URL</code> để xuất bản link zip cho người kiểm thử.",
+    "afterDownload": "Sau khi tải extension, đăng nhập vào dashboard và bắt đầu ghi âm từ popup để kiểm tra toàn bộ luồng.",
+    "stepsHeading": "Danh sách cài đặt thủ công",
+    "stepsWithDownload": [
+      "Tải file zip build thử nghiệm mới nhất và giải nén ra thư mục cục bộ.",
+      "Mở chrome://extensions trên Chrome.",
+      "Bật chế độ nhà phát triển (Developer mode).",
+      "Nhấp Load unpacked và chọn thư mục extension đã giải nén."
+    ],
+    "stepsWithoutDownload": [
+      "Build extension cục bộ (hoặc yêu cầu file zip build từ nhóm).",
+      "Mở chrome://extensions trên Chrome.",
+      "Bật chế độ nhà phát triển (Developer mode).",
+      "Nhấp Load unpacked và chọn kapter-extension/dist (hoặc thư mục đã giải nén)."
+    ],
+    "localBuildHeading": "Lệnh build cục bộ"
+  },
+  "finalCta": {
+    "eyebrow": "Sẵn sàng cho cuộc họp tiếp theo",
+    "title": "Để mọi cuộc họp kết thúc với người được gắn tên và bàn giao sạch sẽ vào Notion.",
+    "description": "Kapter giữ lại sắc thái của cuộc hội thoại, rồi trao cho nhóm quyết định cuối cùng trước khi việc theo dõi trở thành một đầu việc thành văn.",
+    "signedInCta": "Vào dashboard",
+    "secondaryCta": "Cài extension để kiểm thử",
+    "steps": [
+      "Ghi âm với extension",
+      "Duyệt trong dashboard",
+      "Xuất đầu việc đã duyệt sang Notion"
+    ]
+  }
+}

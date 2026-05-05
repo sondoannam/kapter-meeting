@@ -1,0 +1,5 @@
+packages:
+  - "kapter-backend"
+  - "kapter-webapp"
+  - "kapter-extension"
+  - "libs/contracts"

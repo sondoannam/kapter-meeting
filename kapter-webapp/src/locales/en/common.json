@@ -1,0 +1,71 @@
+{
+  "appName": "Kapter",
+  "languages": {
+    "vi": "Vietnamese",
+    "en": "English"
+  },
+  "languageSwitcher": {
+    "ariaLabel": "Display language",
+    "useLanguage": "Use {{language}}"
+  },
+  "themeToggle": {
+    "groupLabel": "Theme mode",
+    "light": "Light",
+    "dark": "Dark",
+    "useMode": "Use {{mode}} mode"
+  },
+  "actions": {
+    "openDashboard": "Open dashboard",
+    "openDashboardCapitalized": "Open Dashboard",
+    "signIn": "Sign in",
+    "signInWithClerk": "Sign in with Clerk",
+    "signInAndStart": "Sign in and start",
+    "viewWorkflow": "View workflow",
+    "installExtension": "Install extension",
+    "installExtensionTesting": "Install extension for testing",
+    "refresh": "Refresh",
+    "close": "Close",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "clearFilters": "Clear filters",
+    "viewDetails": "View details",
+    "backToDashboard": "Back to dashboard",
+    "addTask": "Add task",
+    "remove": "Remove",
+    "search": "Search"
+  },
+  "loading": {
+    "eyebrow": "Kapter workspace sync",
+    "title": "Building the meeting control room",
+    "description": "Kapter is preparing the operations dashboard, syncing your signed-in session, and warming the review surfaces so you can continue working as soon as data is ready.",
+    "controlRoomLabel": "Control room",
+    "commandSurfaceLabel": "Kapter command surface",
+    "stageLabel": "Stage {{index}}",
+    "liveSyncLabel": "Live sync",
+    "bringingPanelsOnline": "Bringing panels online",
+    "transcriptBusLabel": "Transcript bus",
+    "transcriptBusValue": "Chunk router warmed up",
+    "reviewEngineLabel": "Review engine",
+    "deliveryMeshLabel": "Delivery mesh",
+    "signals": {
+      "authBridge": {
+        "label": "Auth bridge",
+        "value": "Session ready"
+      },
+      "meetingGraph": {
+        "label": "Meeting graph",
+        "value": "Realtime sync"
+      },
+      "reviewRail": {
+        "label": "Review rail",
+        "value": "Panels staged"
+      }
+    },
+    "steps": [
+      "Authenticate the workspace session and lock access safely",
+      "Restore the project space, filters, and last session state",
+      "Warm the transcript stream, review rail, and Notion sync"
+    ]
+  }
+}

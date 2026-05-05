@@ -1,0 +1,24 @@
+--index-url https://download.pytorch.org/whl/cu128
+--extra-index-url https://pypi.org/simple
+
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+numpy>=1.26.0
+soundfile>=0.12.1
+# cu128 required for RTX 5060 Ti (Blackwell sm_120). Driver 591.74 supports CUDA 12.8.
+# +cu128 suffix prevents pip from falling back to PyPI's CPU-only builds.
+torch==2.11.0+cu128
+torchaudio==2.11.0+cu128
+loguru>=0.7.2
+fastapi>=0.115.0
+uvicorn>=0.32.0
+rich>=13.9.0
+sounddevice>=0.5.1
+pytest>=8.3.0
+
+# Real ML models
+faster-whisper>=1.1.0
+pyannote.audio>=3.1.0
+silero-vad>=5.1
+
+omegaconf

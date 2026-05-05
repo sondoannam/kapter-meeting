@@ -1,0 +1,16 @@
+{
+  "name": "kapter-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter @kapter/contracts build && pnpm --filter ./kapter-backend build && pnpm --filter ./kapter-webapp build && pnpm --filter ./kapter-extension build",
+    "lint": "pnpm --filter ./kapter-backend lint && pnpm --filter ./kapter-webapp lint && pnpm --filter ./kapter-extension lint",
+    "typecheck": "pnpm --filter @kapter/contracts typecheck && pnpm --filter ./kapter-backend typecheck && pnpm --filter ./kapter-webapp typecheck && pnpm --filter ./kapter-extension typecheck",
+    "sync:docs": "node scripts/sync-docs.mjs",
+    "zip:extension": "pnpm --filter ./kapter-extension package:zip"
+  }
+}

@@ -1,0 +1,66 @@
+name: Backend CI
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Lint, test, and build backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kapter_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kapter_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      CORS_ORIGIN: http://localhost:5173
+      CLERK_SECRET_KEY: sk_test_ci
+      CLERK_WEBHOOK_SIGNING_SECRET: whsec_ci
+      NOTION_API_KEY: ci-placeholder
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kapter_test?schema=public
+      AI_WORKER_BASE_URL: http://127.0.0.1:8000
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared contracts
+        run: pnpm --filter @kapter/contracts build
+
+      - name: Lint backend
+        run: pnpm --filter ./kapter-backend lint
+
+      - name: Typecheck backend
+        run: pnpm --filter ./kapter-backend typecheck
+
+      - name: Test backend
+        run: pnpm --filter ./kapter-backend test
+
+      - name: Build backend
+        run: pnpm --filter ./kapter-backend build

@@ -1,0 +1,18 @@
+{
+  "brandTagline": "Meeting operations dashboard",
+  "reviewBadge": "Workspace review",
+  "sidebar": {
+    "navigationHeading": "Navigation",
+    "overview": "Overview",
+    "statusHeading": "Status",
+    "statuses": {
+      "processing": "Processing",
+      "review": "Needs review",
+      "approved": "Approved"
+    },
+    "accountHeading": "Account",
+    "installExtension": "Install extension",
+    "installExtensionTitle": "Guidance",
+    "signOut": "Sign out"
+  }
+}

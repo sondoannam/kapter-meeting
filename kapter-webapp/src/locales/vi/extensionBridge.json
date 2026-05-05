@@ -1,0 +1,49 @@
+{
+  "eyebrow": "Liên kết extension an toàn",
+  "title": "Trao phiên Clerk mới cho Kapter extension.",
+  "description": "Trang này chỉ dùng để chuyển một session token thời hạn ngắn vào extension đã cài đặt. Hãy giữ tab này mở cho đến khi extension xác nhận đã lưu phiên.",
+  "statusTitle": "Trạng thái",
+  "statuses": {
+    "missing-request": {
+      "title": "Yêu cầu bridge không hợp lệ",
+      "description": "Hãy mở route này từ popup của extension để request có kèm mã bridge hợp lệ."
+    },
+    "loadingSignedOut": {
+      "title": "Đăng nhập để tiếp tục",
+      "description": "Hãy xác thực trong trình duyệt này trước, sau đó trang sẽ tự gửi lại token."
+    },
+    "loadingSignedIn": {
+      "title": "Đang kiểm tra phiên Clerk",
+      "description": "Clerk đang nạp phiên đang hoạt động trong trình duyệt trước khi bắt đầu handoff."
+    },
+    "sign-in": {
+      "title": "Đăng nhập để tiếp tục",
+      "description": "Hãy xác thực trong trình duyệt này trước, sau đó trang sẽ tự gửi lại token."
+    },
+    "sending": {
+      "title": "Đang đóng gói session token mới",
+      "description": "Bridge đang yêu cầu một session token từ Clerk."
+    },
+    "waiting": {
+      "title": "Đang chờ extension xác nhận",
+      "description": "Token đã được post vào trang. Extension sẽ xác nhận và đóng tab này."
+    },
+    "confirmed": {
+      "title": "Extension đã kết nối",
+      "description": "Extension đã xác nhận nhận token. Có thể đóng tab này an toàn."
+    },
+    "error": {
+      "title": "Bridge thất bại",
+      "description": "Bridge không thể chuyển token. Hãy thử lại từ popup của extension sau khi xử lý lỗi bên dưới."
+    }
+  },
+  "requestContext": "Ngữ cảnh yêu cầu",
+  "bridgeRequest": "Yêu cầu bridge",
+  "missingRequestId": "Thiếu requestId",
+  "signedInUser": "Người dùng Clerk đã đăng nhập",
+  "notSignedIn": "Chưa đăng nhập",
+  "bridgeOrigin": "Nguồn bridge",
+  "jwtTemplate": "Mẫu JWT",
+  "defaultSessionToken": "Clerk session token mặc định",
+  "prepareTokenError": "Không thể chuẩn bị token cho extension."
+}

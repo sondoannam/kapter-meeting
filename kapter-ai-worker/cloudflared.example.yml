@@ -1,0 +1,7 @@
+tunnel: <your-tunnel-uuid>
+credentials-file: C:/Users/<you>/.cloudflared/<your-tunnel-uuid>.json
+
+ingress:
+  - hostname: kapter-worker.sondndev.id.vn
+    service: http://127.0.0.1:8000
+  - service: http_status:404

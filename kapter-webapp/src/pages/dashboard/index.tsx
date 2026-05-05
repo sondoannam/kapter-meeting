@@ -1,0 +1,338 @@
+import * as React from "react"
+import { useSearchParams } from "react-router"
+
+import { AppShellContainer } from "@/components/app-shell-container"
+import { useActiveMeeting } from "@/features/meetings/hooks/use-active-meeting"
+import { useMeetingHistory } from "@/features/meetings/hooks/use-meeting-history"
+import { useProjects } from "@/features/projects/hooks/use-projects"
+import { DashboardMetricGrid } from "@/components/dashboard/dashboard-metric-grid"
+import { DashboardNotionCallbackBanner } from "@/components/dashboard/dashboard-notion-callback-banner"
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header"
+import { DashboardProjectSetupAccordion } from "@/components/dashboard/dashboard-project-setup-accordion"
+import { ErrorBanner } from "@/components/dashboard/error-banner"
+import { MeetingPanel } from "@/components/dashboard/meeting-panel"
+import { ProjectPanel } from "@/components/dashboard/project-panel"
+import { ActiveSessionBanner } from "@/features/meetings/components/active-session-banner"
+
+import type { DashboardMeetingSummary } from "@/features/meetings/types"
+
+type MeetingStatusFilter = "all" | DashboardMeetingSummary["status"]
+type MeetingReviewFilter =
+  | "all"
+  | DashboardMeetingSummary["artifactReviewStatus"]
+
+export default function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sidebarStatus = searchParams.get("sidebar_status")
+  const {
+    activeMeeting,
+    status: activeMeetingStatus,
+    errorMessage: activeMeetingError,
+    refresh: refreshActiveMeeting,
+  } = useActiveMeeting()
+  const {
+    meetings,
+    status: historyStatus,
+    refresh: refreshMeetingHistory,
+  } = useMeetingHistory()
+  const {
+    projects,
+    status: projectsStatus,
+    errorMessage: projectsErrorMessage,
+    isCreating,
+    refresh: refreshProjects,
+    createProject,
+    notionConnection,
+    notionStatus,
+    notionErrorMessage,
+    isConnectingNotion,
+    activeNotionProjectId,
+    refreshNotionConnection,
+    connectNotion,
+    searchNotionPages,
+    configureProjectNotionDestination,
+    clearProjectNotionDestination,
+  } = useProjects()
+  const notionCallbackStatus = searchParams.get("notion_status")
+  const notionCallbackReason = searchParams.get("reason")
+  const [selectedProjectId, setSelectedProjectId] = React.useState<
+    string | "all"
+  >("all")
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [statusFilter, setStatusFilter] =
+    React.useState<MeetingStatusFilter>("all")
+  const [reviewFilter, setReviewFilter] =
+    React.useState<MeetingReviewFilter>("all")
+  const [activeMetricId, setActiveMetricId] = React.useState("all")
+  const sidebarMetricId = React.useMemo(() => {
+    switch (sidebarStatus) {
+      case "processing":
+        return "live"
+      case "review":
+        return "review"
+      case "approved":
+        return "approved"
+      default:
+        return null
+    }
+  }, [sidebarStatus])
+  const effectiveMetricId = sidebarMetricId ?? activeMetricId
+
+  const activeMeetingKey = activeMeeting
+    ? `${activeMeeting.id}:${activeMeeting.status}`
+    : "idle"
+  const previousActiveMeetingKey = React.useRef(activeMeetingKey)
+
+  React.useEffect(() => {
+    if (previousActiveMeetingKey.current === activeMeetingKey) {
+      return
+    }
+
+    previousActiveMeetingKey.current = activeMeetingKey
+    void refreshMeetingHistory()
+  }, [activeMeetingKey, refreshMeetingHistory])
+
+  React.useEffect(() => {
+    if (!notionCallbackStatus) {
+      return
+    }
+
+    void refreshNotionConnection()
+  }, [notionCallbackStatus, refreshNotionConnection])
+
+  const dismissNotionCallbackBanner = React.useCallback(() => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+
+    nextSearchParams.delete("notion_status")
+    nextSearchParams.delete("reason")
+    setSearchParams(nextSearchParams, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  const clearSidebarStatusParam = React.useCallback(() => {
+    if (!searchParams.has("sidebar_status")) {
+      return
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.delete("sidebar_status")
+    setSearchParams(nextSearchParams, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  const effectiveSelectedProjectId = React.useMemo(() => {
+    if (selectedProjectId === "all") {
+      return "all"
+    }
+
+    return projects.some((project) => project.id === selectedProjectId)
+      ? selectedProjectId
+      : "all"
+  }, [projects, selectedProjectId])
+
+  const filteredMeetings = React.useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    return meetings.filter((meeting) => {
+      if (
+        effectiveMetricId === "live" &&
+        meeting.status !== "RECORDING" &&
+        meeting.status !== "PROCESSING"
+      ) {
+        return false
+      }
+
+      if (
+        effectiveMetricId === "review" &&
+        meeting.artifactReviewStatus !== "READY"
+      ) {
+        return false
+      }
+
+      if (
+        effectiveMetricId === "approved" &&
+        meeting.artifactReviewStatus !== "APPROVED"
+      ) {
+        return false
+      }
+
+      if (
+        effectiveSelectedProjectId !== "all" &&
+        meeting.projectId !== effectiveSelectedProjectId
+      ) {
+        return false
+      }
+
+      if (statusFilter !== "all" && meeting.status !== statusFilter) {
+        return false
+      }
+
+      if (
+        reviewFilter !== "all" &&
+        meeting.artifactReviewStatus !== reviewFilter
+      ) {
+        return false
+      }
+
+      if (!normalizedQuery) {
+        return true
+      }
+
+      const haystack = [
+        meeting.title,
+        meeting.externalMeetingId,
+        meeting.projectTitle,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+
+      return haystack.includes(normalizedQuery)
+    })
+  }, [
+    effectiveMetricId,
+    effectiveSelectedProjectId,
+    meetings,
+    reviewFilter,
+    searchQuery,
+    statusFilter,
+  ])
+
+  const dashboardMetrics = React.useMemo(() => {
+    const liveCount = meetings.filter(
+      (meeting) =>
+        meeting.status === "RECORDING" || meeting.status === "PROCESSING"
+    ).length
+
+    const reviewCount = meetings.filter(
+      (meeting) => meeting.artifactReviewStatus === "READY"
+    ).length
+
+    const approvedCount = meetings.filter(
+      (meeting) => meeting.artifactReviewStatus === "APPROVED"
+    ).length
+
+    return {
+      liveCount,
+      reviewCount,
+      approvedCount,
+      projectCount: projects.length,
+    }
+  }, [meetings, projects.length])
+
+  const clearFilters = React.useCallback(() => {
+    setSelectedProjectId("all")
+    setSearchQuery("")
+    setStatusFilter("all")
+    setReviewFilter("all")
+    setActiveMetricId("all")
+    clearSidebarStatusParam()
+  }, [clearSidebarStatusParam])
+
+  const handleMetricClick = (id: string) => {
+    clearSidebarStatusParam()
+    setActiveMetricId((prev) => (prev === id ? "all" : id))
+    setStatusFilter("all")
+    setReviewFilter("all")
+  }
+
+  const handleStatusFilterChange = (value: MeetingStatusFilter) => {
+    clearSidebarStatusParam()
+    setActiveMetricId("all")
+    setStatusFilter(value)
+  }
+
+  const handleReviewFilterChange = (value: MeetingReviewFilter) => {
+    clearSidebarStatusParam()
+    setActiveMetricId("all")
+    setReviewFilter(value)
+  }
+
+  const hasActiveFilters =
+    effectiveMetricId !== "all" ||
+    effectiveSelectedProjectId !== "all" ||
+    searchQuery.trim().length > 0 ||
+    statusFilter !== "all" ||
+    reviewFilter !== "all"
+
+  return (
+    <AppShellContainer className="space-y-5 py-6">
+      <DashboardPageHeader
+        meetingCount={meetings.length}
+        projectCount={projects.length}
+      />
+
+      {historyStatus === "error" && (
+        <ErrorBanner onRetry={() => void refreshMeetingHistory()} />
+      )}
+
+      <DashboardMetricGrid
+        metrics={dashboardMetrics}
+        activeMetricId={effectiveMetricId}
+        onMetricClick={handleMetricClick}
+      />
+
+      {notionCallbackStatus ? (
+        <DashboardNotionCallbackBanner
+          onDismiss={dismissNotionCallbackBanner}
+          reason={notionCallbackReason}
+          status={notionCallbackStatus}
+        />
+      ) : null}
+
+      <DashboardProjectSetupAccordion
+        activeNotionProjectId={activeNotionProjectId}
+        errorMessage={projectsErrorMessage}
+        isConnectingNotion={isConnectingNotion}
+        isCreating={isCreating}
+        notionConnection={notionConnection}
+        notionErrorMessage={notionErrorMessage}
+        notionStatus={notionStatus}
+        onClearProjectNotionDestination={clearProjectNotionDestination}
+        onConfigureProjectNotionDestination={configureProjectNotionDestination}
+        onConnectNotion={connectNotion}
+        onCreateProject={createProject}
+        onRefresh={refreshProjects}
+        onRefreshNotion={refreshNotionConnection}
+        onSearchNotionPages={searchNotionPages}
+        projects={projects}
+        status={projectsStatus}
+      />
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-5">
+          <ActiveSessionBanner
+            activeMeeting={activeMeeting}
+            status={activeMeetingStatus}
+            errorMessage={activeMeetingError}
+            onRefresh={refreshActiveMeeting}
+          />
+
+          <MeetingPanel
+            filtersActive={hasActiveFilters}
+            meetings={filteredMeetings}
+            onClearFilters={clearFilters}
+            onRefresh={refreshMeetingHistory}
+            onReviewFilterChange={handleReviewFilterChange}
+            onSearchQueryChange={setSearchQuery}
+            onStatusFilterChange={handleStatusFilterChange}
+            reviewFilter={reviewFilter}
+            searchQuery={searchQuery}
+            status={historyStatus}
+            statusFilter={statusFilter}
+            totalMeetings={meetings.length}
+          />
+        </div>
+
+        <ProjectPanel
+          networkError={historyStatus === "error"}
+          notionConnection={notionConnection}
+          onSelectProjectId={(projectId) => {
+            setActiveMetricId("all")
+            setSelectedProjectId(projectId)
+          }}
+          projects={projects}
+          selectedProjectId={effectiveSelectedProjectId}
+        />
+      </div>
+    </AppShellContainer>
+  )
+}

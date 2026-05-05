@@ -1,0 +1,18 @@
+{
+  "brandTagline": "Dashboard điều phối cuộc họp",
+  "reviewBadge": "Workspace review",
+  "sidebar": {
+    "navigationHeading": "Điều hướng",
+    "overview": "Tổng quan",
+    "statusHeading": "Trạng thái",
+    "statuses": {
+      "processing": "Đang xử lý",
+      "review": "Chờ duyệt",
+      "approved": "Đã duyệt"
+    },
+    "accountHeading": "Tài khoản",
+    "installExtension": "Cài extension",
+    "installExtensionTitle": "Hướng dẫn",
+    "signOut": "Đăng xuất"
+  }
+}

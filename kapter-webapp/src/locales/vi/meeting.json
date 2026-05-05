@@ -1,0 +1,253 @@
+{
+  "status": {
+    "RECORDING": "Đang ghi âm",
+    "PROCESSING": "Đang xử lý",
+    "COMPLETED": "Hoàn thành",
+    "FAILED": "Lỗi"
+  },
+  "reviewStatus": {
+    "PENDING": "Chờ trích xuất",
+    "READY": "Chờ duyệt",
+    "FAILED": "Cần chạy lại",
+    "APPROVED": "Đã duyệt"
+  },
+  "history": {
+    "title": "Danh sách cuộc họp",
+    "description": "Lịch sử cuộc họp từ backend, kèm ngữ cảnh dự án và trạng thái duyệt.",
+    "loadError": "Không thể tải lịch sử cuộc họp.",
+    "emptyFiltered": "Không có cuộc họp nào khớp với bộ lọc hiện tại. Hãy xóa hoặc mở rộng bộ lọc.",
+    "emptyDefault": "Chưa có cuộc họp nào. Khi extension ghi âm lần đầu, cuộc họp sẽ xuất hiện ở đây.",
+    "columns": {
+      "meeting": "Cuộc họp",
+      "project": "Dự án",
+      "date": "Ngày",
+      "duration": "Thời lượng",
+      "review": "Duyệt"
+    },
+    "missingMeetingId": "Không có mã cuộc họp",
+    "draftProject": "Dự án nháp",
+    "assignedProject": "Đã phân vào dự án",
+    "needsProject": "Cần chỉ định dự án",
+    "retryExtraction": "Trích xuất cần chạy lại trước khi phê duyệt."
+  },
+  "activeSession": {
+    "emptyTitle": "Không có phiên đang hoạt động",
+    "emptyDescription": "Mở extension trên Google Meet để bắt đầu ghi âm.",
+    "recording": "Đang ghi âm",
+    "processing": "Đang xử lý",
+    "recordingDescription": "Extension đang gửi âm thanh Google Meet vào pipeline backend.",
+    "processingDescription": "Extension đã dừng ghi, backend đang hoàn tất artifact cho cuộc họp.",
+    "untitledMeeting": "Cuộc họp không tên",
+    "googleMeet": "Google Meet",
+    "genericTab": "Tab tổng quát",
+    "unknownCapture": "Nguồn ghi chưa xác định",
+    "selfMic": "mic cá nhân",
+    "tabMix": "âm thanh tab",
+    "noSourceMetadata": "Chưa có metadata nguồn ghi",
+    "recorderMicUnavailable": "mic recorder không khả dụng",
+    "duration": "Thời lượng",
+    "startedAt": "Bắt đầu",
+    "backendSnapshot": "Snapshot backend",
+    "apiUpdated": "Cập nhật từ API cuộc họp"
+  },
+  "overview": {
+    "googleMeet": "Google Meet",
+    "genericTab": "Tab tổng quát",
+    "unknownCapture": "Nguồn ghi chưa xác định",
+    "noSourceMetadata": "Chưa có metadata nguồn ghi",
+    "selfMic": "mic cá nhân",
+    "tabMix": "âm thanh tab",
+    "workflowDescription": "Layout ưu tiên review. Header này chỉ giữ lại ngữ cảnh tối thiểu cần nhìn thấy.",
+    "batchProgress": "Tiến độ batch",
+    "batchProgressHelper": "{{completed}}/{{total}} đã hoàn tất",
+    "speakers": "Người nói",
+    "speakersHelper": "Hồ sơ đã nhận diện",
+    "transcript": "Transcript",
+    "transcriptHelper": "Lượt nói đã gộp",
+    "latestBatch": "Batch mới nhất",
+    "latestBatchHelper": "Tiến độ trích xuất artifact",
+    "waiting": "Đang chờ",
+    "project": "Dự án",
+    "draftProject": "Dự án nháp",
+    "tasks": "Đầu việc",
+    "tasksValue": "{{count}} đã trích xuất",
+    "pendingSync": "Chờ đồng bộ",
+    "pendingSyncValue": "{{count}} việc",
+    "captureMode": "Chế độ ghi",
+    "audioLanes": "Nguồn âm thanh",
+    "transcriptValue": "{{turns}} lượt / {{fragments}} đoạn",
+    "identifiers": "Mã nhận diện",
+    "missingExternalId": "Không có mã cuộc họp bên ngoài",
+    "approval": "Phê duyệt",
+    "approved": "Đã duyệt",
+    "waitingForApproval": "Chờ phê duyệt",
+    "workflowStages": {
+      "extracting": "Đang trích xuất",
+      "review": "Cần duyệt",
+      "project-memory": "Project memory",
+      "notion-sync": "Sẵn sàng đồng bộ",
+      "complete": "Hoàn tất"
+    },
+    "micDegraded": "Mic giảm chất lượng",
+    "recorderMicActive": "Mic recorder đang hoạt động",
+    "tabOnlyCapture": "Chỉ ghi từ tab",
+    "liveRefreshEnabled": "Đang làm mới trực tiếp"
+  },
+  "workflow": {
+    "statusEyebrow": "Trạng thái quy trình",
+    "statusDescription": "Kapter review theo chuỗi này. Hãy giữ nó hiển thị phía trên workspace chỉnh sửa như nguyên tắc vận hành.",
+    "guideTitle": "Hướng dẫn quy trình",
+    "guideDescription": "Kapter đi theo chuỗi review cố định trước khi cập nhật memory và đồng bộ ra ngoài.",
+    "current": "Hiện tại",
+    "done": "Xong",
+    "next": "Tiếp theo",
+    "stepLabel": "Bước {{index}}",
+    "steps": {
+      "extracting": {
+        "title": "Trích xuất",
+        "description": "Chờ capture, transcript batches và quá trình trích xuất artifact theo từng chunk."
+      },
+      "review": {
+        "title": "Review",
+        "description": "Chỉnh summary và đầu việc trước khi khóa bản ghi cuộc họp."
+      },
+      "project-memory": {
+        "title": "Project memory",
+        "description": "Chấp nhận hoặc bỏ qua đề xuất cập nhật ngữ cảnh cho các cuộc họp sau."
+      },
+      "notion-sync": {
+        "title": "Đồng bộ Notion",
+        "description": "Đồng bộ thủ công các đầu việc đã duyệt khi đích dự án đã sẵn sàng."
+      },
+      "complete": {
+        "title": "Hoàn tất",
+        "description": "Cuộc họp đã duyệt không còn việc memory hay sync nào đang chờ."
+      }
+    }
+  },
+  "notionSync": {
+    "title": "Đồng bộ Notion",
+    "description": "Đồng bộ luôn là thủ công. Kapter chỉ tạo task Notion sau khi review và thiết lập dự án đã hoàn tất.",
+    "workspace": "Workspace",
+    "destination": "Đích",
+    "syncableTasks": "Đầu việc có thể đồng bộ",
+    "connectedWorkspace": "Workspace đã kết nối",
+    "notConnected": "Chưa kết nối",
+    "configured": "Đã cấu hình",
+    "autoCreate": "Tự tạo khi đồng bộ",
+    "missing": "Thiếu",
+    "pendingSummary": "{{pending}} chờ, {{synced}} đã đồng bộ",
+    "workspaceConnected": "Workspace đã kết nối",
+    "workspaceMissing": "Notion chưa kết nối",
+    "destinationReady": "Đích sẵn sàng",
+    "destinationWillBeCreated": "Đích sẽ được tạo",
+    "destinationMissing": "Thiếu đích",
+    "syncResult": "Đã đồng bộ {{synced}} đầu việc và bỏ qua {{skipped}} đầu việc đã đồng bộ.",
+    "destinationCreated": " Kapter đã tự tạo đích của dự án trong lần chạy này.",
+    "approveBeforeSync": "Hãy duyệt cuộc họp trước khi đồng bộ bất kỳ đầu việc nào sang Notion.",
+    "resolveProposalBeforeSync": "Hãy xử lý đề xuất project memory trước. Chỉ sau khi áp dụng hoặc bỏ qua thì sync mới khả dụng.",
+    "connectPrompt": "Kết nối Notion ngay bây giờ. Sync sẽ tiếp tục bị khóa cho đến khi cuộc họp được duyệt và thiết lập dự án hoàn tất.",
+    "connectNotion": "Kết nối Notion",
+    "missingDestinationNotice": "Dự án này chưa có đích Notion. Hãy cấu hình đích trên dashboard trước khi đồng bộ đầu việc.",
+    "autoCreateDestinationNotice": "Dự án này chưa có đích Notion. Kapter sẽ tự tạo project page và database Action Items trong lúc đồng bộ.",
+    "syncError": "Không thể đồng bộ sang Notion.",
+    "connectError": "Không thể kết nối Notion workspace.",
+    "syncApprovedItems": "Đồng bộ các mục đã duyệt sang Notion",
+    "taskQueueTitle": "Hàng chờ task Notion",
+    "emptyTaskQueue": "Chưa có đầu việc đã duyệt nào để đồng bộ sang Notion.",
+    "unassigned": "Chưa giao",
+    "deadline": "Hạn {{value}}",
+    "syncedBadge": "Đã đồng bộ",
+    "pendingBadge": "Chờ đồng bộ",
+    "manageConnections": "Quản lý kết nối dự án từ",
+    "dashboardLink": "dashboard",
+    "syncDisabledNotice": ". Sync sẽ bị tắt cho đến khi cuộc họp được duyệt, Notion đã kết nối và project memory đã xử lý xong."
+  },
+  "projectMemory": {
+    "title": "Project memory",
+    "description": "Chỉ đẩy ngữ cảnh đã trích xuất vào hồ sơ dự án khi thông tin mới thực sự giúp ích cho các cuộc họp sau.",
+    "currentProject": "Dự án hiện tại",
+    "draftProject": "Dự án nháp",
+    "projectDescription": "Những cập nhật ngữ cảnh từ cuộc họp này sẽ được áp dụng vào hồ sơ dự án hiện tại sau khi review.",
+    "changeSummary": "Tóm tắt thay đổi",
+    "apply": "Áp dụng vào project memory",
+    "dismiss": "Bỏ qua đề xuất",
+    "noProposal": "Cuộc họp này hiện chưa có đề xuất memory nào đang chờ.",
+    "mutationError": "Không thể cập nhật project memory."
+  },
+  "speakerRoster": {
+    "title": "Danh sách người nói",
+    "description": "Các nhãn người nói do AI phát hiện cho cuộc họp này đến thời điểm hiện tại.",
+    "empty": "Chưa có hồ sơ người nói nào được tạo.",
+    "awaitingNameMapping": "Chờ gắn với tên thật",
+    "segments": "{{count}} đoạn transcript",
+    "actionItems": "{{count}} đầu việc"
+  },
+  "reviewPanel": {
+    "title": "Workspace review",
+    "description": "Summary ở bên trái, đầu việc ở bên phải và cả hai đều có thể chỉnh sửa mà không phải cuộn dọc quá dài.",
+    "chunks": "Chunks",
+    "pending": "Pending",
+    "latestWork": "Lần xử lý mới nhất",
+    "waiting": "Đang chờ",
+    "pendingNotice": "Extraction vẫn đang chạy trong nền. Workspace này sẽ tự làm mới khi các chunk hoàn tất.",
+    "approvedPrefix": "Đã duyệt cho project memory và Notion sync",
+    "approvedFallback": "vừa xong",
+    "saveError": "Không thể cập nhật review.",
+    "saveReview": "Lưu thay đổi",
+    "retryExtraction": "Thử lại",
+    "approveReview": "Duyệt cuộc họp đã review",
+    "summaryTitle": "Summary",
+    "summaryDescription": "Giữ mạch tường thuật ngắn gọn và sẵn sàng cho việc ra quyết định.",
+    "summaryPlaceholder": "Extraction chưa tạo ra summary nào.",
+    "actionItemsTitle": "Đầu việc",
+    "actionItemsDescription": "Các follow-up nằm cạnh summary, không nằm phía dưới.",
+    "taskPlaceholder": "Mô tả đầu việc follow-up",
+    "taskStatusPlaceholder": "Trạng thái đầu việc",
+    "assigneePlaceholder": "Người phụ trách",
+    "unassigned": "Chưa giao",
+    "setDeadline": "Đặt deadline",
+    "emptyTasks": "Chưa có đầu việc nào. Hãy thêm thủ công nếu transcript có follow-up cụ thể.",
+    "actionItemStatuses": {
+      "TODO": "Cần làm",
+      "IN_PROGRESS": "Đang làm",
+      "DONE": "Hoàn tất"
+    }
+  },
+  "transcript": {
+    "title": "Tham chiếu transcript",
+    "descriptionLive": "Dùng khi bạn cần bằng chứng cho một quyết định review hoặc chỉnh sửa đầu việc. Snapshot sẽ cập nhật trực tiếp khi các batch nguồn hoàn tất.",
+    "descriptionStatic": "Dùng khi bạn cần bằng chứng cho một quyết định review hoặc chỉnh sửa đầu việc. Snapshot ổn định để truy xuất nguồn gốc thủ công.",
+    "visibleTurns": "Lượt hiển thị",
+    "storedFragments": "Đoạn đã lưu",
+    "selfMicTurns": "Lượt từ mic cá nhân",
+    "mergeFlags": "Cờ gộp",
+    "emptyLive": "Cuộc họp vẫn đang được xử lý. Các lượt transcript sẽ xuất hiện ở đây khi từng batch hoàn tất.",
+    "emptyStatic": "Chưa có transcript nào được lưu cho cuộc họp này.",
+    "mergedFragments": "Đã gộp {{count}} đoạn",
+    "lane": "Nguồn {{value}}",
+    "selfMic": "mic cá nhân",
+    "tabMix": "âm thanh tab",
+    "mergeStrategies": {
+      "PREFERRED_SELF_MIC_DUPLICATE": "Mic cá nhân thắng bản trùng",
+      "AMBIGUOUS_OVERLAP": "Chồng lấn mơ hồ"
+    },
+    "comparedWith": "So với {{value}}"
+  },
+  "detailExperience": {
+    "refreshSnapshot": "Làm mới snapshot",
+    "transcriptEyebrow": "Bằng chứng transcript",
+    "transcriptDescription": "Để transcript ở cuối. Chỉ dùng nó khi bạn cần bằng chứng cho summary hoặc quyết định về đầu việc.",
+    "transcriptSummary": "{{turns}} lượt đã gộp từ {{fragments}} đoạn",
+    "loadingTitle": "Đang dựng review workspace",
+    "loadingDescription": "Kapter đang dựng workspace review của cuộc họp, nạp transcript đã gom lượt nói và làm nóng các panel phê duyệt để bạn có thể kiểm tra ngay khi snapshot hoàn tất.",
+    "loadingSteps": [
+      "Khóa snapshot cuộc họp mới nhất và xác minh quyền truy cập",
+      "Gom transcript fragments thành lượt nói dễ đọc cho phần evidence",
+      "Khởi tạo các panel review, project memory và Notion sync"
+    ],
+    "unavailableTitle": "Không thể mở cuộc họp",
+    "unavailableDescription": "Không tải được trang chi tiết cho cuộc họp được yêu cầu.",
+    "unavailableFallback": "Cuộc họp có thể không tồn tại hoặc không thuộc người dùng hiện tại."
+  }
+}

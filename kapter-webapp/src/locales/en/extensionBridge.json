@@ -1,0 +1,49 @@
+{
+  "eyebrow": "Secure extension link",
+  "title": "Hand off a fresh Clerk session to the Kapter extension.",
+  "description": "This page only exists to transfer a short-lived session token into the installed extension. Leave this tab open until the extension confirms it has stored the session.",
+  "statusTitle": "Status",
+  "statuses": {
+    "missing-request": {
+      "title": "Invalid bridge request",
+      "description": "Open this route from the extension popup so the request includes a valid bridge identifier."
+    },
+    "loadingSignedOut": {
+      "title": "Sign in to continue",
+      "description": "Authenticate in this browser first, then the page will resend the token automatically."
+    },
+    "loadingSignedIn": {
+      "title": "Checking your Clerk session",
+      "description": "Clerk is loading the active browser session before the handoff can start."
+    },
+    "sign-in": {
+      "title": "Sign in to continue",
+      "description": "Authenticate in this browser first, then the page will resend the token automatically."
+    },
+    "sending": {
+      "title": "Packaging a fresh session token",
+      "description": "The bridge is requesting a session token from Clerk now."
+    },
+    "waiting": {
+      "title": "Waiting for extension confirmation",
+      "description": "The token has been posted to the page. The extension should acknowledge and close this tab."
+    },
+    "confirmed": {
+      "title": "Extension connected",
+      "description": "The extension confirmed receipt of the token. This tab can be closed safely."
+    },
+    "error": {
+      "title": "Bridge failed",
+      "description": "The bridge could not deliver the token. Retry from the extension popup after fixing the issue below."
+    }
+  },
+  "requestContext": "Request context",
+  "bridgeRequest": "Bridge request",
+  "missingRequestId": "Missing requestId",
+  "signedInUser": "Signed-in Clerk user",
+  "notSignedIn": "Not signed in",
+  "bridgeOrigin": "Bridge origin",
+  "jwtTemplate": "JWT template",
+  "defaultSessionToken": "Default Clerk session token",
+  "prepareTokenError": "Unable to prepare a token for the extension."
+}

@@ -1,0 +1,15 @@
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+numpy>=1.26.0
+soundfile>=0.12.1
+torch==2.11.0
+torchaudio==2.11.0
+loguru>=0.7.2
+faster-whisper>=1.1.1
+pyannote.audio>=4.0.0
+silero-vad>=6.2.0
+fastapi>=0.115.0
+uvicorn>=0.32.0

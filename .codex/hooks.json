@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "name": "log-prompt",
+            "type": "command",
+            "command": "AI_TOOL_NAME=codex python3 \"$(git rev-parse --show-toplevel)/scripts/log_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "name": "log-stop",
+            "type": "command",
+            "command": "AI_TOOL_NAME=codex python3 \"$(git rev-parse --show-toplevel)/scripts/log_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

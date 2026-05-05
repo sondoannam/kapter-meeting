@@ -1,0 +1,42 @@
+name: Post-Merge
+
+on:
+  push:
+    branches:
+      - development
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "libs/contracts/**"
+      - "kapter-backend/**"
+      - "kapter-webapp/**"
+      - "kapter-extension/**"
+      - "kapter-ai-worker/**"
+  workflow_dispatch:
+
+concurrency:
+  group: post-merge-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    uses: ./.github/workflows/backend-ci.yml
+    secrets: inherit
+
+  webapp:
+    uses: ./.github/workflows/webapp-ci.yml
+    secrets: inherit
+
+  extension:
+    uses: ./.github/workflows/extension-ci.yml
+    secrets: inherit
+
+  ai-worker:
+    uses: ./.github/workflows/ai-worker-ci.yml
+    secrets: inherit

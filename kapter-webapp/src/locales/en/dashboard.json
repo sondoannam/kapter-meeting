@@ -1,0 +1,155 @@
+{
+  "layoutLoading": {
+    "title": "Opening the control center",
+    "description": "Kapter is verifying your Clerk session, restoring dashboard navigation, and syncing the last working surfaces before opening the control room."
+  },
+  "pageHeader": {
+    "eyebrow": "Control center",
+    "title": "Post-meeting operations dashboard",
+    "description": "Review recordings, approve action items, and prepare the Notion sync.",
+    "meetingsCount": "{{count}} meetings",
+    "projectsCount": "{{count}} projects"
+  },
+  "metrics": {
+    "live": {
+      "label": "In flight",
+      "helper": "Recording or processing sessions"
+    },
+    "review": {
+      "label": "Needs review",
+      "helper": "Ready to open for review"
+    },
+    "approved": {
+      "label": "Approved",
+      "helper": "Ready to sync"
+    },
+    "project": {
+      "label": "Projects",
+      "helper": "Working context"
+    }
+  },
+  "errorBanner": {
+    "message": "Connection error, data could not be loaded"
+  },
+  "notionCallbackBanner": {
+    "connectedTitle": "Notion connected",
+    "connectedDescription": "You can now assign a Notion destination to each project from the dashboard.",
+    "attentionTitle": "Notion connection needs attention",
+    "fallbackDescription": "The Notion authentication flow did not complete."
+  },
+  "projectSetupAccordion": {
+    "title": "Project setup and Notion destination"
+  },
+  "meetingPanel": {
+    "title": "Meetings",
+    "description": "{{visible}}/{{total}} meetings visible",
+    "searchPlaceholder": "Search title, project...",
+    "statusPlaceholder": "Status",
+    "reviewPlaceholder": "Review",
+    "refreshError": "Unable to refresh the meeting list.",
+    "loading": "Loading meetings...",
+    "emptyTitle": "No matching meetings yet",
+    "emptyWithFilters": "Try clearing the filters to view the full history.",
+    "emptyWithoutFilters": "The extension will create the first record here.",
+    "untitledMeeting": "Untitled meeting",
+    "draftProject": "Draft project",
+    "hasRecording": "Has recording",
+    "newMeeting": "New",
+    "statusOptions": {
+      "all": "All",
+      "RECORDING": "Recording",
+      "PROCESSING": "Processing",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed"
+    },
+    "reviewOptions": {
+      "all": "All reviews",
+      "PENDING": "Extracting",
+      "READY": "Needs review",
+      "APPROVED": "Approved",
+      "FAILED": "Retry needed"
+    }
+  },
+  "projectPanel": {
+    "title": "Projects & Notion",
+    "description": "Choose a project to narrow the meeting list.",
+    "allProjects": "All projects",
+    "allWorkspace": "Entire workspace",
+    "emptyProjects": "No projects yet.",
+    "notionReady": "Notion ready",
+    "draft": "Draft",
+    "setupNeeded": "Setup needed",
+    "systemStatusTitle": "System status",
+    "systemStatusDescription": "Connections required before syncing.",
+    "stable": "Stable",
+    "error": "Error",
+    "extensionLabel": "Extension",
+    "extensionActive": "Active",
+    "notionLabel": "Notion",
+    "notionConnected": "Connected",
+    "notionPending": "Waiting to connect",
+    "networkLabel": "Network",
+    "lastSyncTitle": "Last sync",
+    "noData": "No data yet"
+  },
+  "projectsPanel": {
+    "title": "Projects",
+    "description": "Create work context so recordings and future tasks land in the right place.",
+    "notionWorkspaceTitle": "Notion workspace",
+    "connected": "Connected",
+    "setupNeeded": "Setup needed",
+    "unavailable": "Unavailable",
+    "connectedDescription": "Connected to {{workspace}}. Pick one shared page per project so Kapter can create the task database there.",
+    "oauthDescription": "Connect Notion once, then assign one page per project or let Kapter create a dedicated page.",
+    "unavailableDescription": "Notion OAuth is not configured in this environment. Projects stay local until Notion OAuth is set up.",
+    "refreshStatus": "Refresh status",
+    "connectNotion": "Connect Notion",
+    "connectingNotion": "Connecting...",
+    "loadingWorkspace": "Checking the Notion workspace status...",
+    "newProjectTitle": "Create a new project",
+    "newProjectDescription": "Start simple. You can add more context and connect Notion later.",
+    "projectNameLabel": "Project name",
+    "projectNamePlaceholder": "Example: Product roadmap review",
+    "projectDescriptionLabel": "Project description",
+    "projectDescriptionPlaceholder": "What is this project about? This helps the AI analyze it more accurately.",
+    "projectTitleRequired": "Project title is required.",
+    "createProject": "Create project",
+    "creatingProject": "Creating project...",
+    "createProjectError": "Unable to create the project.",
+    "loadProjectsError": "Unable to load projects.",
+    "emptyProjects": "No projects yet. The extension can still record into the draft project, but creating a project here gives you stable context to reuse.",
+    "draftBadge": "Draft",
+    "notionReadyBadge": "Notion ready",
+    "missingProjectDescription": "This project does not have a description yet. Meetings can still be attached to it.",
+    "meetingCount": "{{count}} meetings",
+    "updatedAt": "Updated {{value}}",
+    "existingPage": "Existing page",
+    "dedicatedPage": "Dedicated page",
+    "editNotion": "Edit Notion",
+    "setupNotion": "Set up Notion",
+    "clearingDestination": "Clearing...",
+    "clearDestination": "Clear destination",
+    "connectWorkspaceFirst": "Connect the Notion workspace first, then return here to pick the parent page for this project.",
+    "destinationModeTitle": "Destination mode",
+    "destinationModeDescription": "Choose whether Kapter works inside the page you pick or creates a dedicated project page.",
+    "createDedicatedPageTitle": "Create a dedicated page",
+    "createDedicatedPageDescription": "Kapter creates a child project page and places the task database inside it.",
+    "useExistingPageTitle": "Use the selected page directly",
+    "useExistingPageDescription": "Kapter attaches the project to the page you pick and creates the task database there.",
+    "searchSharedPageLabel": "Search shared Notion pages",
+    "searchSharedPagePlaceholder": "Search for a page you already shared with Kapter",
+    "searchPagesError": "Unable to search shared Notion pages.",
+    "selectPageBeforeSaving": "Choose a shared Notion page before saving.",
+    "saveDestinationError": "Unable to save the Notion destination.",
+    "clearDestinationError": "Unable to clear the Notion destination.",
+    "searching": "Searching...",
+    "open": "Open",
+    "selected": "Selected",
+    "selectedPageTitle": "Selected page",
+    "savedPageFallback": "A page was already saved for this project.",
+    "savingDestination": "Saving...",
+    "saveDestination": "Save Notion destination",
+    "lastEditedAt": "Last edited {{value}}",
+    "unknownLastEdited": "Last edited time unavailable"
+  }
+}

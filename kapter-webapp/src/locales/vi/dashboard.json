@@ -1,0 +1,155 @@
+{
+  "layoutLoading": {
+    "title": "Đang mở trung tâm điều phối",
+    "description": "Kapter đang xác thực phiên Clerk, khôi phục điều hướng dashboard và đồng bộ những bề mặt làm việc cuối cùng trước khi mở buồng điều phối."
+  },
+  "pageHeader": {
+    "eyebrow": "Trung tâm điều phối",
+    "title": "Dashboard vận hành sau cuộc họp",
+    "description": "Xem lại bản ghi, duyệt đầu việc và chuẩn bị đồng bộ sang Notion.",
+    "meetingsCount": "{{count}} cuộc họp",
+    "projectsCount": "{{count}} dự án"
+  },
+  "metrics": {
+    "live": {
+      "label": "Đang xử lý",
+      "helper": "Phiên ghi âm hoặc xử lý"
+    },
+    "review": {
+      "label": "Chờ duyệt",
+      "helper": "Cần mở để review"
+    },
+    "approved": {
+      "label": "Đã duyệt",
+      "helper": "Sẵn sàng đồng bộ"
+    },
+    "project": {
+      "label": "Dự án",
+      "helper": "Ngữ cảnh làm việc"
+    }
+  },
+  "errorBanner": {
+    "message": "Lỗi kết nối, không tải được dữ liệu"
+  },
+  "notionCallbackBanner": {
+    "connectedTitle": "Notion đã kết nối",
+    "connectedDescription": "Bạn có thể chỉ định đích Notion cho từng dự án trong dashboard.",
+    "attentionTitle": "Kết nối Notion cần kiểm tra",
+    "fallbackDescription": "Quá trình xác thực Notion không hoàn tất."
+  },
+  "projectSetupAccordion": {
+    "title": "Thiết lập dự án và đích Notion"
+  },
+  "meetingPanel": {
+    "title": "Danh sách cuộc họp",
+    "description": "{{visible}}/{{total}} cuộc họp đang hiển thị",
+    "searchPlaceholder": "Tìm tên, dự án...",
+    "statusPlaceholder": "Trạng thái",
+    "reviewPlaceholder": "Review",
+    "refreshError": "Không thể làm mới danh sách cuộc họp.",
+    "loading": "Đang tải danh sách cuộc họp...",
+    "emptyTitle": "Chưa có cuộc họp phù hợp",
+    "emptyWithFilters": "Thử xóa bộ lọc để xem toàn bộ lịch sử.",
+    "emptyWithoutFilters": "Extension sẽ tạo bản ghi đầu tiên tại đây.",
+    "untitledMeeting": "Cuộc họp không tên",
+    "draftProject": "Dự án nháp",
+    "hasRecording": "Có bản ghi",
+    "newMeeting": "Mới",
+    "statusOptions": {
+      "all": "Tất cả",
+      "RECORDING": "Đang ghi âm",
+      "PROCESSING": "Đang xử lý",
+      "COMPLETED": "Hoàn thành",
+      "FAILED": "Lỗi"
+    },
+    "reviewOptions": {
+      "all": "Tất cả review",
+      "PENDING": "Chờ trích xuất",
+      "READY": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "FAILED": "Cần chạy lại"
+    }
+  },
+  "projectPanel": {
+    "title": "Dự án & Notion",
+    "description": "Chọn dự án để thu hẹp danh sách cuộc họp.",
+    "allProjects": "Tất cả dự án",
+    "allWorkspace": "Toàn bộ workspace",
+    "emptyProjects": "Chưa có dự án nào.",
+    "notionReady": "Notion sẵn sàng",
+    "draft": "Bản nháp",
+    "setupNeeded": "Cần thiết lập",
+    "systemStatusTitle": "Trạng thái hệ thống",
+    "systemStatusDescription": "Kết nối cần thiết trước khi đồng bộ.",
+    "stable": "Ổn định",
+    "error": "Lỗi",
+    "extensionLabel": "Extension",
+    "extensionActive": "Đang hoạt động",
+    "notionLabel": "Notion",
+    "notionConnected": "Đã kết nối",
+    "notionPending": "Chờ kết nối",
+    "networkLabel": "Kết nối mạng",
+    "lastSyncTitle": "Đồng bộ gần nhất",
+    "noData": "Chưa có dữ liệu"
+  },
+  "projectsPanel": {
+    "title": "Dự án",
+    "description": "Tạo ngữ cảnh làm việc để các buổi ghi âm và công việc tương lai được phân vào đó.",
+    "notionWorkspaceTitle": "Notion workspace",
+    "connected": "Đã kết nối",
+    "setupNeeded": "Cần thiết lập",
+    "unavailable": "Không khả dụng",
+    "connectedDescription": "Đã kết nối với {{workspace}}. Chọn một trang đã chia sẻ cho mỗi dự án để Kapter tạo cơ sở dữ liệu công việc ở đó.",
+    "oauthDescription": "Kết nối Notion một lần, sau đó chỉ định trang cho từng dự án hoặc để Kapter tự tạo trang riêng.",
+    "unavailableDescription": "Notion OAuth chưa được cấu hình trong môi trường này. Dự án sẽ chỉ lưu cục bộ cho đến khi Notion OAuth được cài đặt.",
+    "refreshStatus": "Làm mới trạng thái",
+    "connectNotion": "Kết nối Notion",
+    "connectingNotion": "Đang kết nối...",
+    "loadingWorkspace": "Đang kiểm tra trạng thái Notion workspace...",
+    "newProjectTitle": "Tạo dự án mới",
+    "newProjectDescription": "Bắt đầu đơn giản. Bạn có thể thêm ngữ cảnh và kết nối Notion sau.",
+    "projectNameLabel": "Tên dự án",
+    "projectNamePlaceholder": "VD: Tổng quan lộ trình sản phẩm",
+    "projectDescriptionLabel": "Mô tả dự án",
+    "projectDescriptionPlaceholder": "Dự án này về chủ đề gì? Thông tin này sẽ giúp AI phân tích đúng hơn.",
+    "projectTitleRequired": "Tên dự án là bắt buộc.",
+    "createProject": "Tạo dự án",
+    "creatingProject": "Đang tạo dự án...",
+    "createProjectError": "Không thể tạo dự án.",
+    "loadProjectsError": "Không thể tải dự án.",
+    "emptyProjects": "Chưa có dự án nào. Extension vẫn có thể ghi vào dự án nháp, nhưng tạo dự án ở đây giúp bạn có ngữ cảnh ổn định để tái sử dụng.",
+    "draftBadge": "Bản nháp",
+    "notionReadyBadge": "Notion sẵn sàng",
+    "missingProjectDescription": "Chưa có mô tả dự án. Cuộc họp vẫn có thể được gắn vào đây.",
+    "meetingCount": "{{count}} cuộc họp",
+    "updatedAt": "Cập nhật {{value}}",
+    "existingPage": "Trang có sẵn",
+    "dedicatedPage": "Trang riêng",
+    "editNotion": "Chỉnh sửa Notion",
+    "setupNotion": "Thiết lập Notion",
+    "clearingDestination": "Đang xóa...",
+    "clearDestination": "Xóa đích",
+    "connectWorkspaceFirst": "Kết nối Notion workspace trước, sau đó quay lại chọn trang gốc cho dự án này.",
+    "destinationModeTitle": "Chế độ đích",
+    "destinationModeDescription": "Quyết định Kapter sẽ làm việc trong trang bạn chọn hay tạo trang dự án riêng.",
+    "createDedicatedPageTitle": "Tạo trang riêng",
+    "createDedicatedPageDescription": "Kapter tạo trang dự án con, sau đó đặt cơ sở dữ liệu công việc bên trong.",
+    "useExistingPageTitle": "Dùng trang đã chọn trực tiếp",
+    "useExistingPageDescription": "Kapter gắn dự án vào trang bạn chọn và tạo cơ sở dữ liệu công việc ở đó.",
+    "searchSharedPageLabel": "Tìm trang Notion đã chia sẻ",
+    "searchSharedPagePlaceholder": "Tìm trang bạn đã chia sẻ với Kapter",
+    "searchPagesError": "Không thể tìm trang Notion đã chia sẻ.",
+    "selectPageBeforeSaving": "Hãy chọn một trang Notion đã chia sẻ trước khi lưu.",
+    "saveDestinationError": "Không thể lưu đích Notion.",
+    "clearDestinationError": "Không thể xóa đích Notion.",
+    "searching": "Đang tìm...",
+    "open": "Mở",
+    "selected": "Đã chọn",
+    "selectedPageTitle": "Trang đã chọn",
+    "savedPageFallback": "Trang đã lưu trước cho dự án này.",
+    "savingDestination": "Đang lưu...",
+    "saveDestination": "Lưu đích Notion",
+    "lastEditedAt": "Chỉnh sửa lần cuối {{value}}",
+    "unknownLastEdited": "Không rõ thời gian chỉnh sửa gần nhất"
+  }
+}
