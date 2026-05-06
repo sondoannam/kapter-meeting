@@ -13,6 +13,7 @@
     "test": "tsx --test \"src/**/*.spec.ts\"",
     "start": "node dist/src/main",
     "start:dev": "nest start --watch",
+    "postinstall": "prisma generate",
     "start:prod": "node dist/src/main",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

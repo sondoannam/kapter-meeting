@@ -1,0 +1,1 @@
+web: cd kapter-backend && pnpm run start:prod 

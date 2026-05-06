@@ -1,8 +1,14 @@
 #!/bin/bash
-# Install git pre-push hook for AI log submission
+# Install git pre-commit and pre-push hooks
 set -e
 
+PRE_COMMIT_HOOK_FILE=".git/hooks/pre-commit"
 HOOK_FILE=".git/hooks/pre-push"
+
+cat > "$PRE_COMMIT_HOOK_FILE" << 'EOF'
+#!/bin/bash
+node scripts/sync-public-repo.mjs
+EOF
 
 cat > "$HOOK_FILE" << 'EOF'
 #!/bin/bash
@@ -11,7 +17,9 @@ python3 scripts/submit_log.py
 exit 0  # Never block push
 EOF
 
+chmod +x "$PRE_COMMIT_HOOK_FILE"
 chmod +x "$HOOK_FILE"
+echo "[public-sync] Git pre-commit hook installed."
 echo "[ai-log] Git pre-push hook installed."
 
 # Create .ai-log directory if not exists
