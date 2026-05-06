@@ -155,42 +155,76 @@ const LOG_LEVELS = [
 
 type ApplicationLogLevel = (typeof LOG_LEVELS)[number];
 
-const parseStringList = (value?: string): string[] => {
+export const stripWrappingQuotes = (value: string): string => {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length < 2) {
+    return trimmedValue;
+  }
+
+  const startsWithDoubleQuote = trimmedValue.startsWith('"');
+  const endsWithDoubleQuote = trimmedValue.endsWith('"');
+  const startsWithSingleQuote = trimmedValue.startsWith("'");
+  const endsWithSingleQuote = trimmedValue.endsWith("'");
+
+  if (
+    (startsWithDoubleQuote && endsWithDoubleQuote) ||
+    (startsWithSingleQuote && endsWithSingleQuote)
+  ) {
+    return trimmedValue.slice(1, -1).trim();
+  }
+
+  return trimmedValue;
+};
+
+export const normalizeConfiguredUrl = (value: string): string => {
+  const normalizedValue = stripWrappingQuotes(value);
+
+  return normalizedValue.endsWith("/")
+    ? normalizedValue.slice(0, -1)
+    : normalizedValue;
+};
+
+export const parseStringList = (value?: string): string[] => {
   if (!value) {
     return [];
   }
 
-  return value
+  return stripWrappingQuotes(value)
     .split(",")
-    .map((entry) => entry.trim())
+    .map((entry) => normalizeConfiguredUrl(entry))
     .filter(Boolean);
 };
 
-const parseCorsOrigin = (): "*" | string[] => {
-  const configuredOrigin = process.env.CORS_ORIGIN?.trim();
+export const parseCorsOriginValue = (
+  configuredOrigin?: string,
+): "*" | string[] => {
+  const normalizedOrigin = configuredOrigin
+    ? stripWrappingQuotes(configuredOrigin)
+    : undefined;
 
-  if (!configuredOrigin || configuredOrigin === "*") {
+  if (!normalizedOrigin || normalizedOrigin === "*") {
     return "*";
   }
 
-  return parseStringList(configuredOrigin);
+  return parseStringList(normalizedOrigin);
 };
 
-const normalizeBaseUrl = (value: string): string =>
-  value.endsWith("/") ? value.slice(0, -1) : value;
+const parseCorsOrigin = (): "*" | string[] =>
+  parseCorsOriginValue(process.env.CORS_ORIGIN);
 
 const parseWebappBaseUrl = (corsOrigin: "*" | string[]): string => {
   const configuredBaseUrl = process.env.WEBAPP_BASE_URL?.trim();
 
   if (configuredBaseUrl) {
-    return normalizeBaseUrl(configuredBaseUrl);
+    return normalizeConfiguredUrl(configuredBaseUrl);
   }
 
   if (Array.isArray(corsOrigin) && corsOrigin.length > 0) {
     const firstOrigin = corsOrigin[0];
 
     if (firstOrigin) {
-      return normalizeBaseUrl(firstOrigin);
+      return normalizeConfiguredUrl(firstOrigin);
     }
   }
 
@@ -368,7 +402,7 @@ export const buildAppConfig = (): ApplicationConfig => {
         process.env.GEMINI_THINKING_BUDGET,
         DEFAULT_GEMINI_THINKING_BUDGET,
       ),
-      ollamaBaseUrl: normalizeBaseUrl(
+      ollamaBaseUrl: normalizeConfiguredUrl(
         process.env.OLLAMA_BASE_URL?.trim() || DEFAULT_OLLAMA_BASE_URL,
       ),
       ollamaModel:
