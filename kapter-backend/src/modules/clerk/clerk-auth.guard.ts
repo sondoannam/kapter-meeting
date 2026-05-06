@@ -30,6 +30,12 @@ export class ClerkAuthGuard implements CanActivate {
       return true;
     }
 
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+
+    if (request.method === "OPTIONS") {
+      return true;
+    }
+
     const isPublicRoute = this.reflector.getAllAndOverride<boolean>(
       IS_PUBLIC_ROUTE,
       [context.getHandler(), context.getClass()],
@@ -39,7 +45,6 @@ export class ClerkAuthGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const sessionToken = extractSessionTokenFromHttpRequest(request);
 
     if (!sessionToken) {
