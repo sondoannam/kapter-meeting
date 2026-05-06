@@ -4,9 +4,7 @@ import { describe, it, mock } from "node:test";
 import { ClerkWebhookService } from "./clerk-webhook.service";
 
 const createService = () => {
-  const syncNormalizedUser = mock.fn(
-    async (_payload: unknown) => null as unknown,
-  );
+  const syncNormalizedUser = mock.fn(async () => null as unknown);
 
   const logger = {
     info: mock.fn(() => undefined),
@@ -42,7 +40,7 @@ void describe("ClerkWebhookService", () => {
     assert.equal(syncNormalizedUser.mock.callCount(), 1);
     const syncNormalizedUserCall = syncNormalizedUser.mock.calls[0];
     assert.ok(syncNormalizedUserCall);
-    assert.deepEqual(syncNormalizedUserCall.arguments[0], {
+    assert.deepEqual(syncNormalizedUserCall.arguments, {
       clerkId: "user_deleted_missing_locally",
       email: "deleted+user_deleted_missing_locally@clerk.local",
       name: null,
