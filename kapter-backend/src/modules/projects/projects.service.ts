@@ -1,51 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type {
+  CreateProjectInput,
+  DashboardProjectDetail as ProjectDetail,
+  DashboardProjectMeetingSummary as ProjectMeetingSummary,
+  DashboardProjectSummary as ProjectSummary,
+  MeetingStatus,
+  NotionProjectDestinationMode,
+  UpdateProjectInput,
+} from "@kapter/contracts";
 
 import { PrismaService } from "src/database/prisma.service";
-
-interface CreateProjectInput {
-  title: string;
-  description?: string | null;
-  initialDescription?: string | null;
-  contextMarkdown?: string | null;
-}
-
-interface UpdateProjectInput {
-  title?: string;
-  description?: string | null;
-  isDraft?: boolean;
-}
-
-export interface ProjectSummary {
-  id: string;
-  title: string;
-  description: string | null;
-  isDraft: boolean;
-  notionDestinationMode: string | null;
-  notionProjectPageId: string | null;
-  notionTaskDatabaseId: string | null;
-  meetingCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProjectContextSnapshot {
-  initialDescription: string | null;
-  contextMarkdown: string | null;
-}
-
-export interface ProjectMeetingSummary {
-  id: string;
-  title: string;
-  status: string;
-  externalMeetingId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProjectDetail extends ProjectSummary {
-  context: ProjectContextSnapshot | null;
-  recentMeetings: ProjectMeetingSummary[];
-}
 
 const normalizeOptionalText = (value?: string | null): string | null => {
   const trimmed = value?.trim();
@@ -112,7 +76,8 @@ const toProjectSummary = (project: {
   title: project.title,
   description: project.description,
   isDraft: project.isDraft,
-  notionDestinationMode: project.notionDestinationMode,
+  notionDestinationMode:
+    project.notionDestinationMode as NotionProjectDestinationMode | null,
   notionProjectPageId: project.notionProjectPageId,
   notionTaskDatabaseId: project.notionTaskDatabaseId,
   meetingCount: project._count.meetings,
@@ -151,7 +116,7 @@ const toProjectDetail = (project: {
   recentMeetings: project.meetings.map((meeting) => ({
     id: meeting.id,
     title: meeting.title,
-    status: meeting.status,
+    status: meeting.status as MeetingStatus,
     externalMeetingId: meeting.externalMeetingId,
     createdAt: meeting.createdAt.toISOString(),
     updatedAt: meeting.updatedAt.toISOString(),
@@ -258,6 +223,12 @@ export class ProjectsService {
       },
       select: {
         id: true,
+        context: {
+          select: {
+            initialDescription: true,
+            contextMarkdown: true,
+          },
+        },
       },
     });
 
@@ -287,6 +258,36 @@ export class ProjectsService {
       data.isDraft = input.isDraft;
     }
 
+    const hasContextUpdate =
+      input.initialDescription !== undefined ||
+      input.contextMarkdown !== undefined;
+
+    if (hasContextUpdate) {
+      const nextInitialDescription =
+        input.initialDescription !== undefined
+          ? normalizeOptionalText(input.initialDescription)
+          : (existingProject.context?.initialDescription ?? null);
+      const nextContextMarkdown =
+        input.contextMarkdown !== undefined
+          ? normalizeOptionalText(input.contextMarkdown)
+          : (existingProject.context?.contextMarkdown ?? null);
+
+      await this.prisma.projectContext.upsert({
+        where: {
+          projectId: existingProject.id,
+        },
+        create: {
+          projectId: existingProject.id,
+          initialDescription: nextInitialDescription,
+          contextMarkdown: nextContextMarkdown,
+        },
+        update: {
+          initialDescription: nextInitialDescription,
+          contextMarkdown: nextContextMarkdown,
+        },
+      });
+    }
+
     const project = await this.prisma.project.update({
       where: {
         id: existingProject.id,
@@ -296,5 +297,42 @@ export class ProjectsService {
     });
 
     return toProjectDetail(project);
+  }
+
+  async deleteProject(clerkUserId: string, projectId: string): Promise<void> {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project ${projectId} was not found for the current user.`,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.meeting.deleteMany({
+        where: {
+          projectId: project.id,
+        },
+      });
+
+      await tx.project.delete({
+        where: {
+          id: project.id,
+        },
+      });
+    });
   }
 }
