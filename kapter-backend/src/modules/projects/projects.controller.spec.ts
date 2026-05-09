@@ -25,6 +25,7 @@ void describe("ProjectsController", () => {
         createProject: mock.fn(async () => undefined),
         getProjectDetail: mock.fn(async () => undefined),
         updateProject: mock.fn(async () => undefined),
+        deleteProject: mock.fn(async () => undefined),
       } as never,
       {
         configureProjectDestination: mock.fn(async () => undefined),
@@ -79,6 +80,7 @@ void describe("ProjectsController", () => {
         createProject,
         getProjectDetail: mock.fn(async () => undefined),
         updateProject: mock.fn(async () => undefined),
+        deleteProject: mock.fn(async () => undefined),
       } as never,
       {
         configureProjectDestination: mock.fn(async () => undefined),
@@ -145,6 +147,7 @@ void describe("ProjectsController", () => {
         createProject: mock.fn(async () => undefined),
         getProjectDetail,
         updateProject: mock.fn(async () => undefined),
+        deleteProject: mock.fn(async () => undefined),
       } as never,
       {
         configureProjectDestination: mock.fn(async () => undefined),
@@ -205,6 +208,7 @@ void describe("ProjectsController", () => {
         createProject: mock.fn(async () => undefined),
         getProjectDetail: mock.fn(async () => undefined),
         updateProject,
+        deleteProject: mock.fn(async () => undefined),
       } as never,
       {
         configureProjectDestination: mock.fn(async () => undefined),
@@ -223,6 +227,8 @@ void describe("ProjectsController", () => {
       {
         title: "Platform Revamp Final",
         description: "Finalized scope",
+        initialDescription: "Updated scope seed",
+        contextMarkdown: "# Updated context",
         isDraft: false,
       },
     );
@@ -234,6 +240,8 @@ void describe("ProjectsController", () => {
       {
         title: "Platform Revamp Final",
         description: "Finalized scope",
+        initialDescription: "Updated scope seed",
+        contextMarkdown: "# Updated context",
         isDraft: false,
       },
     ]);
@@ -251,6 +259,43 @@ void describe("ProjectsController", () => {
         context: null,
         recentMeetings: [],
       },
+    });
+  });
+
+  void it("deletes a project for the current Clerk user", async () => {
+    const deleteProject = mock.fn(async () => undefined);
+
+    const controller = new ProjectsController(
+      {
+        listProjects: mock.fn(async () => []),
+        createProject: mock.fn(async () => undefined),
+        getProjectDetail: mock.fn(async () => undefined),
+        updateProject: mock.fn(async () => undefined),
+        deleteProject,
+      } as never,
+      {
+        configureProjectDestination: mock.fn(async () => undefined),
+        clearProjectDestination: mock.fn(async () => undefined),
+      } as never,
+    );
+
+    const response = await controller.deleteProjectForUser(
+      {
+        userId: "clerk_user_1",
+        sessionId: null,
+        authorizedParty: null,
+        claims: {},
+      },
+      "project_1",
+    );
+
+    assert.equal(deleteProject.mock.callCount(), 1);
+    assert.deepEqual(deleteProject.mock.calls[0]?.arguments, [
+      "clerk_user_1",
+      "project_1",
+    ]);
+    assert.deepEqual(response, {
+      deletedProjectId: "project_1",
     });
   });
 });

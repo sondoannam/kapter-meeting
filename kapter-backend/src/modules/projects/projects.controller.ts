@@ -86,6 +86,21 @@ export class ProjectsController {
     };
   }
 
+  @Delete(":projectId")
+  @ApiOperation({
+    summary: "Delete one empty project for the authenticated user",
+  })
+  async deleteProjectForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("projectId") projectId: string,
+  ) {
+    await this.projectsService.deleteProject(currentUser.userId, projectId);
+
+    return {
+      deletedProjectId: projectId,
+    };
+  }
+
   @Post(":projectId/notion-destination")
   @ApiOperation({
     summary:

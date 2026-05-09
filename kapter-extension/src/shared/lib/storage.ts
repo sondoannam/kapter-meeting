@@ -11,6 +11,7 @@ export interface StorageSchema {
   auth: ExtensionAuthState;
   cache: Record<string, string>;
   captureStatus: import("@/shared/types/messages").CaptureStatus;
+  quotaStatus: import("@kapter/contracts").QuotaSnapshot | null;
   selectedProjectId: string | null;
   recorderMicPermissionGranted: boolean;
 }

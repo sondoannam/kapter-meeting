@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["zod"],
   },
   server: {
     allowedHosts: ["localhost:3001", "kapter.sondndev.id.vn"],

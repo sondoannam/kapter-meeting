@@ -25,6 +25,13 @@ interface UpdateRecordingMeetingCaptureStateOptions {
   degradedWithoutSelfMic?: boolean;
 }
 
+interface UpdateMeetingMetadataInput {
+  title?: string;
+  description?: string | null;
+  externalMeetingId?: string | null;
+  projectId?: string;
+}
+
 const toPrismaCaptureContext = (
   captureContext?: CaptureContext,
 ): "GOOGLE_MEET_ROOM" | "GENERIC_TAB" | undefined => {
@@ -122,6 +129,12 @@ const buildMeetingTitle = (externalMeetingId: string | null): string => {
 
 const buildDraftProjectTitle = (): string =>
   `Draft Project ${new Date().toISOString()}`;
+
+const normalizeOptionalText = (value?: string | null): string | null => {
+  const trimmed = value?.trim();
+
+  return trimmed ? trimmed : null;
+};
 
 export interface DashboardMeetingSummary {
   id: string;
@@ -691,6 +704,35 @@ export class MeetingsService {
     return draftProject.id;
   }
 
+  private async resolveExistingProjectId(
+    userId: string,
+    requestedProjectId: string,
+  ): Promise<string> {
+    const normalizedProjectId = requestedProjectId.trim();
+
+    if (!normalizedProjectId) {
+      throw new BadRequestException("Meeting projectId cannot be empty.");
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: {
+        id: normalizedProjectId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!project || project.userId !== userId) {
+      throw new NotFoundException(
+        `Project ${normalizedProjectId} was not found for the current user.`,
+      );
+    }
+
+    return project.id;
+  }
+
   async createRecordingMeeting({
     userId,
     externalMeetingId,
@@ -847,6 +889,130 @@ export class MeetingsService {
     }
 
     return toDashboardMeetingDetail(meeting);
+  }
+
+  async deleteMeeting(clerkUserId: string, meetingId: string): Promise<void> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException("Meeting not found.");
+    }
+
+    await this.prisma.meeting.delete({
+      where: {
+        id: meeting.id,
+      },
+    });
+  }
+
+  async updateMeetingMetadata(
+    clerkUserId: string,
+    meetingId: string,
+    input: UpdateMeetingMetadataInput,
+  ): Promise<DashboardMeetingDetail> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+        projectId: true,
+        artifactReviewStatus: true,
+        actionItems: {
+          where: {
+            isSynced: true,
+          },
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException("Meeting not found.");
+    }
+
+    const data: {
+      title?: string;
+      description?: string | null;
+      externalMeetingId?: string | null;
+      projectId?: string;
+    } = {};
+
+    if (typeof input.title === "string") {
+      const trimmedTitle = input.title.trim();
+
+      if (!trimmedTitle) {
+        throw new BadRequestException("Meeting title cannot be empty.");
+      }
+
+      data.title = trimmedTitle;
+    }
+
+    if (input.description !== undefined) {
+      data.description = normalizeOptionalText(input.description);
+    }
+
+    if (input.externalMeetingId !== undefined) {
+      data.externalMeetingId = normalizeOptionalText(input.externalMeetingId);
+    }
+
+    if (input.projectId !== undefined) {
+      const normalizedProjectId = input.projectId.trim();
+
+      if (!normalizedProjectId) {
+        throw new BadRequestException("Meeting projectId cannot be empty.");
+      }
+
+      if (normalizedProjectId !== meeting.projectId) {
+        if (
+          meeting.artifactReviewStatus === "APPROVED" ||
+          meeting.actionItems.length > 0
+        ) {
+          throw new BadRequestException(
+            "Approved or synced meetings cannot be moved to another project.",
+          );
+        }
+
+        data.projectId = await this.resolveExistingProjectId(
+          meeting.userId,
+          normalizedProjectId,
+        );
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.getMeetingDetail(clerkUserId, meeting.id);
+    }
+
+    await this.prisma.meeting.update({
+      where: { id: meeting.id },
+      data,
+    });
+
+    return this.getMeetingDetail(clerkUserId, meeting.id);
   }
 
   async saveMeetingReview(

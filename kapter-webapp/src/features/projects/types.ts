@@ -42,11 +42,23 @@ export interface ProjectDetailResponse {
   project: DashboardProjectDetail
 }
 
+export interface DeleteProjectResponse {
+  deletedProjectId: string
+}
+
 export interface CreateProjectInput {
   title: string
   description?: string
   initialDescription?: string
   contextMarkdown?: string
+}
+
+export interface UpdateProjectInput {
+  title?: string
+  description?: string
+  initialDescription?: string
+  contextMarkdown?: string
+  isDraft?: boolean
 }
 
 export interface NotionWorkspaceSummary {

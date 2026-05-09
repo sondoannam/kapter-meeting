@@ -2,6 +2,7 @@ import { useClerk } from "@clerk/react-router"
 import { useTranslation } from "react-i18next"
 import {
   Check,
+  CreditCard,
   ExternalLink,
   LayoutGrid,
   LogOut,
@@ -95,6 +96,14 @@ export function DashboardSidebar() {
         <h3 className="hidden px-2 py-1 text-[10px] font-bold tracking-[0.06em] text-tx3 uppercase lg:block dark:text-dk-tx3">
           {t("sidebar.accountHeading")}
         </h3>
+        <Link
+          className="dashboard-sidebar-item flex w-full items-center justify-center gap-2 whitespace-nowrap px-2 py-1.5 text-sm lg:justify-start"
+          title="Pricing"
+          to={ROUTES.PRICING}
+        >
+          <CreditCard className="size-4 shrink-0" />
+          <span className="hidden lg:inline">Pricing</span>
+        </Link>
         <Link
           className="dashboard-sidebar-item flex w-full items-center justify-center gap-2 whitespace-nowrap px-2 py-1.5 text-sm lg:justify-start"
           title={t("sidebar.installExtensionTitle")}

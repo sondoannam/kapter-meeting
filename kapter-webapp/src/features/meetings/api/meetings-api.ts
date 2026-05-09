@@ -6,10 +6,12 @@ import {
 
 import type {
   ActiveMeetingResponse,
+  DeleteMeetingResponse,
   MeetingDetailResponse,
   MeetingHistoryResponse,
   MeetingNotionSyncResponse,
   SaveMeetingReviewRequest,
+  UpdateMeetingMetadataRequest,
 } from "../types"
 
 export async function fetchMeetingHistory(sessionToken: string) {
@@ -75,6 +77,23 @@ export async function fetchMeetingDetail(
   }
 }
 
+export async function deleteMeeting(sessionToken: string, meetingId: string) {
+  try {
+    const response = await apiClient.delete<DeleteMeetingResponse>(
+      `/api/meetings/${meetingId}`,
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to delete the requested meeting.")
+    )
+  }
+}
+
 export async function saveMeetingReview(
   sessionToken: string,
   meetingId: string,
@@ -93,6 +112,28 @@ export async function saveMeetingReview(
   } catch (error) {
     throw new Error(
       toApiErrorMessage(error, "Unable to save the meeting review.")
+    )
+  }
+}
+
+export async function updateMeetingMetadata(
+  sessionToken: string,
+  meetingId: string,
+  payload: UpdateMeetingMetadataRequest
+) {
+  try {
+    const response = await apiClient.patch<MeetingDetailResponse>(
+      `/api/meetings/${meetingId}`,
+      payload,
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to update the meeting details.")
     )
   }
 }

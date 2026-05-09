@@ -8,14 +8,22 @@ import {
   fetchNotionConnection,
   searchNotionPages,
 } from "../api/notion-api"
-import { createProject, fetchProjects } from "../api/projects-api"
+import {
+  createProject,
+  deleteProject,
+  fetchProjectDetail,
+  fetchProjects,
+  updateProject,
+} from "../api/projects-api"
 import type {
   ConfigureProjectNotionDestinationInput,
   CreateProjectInput,
+  DashboardProjectDetail,
   DashboardProjectSummary,
   NotionConnectionStatus,
   NotionPageSearchResult,
   ProjectsRequestStatus,
+  UpdateProjectInput,
 } from "../types"
 
 function upsertProject(
@@ -29,16 +37,24 @@ function upsertProject(
   return [nextProject, ...remainingProjects]
 }
 
-export function useProjects() {
+export function useProjects(options?: { includeNotionConnection?: boolean }) {
   const { getToken, isLoaded, isSignedIn } = useAuth()
+  const includeNotionConnection = options?.includeNotionConnection ?? true
   const [projects, setProjects] = React.useState<DashboardProjectSummary[]>([])
   const [status, setStatus] = React.useState<ProjectsRequestStatus>("loading")
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isCreating, setIsCreating] = React.useState(false)
+  const [activeProjectUpdateId, setActiveProjectUpdateId] = React.useState<
+    string | null
+  >(null)
+  const [activeProjectDeleteId, setActiveProjectDeleteId] = React.useState<
+    string | null
+  >(null)
   const [notionConnection, setNotionConnection] =
     React.useState<NotionConnectionStatus | null>(null)
-  const [notionStatus, setNotionStatus] =
-    React.useState<ProjectsRequestStatus>("loading")
+  const [notionStatus, setNotionStatus] = React.useState<ProjectsRequestStatus>(
+    includeNotionConnection ? "loading" : "ready"
+  )
   const [notionErrorMessage, setNotionErrorMessage] = React.useState<
     string | null
   >(null)
@@ -81,6 +97,10 @@ export function useProjects() {
   }, [getToken, isLoaded, isSignedIn])
 
   const refreshNotionConnection = React.useCallback(async () => {
+    if (!includeNotionConnection) {
+      return
+    }
+
     if (!isLoaded || !isSignedIn) {
       return
     }
@@ -111,7 +131,7 @@ export function useProjects() {
           : "Unable to load the Notion connection status."
       )
     }
-  }, [getToken, isLoaded, isSignedIn])
+  }, [getToken, includeNotionConnection, isLoaded, isSignedIn])
 
   React.useEffect(() => {
     if (!isLoaded || !isSignedIn) {
@@ -125,7 +145,12 @@ export function useProjects() {
         return
       }
 
-      await Promise.all([refresh(), refreshNotionConnection()])
+      if (includeNotionConnection) {
+        await Promise.all([refresh(), refreshNotionConnection()])
+        return
+      }
+
+      await refresh()
     }
 
     void run()
@@ -133,7 +158,13 @@ export function useProjects() {
     return () => {
       isCancelled = true
     }
-  }, [isLoaded, isSignedIn, refresh, refreshNotionConnection])
+  }, [
+    includeNotionConnection,
+    isLoaded,
+    isSignedIn,
+    refresh,
+    refreshNotionConnection,
+  ])
 
   const submitProject = React.useCallback(
     async (input: CreateProjectInput) => {
@@ -173,6 +204,114 @@ export function useProjects() {
         throw new Error(nextError)
       } finally {
         setIsCreating(false)
+      }
+    },
+    [getToken, isLoaded, isSignedIn]
+  )
+
+  const saveProject = React.useCallback(
+    async (projectId: string, input: UpdateProjectInput) => {
+      if (!isLoaded || !isSignedIn) {
+        throw new Error("Clerk session is not available for project updates.")
+      }
+
+      setActiveProjectUpdateId(projectId)
+      setErrorMessage(null)
+
+      try {
+        const sessionToken = await getToken()
+
+        if (!sessionToken) {
+          throw new Error(
+            "Unable to mint a Clerk session token for project updates."
+          )
+        }
+
+        const response = await updateProject(sessionToken, projectId, input)
+        const nextProject = response.project
+
+        setProjects((currentProjects) =>
+          upsertProject(currentProjects, nextProject)
+        )
+        setStatus("ready")
+
+        return nextProject
+      } catch (error) {
+        const nextError =
+          error instanceof Error
+            ? error.message
+            : "Unable to update the project."
+
+        setStatus("error")
+        setErrorMessage(nextError)
+        throw new Error(nextError)
+      } finally {
+        setActiveProjectUpdateId(null)
+      }
+    },
+    [getToken, isLoaded, isSignedIn]
+  )
+
+  const getProjectDetail = React.useCallback(
+    async (projectId: string): Promise<DashboardProjectDetail> => {
+      if (!isLoaded || !isSignedIn) {
+        throw new Error("Clerk session is not available for project details.")
+      }
+
+      const sessionToken = await getToken()
+
+      if (!sessionToken) {
+        throw new Error(
+          "Unable to mint a Clerk session token for project details."
+        )
+      }
+
+      const response = await fetchProjectDetail(sessionToken, projectId)
+
+      return response.project
+    },
+    [getToken, isLoaded, isSignedIn]
+  )
+
+  const removeProject = React.useCallback(
+    async (projectId: string) => {
+      if (!isLoaded || !isSignedIn) {
+        throw new Error("Clerk session is not available for project deletion.")
+      }
+
+      setActiveProjectDeleteId(projectId)
+      setErrorMessage(null)
+
+      try {
+        const sessionToken = await getToken()
+
+        if (!sessionToken) {
+          throw new Error(
+            "Unable to mint a Clerk session token for project deletion."
+          )
+        }
+
+        const response = await deleteProject(sessionToken, projectId)
+
+        setProjects((currentProjects) =>
+          currentProjects.filter(
+            (project) => project.id !== response.deletedProjectId
+          )
+        )
+        setStatus("ready")
+
+        return response.deletedProjectId
+      } catch (error) {
+        const nextError =
+          error instanceof Error
+            ? error.message
+            : "Unable to delete the project."
+
+        setStatus("error")
+        setErrorMessage(nextError)
+        throw new Error(nextError)
+      } finally {
+        setActiveProjectDeleteId(null)
       }
     },
     [getToken, isLoaded, isSignedIn]
@@ -338,8 +477,13 @@ export function useProjects() {
     status: authErrorMessage ? "error" : status,
     errorMessage: authErrorMessage || errorMessage,
     isCreating,
+    activeProjectUpdateId,
+    activeProjectDeleteId,
     refresh,
     createProject: submitProject,
+    getProjectDetail,
+    updateProject: saveProject,
+    deleteProject: removeProject,
     notionConnection,
     notionStatus,
     notionErrorMessage,

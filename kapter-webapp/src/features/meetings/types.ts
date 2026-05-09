@@ -152,6 +152,10 @@ export interface MeetingDetailResponse {
   meeting: DashboardMeetingDetail
 }
 
+export interface DeleteMeetingResponse {
+  deletedMeetingId: string
+}
+
 export interface MeetingNotionSyncResult {
   meetingId: string
   projectId: string
@@ -177,6 +181,13 @@ export interface SaveMeetingReviewActionItemRequest {
 export interface SaveMeetingReviewRequest {
   summary: string
   actionItems: SaveMeetingReviewActionItemRequest[]
+}
+
+export interface UpdateMeetingMetadataRequest {
+  title?: string
+  description?: string
+  externalMeetingId?: string
+  projectId?: string
 }
 
 export type MeetingsRequestStatus = "loading" | "ready" | "error"

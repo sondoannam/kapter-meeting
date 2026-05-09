@@ -3,19 +3,34 @@ interface Props {
   isOnMeetTab: boolean;
   isBusy: boolean;
   isFinishing: boolean;
+  canStartRecording?: boolean;
+  disabledReason?: string | null;
   onStart: () => void;
   onStop: () => void;
 }
 
-export function RecordButton({ isRecording, isFinishing, isOnMeetTab, isBusy, onStart, onStop }: Props) {
-  const disabled = (!isOnMeetTab && !isRecording) || isBusy || isFinishing;
+export function RecordButton({
+  canStartRecording = true,
+  disabledReason,
+  isRecording,
+  isFinishing,
+  isOnMeetTab,
+  isBusy,
+  onStart,
+  onStop,
+}: Props) {
+  const disabled =
+    (!isOnMeetTab && !isRecording) ||
+    (!canStartRecording && !isRecording) ||
+    isBusy ||
+    isFinishing;
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex w-full flex-col gap-1.5">
       <button
         onClick={isRecording ? onStop : onStart}
         disabled={disabled}
-        className={`group relative flex w-full items-center justify-center gap-2 rounded-[10px] py-3 text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed ${
+        className={`group relative flex w-full items-center justify-center gap-2 rounded-[10px] py-3 text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-50 ${
           isRecording
             ? "bg-gradient-to-r from-red-500 to-red-600 shadow-[0_4px_14px_rgba(239,68,68,0.3)] hover:shadow-[0_4px_18px_rgba(239,68,68,0.4)]"
             : "bg-gradient-to-r from-kapter-accent to-[#9b67f5] shadow-[0_4px_14px_rgba(124,111,245,0.3)] hover:shadow-[0_4px_18px_rgba(124,111,245,0.4)]"
@@ -32,8 +47,18 @@ export function RecordButton({ isRecording, isFinishing, isOnMeetTab, isBusy, on
           </>
         ) : (
           <>
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
             </svg>
             Bắt đầu ghi
           </>
@@ -44,6 +69,11 @@ export function RecordButton({ isRecording, isFinishing, isOnMeetTab, isBusy, on
           Mở Google Meet trước khi ghi
         </span>
       )}
+      {isOnMeetTab && !isRecording && !canStartRecording && disabledReason ? (
+        <span className="text-center text-[11px] text-kapter-warning">
+          {disabledReason}
+        </span>
+      ) : null}
     </div>
   );
 }

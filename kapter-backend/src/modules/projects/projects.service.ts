@@ -1,4 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { PrismaService } from "src/database/prisma.service";
 
@@ -12,6 +15,8 @@ interface CreateProjectInput {
 interface UpdateProjectInput {
   title?: string;
   description?: string | null;
+  initialDescription?: string | null;
+  contextMarkdown?: string | null;
   isDraft?: boolean;
 }
 
@@ -258,6 +263,12 @@ export class ProjectsService {
       },
       select: {
         id: true,
+        context: {
+          select: {
+            initialDescription: true,
+            contextMarkdown: true,
+          },
+        },
       },
     });
 
@@ -287,6 +298,36 @@ export class ProjectsService {
       data.isDraft = input.isDraft;
     }
 
+    const hasContextUpdate =
+      input.initialDescription !== undefined ||
+      input.contextMarkdown !== undefined;
+
+    if (hasContextUpdate) {
+      const nextInitialDescription =
+        input.initialDescription !== undefined
+          ? normalizeOptionalText(input.initialDescription)
+          : (existingProject.context?.initialDescription ?? null);
+      const nextContextMarkdown =
+        input.contextMarkdown !== undefined
+          ? normalizeOptionalText(input.contextMarkdown)
+          : (existingProject.context?.contextMarkdown ?? null);
+
+      await this.prisma.projectContext.upsert({
+        where: {
+          projectId: existingProject.id,
+        },
+        create: {
+          projectId: existingProject.id,
+          initialDescription: nextInitialDescription,
+          contextMarkdown: nextContextMarkdown,
+        },
+        update: {
+          initialDescription: nextInitialDescription,
+          contextMarkdown: nextContextMarkdown,
+        },
+      });
+    }
+
     const project = await this.prisma.project.update({
       where: {
         id: existingProject.id,
@@ -296,5 +337,42 @@ export class ProjectsService {
     });
 
     return toProjectDetail(project);
+  }
+
+  async deleteProject(clerkUserId: string, projectId: string): Promise<void> {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project ${projectId} was not found for the current user.`,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.meeting.deleteMany({
+        where: {
+          projectId: project.id,
+        },
+      });
+
+      await tx.project.delete({
+        where: {
+          id: project.id,
+        },
+      });
+    });
   }
 }

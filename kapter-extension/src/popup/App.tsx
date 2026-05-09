@@ -13,6 +13,7 @@ import type {
   CaptureState,
   ExtensionProjectSummary,
 } from "@/shared/types/messages";
+import type { QuotaSnapshot } from "@kapter/contracts";
 import { sendMessage } from "@/shared/lib/messaging";
 
 import { StatusBar } from "./components/StatusBar";
@@ -32,6 +33,7 @@ export default function App() {
   );
   const [authState, setAuthState] = useState<ExtensionAuthState | null>(null);
   const [projects, setProjects] = useState<ExtensionProjectSummary[]>([]);
+  const [quotaStatus, setQuotaStatus] = useState<QuotaSnapshot | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -42,6 +44,7 @@ export default function App() {
   const isRecording = captureState === "recording";
   const isFinishing = captureState === "finishing";
   const isAuthenticated = authState?.status === "connected";
+  const isQuotaExhausted = quotaStatus?.canRecord === false;
   const selfMicDegraded = captureStatus.degradedWithoutSelfMic === true;
   const showMeetMicState =
     isOnMeetTab && typeof captureStatus.meetLocalMicState === "string";
@@ -53,13 +56,15 @@ export default function App() {
         : "Chua xac dinh duoc trang thai mic tren giao dien Google Meet.";
 
   const loadPopupState = useCallback(async () => {
-    const [captureResponse, authResponse, projectResponse] = await Promise.all([
-      sendMessage({ type: "GET_CAPTURE_STATUS" }),
-      sendMessage({ type: "AUTH_GET_STATE" }),
-      sendMessage({ type: "GET_PROJECT_SELECTION" }),
-    ]);
+    const [captureResponse, authResponse, projectResponse, billingResponse] =
+      await Promise.all([
+        sendMessage({ type: "GET_CAPTURE_STATUS" }),
+        sendMessage({ type: "AUTH_GET_STATE" }),
+        sendMessage({ type: "GET_PROJECT_SELECTION" }),
+        sendMessage({ type: "GET_BILLING_STATUS" }),
+      ]);
 
-    return { captureResponse, authResponse, projectResponse };
+    return { captureResponse, authResponse, projectResponse, billingResponse };
   }, []);
 
   const syncPopupState = useCallback(async () => {
@@ -87,6 +92,12 @@ export default function App() {
       } else {
         setProjects([]);
         setSelectedProjectId(null);
+      }
+
+      if (nextState.billingResponse.success) {
+        setQuotaStatus(nextState.billingResponse.data);
+      } else {
+        setQuotaStatus(null);
       }
       setLoading(false);
     });
@@ -177,6 +188,11 @@ export default function App() {
     setAuthBusy(false);
   };
 
+  const handleOpenPricing = async () => {
+    const pricingUrl = new URL("/pricing", import.meta.env.VITE_WEBAPP_URL);
+    await chrome.tabs.create({ url: pricingUrl.toString(), active: true });
+  };
+
   if (loading) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center bg-kapter-bg">
@@ -226,6 +242,27 @@ export default function App() {
         </div>
       )}
 
+      {quotaStatus && (
+        <div className="flex items-start gap-2 rounded-lg border border-kapter-border bg-kapter-bg-secondary p-3 text-xs text-kapter-text-secondary">
+          <span className="shrink-0">Quota</span>
+          <div className="min-w-0 flex-1">
+            <p>
+              Còn {Math.max(0, Math.floor(quotaStatus.remainingSeconds / 60))}{" "}
+              phút / {quotaStatus.monthlyQuotaMinutes} phút trong tháng.
+            </p>
+            {isQuotaExhausted && (
+              <button
+                className="mt-2 text-kapter-accent underline-offset-2 hover:underline"
+                onClick={handleOpenPricing}
+                type="button"
+              >
+                Mở trang Pricing
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {authState?.status === "pending" ? (
         <div className="flex items-center gap-2 rounded-lg border border-kapter-border bg-kapter-bg-secondary p-3 text-xs text-kapter-text-secondary italic animate-pulse">
           <span>🔄</span>
@@ -251,6 +288,10 @@ export default function App() {
           isFinishing={isFinishing}
           isOnMeetTab={isOnMeetTab}
           isBusy={actionBusy}
+          canStartRecording={!isQuotaExhausted}
+          disabledReason={
+            isQuotaExhausted ? "Hết quota ghi âm trong tháng này" : null
+          }
           onStart={handleStart}
           onStop={handleStop}
         />
