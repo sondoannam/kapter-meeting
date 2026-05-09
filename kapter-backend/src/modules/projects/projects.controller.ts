@@ -88,7 +88,8 @@ export class ProjectsController {
 
   @Delete(":projectId")
   @ApiOperation({
-    summary: "Delete one empty project for the authenticated user",
+    summary:
+      "Delete one project and any linked meetings for the authenticated user",
   })
   async deleteProjectForUser(
     @CurrentUser() currentUser: ClerkSessionAuth,

@@ -1,56 +1,15 @@
-import {
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import type {
+  CreateProjectInput,
+  DashboardProjectDetail as ProjectDetail,
+  DashboardProjectMeetingSummary as ProjectMeetingSummary,
+  DashboardProjectSummary as ProjectSummary,
+  MeetingStatus,
+  NotionProjectDestinationMode,
+  UpdateProjectInput,
+} from "@kapter/contracts";
 
 import { PrismaService } from "src/database/prisma.service";
-
-interface CreateProjectInput {
-  title: string;
-  description?: string | null;
-  initialDescription?: string | null;
-  contextMarkdown?: string | null;
-}
-
-interface UpdateProjectInput {
-  title?: string;
-  description?: string | null;
-  initialDescription?: string | null;
-  contextMarkdown?: string | null;
-  isDraft?: boolean;
-}
-
-export interface ProjectSummary {
-  id: string;
-  title: string;
-  description: string | null;
-  isDraft: boolean;
-  notionDestinationMode: string | null;
-  notionProjectPageId: string | null;
-  notionTaskDatabaseId: string | null;
-  meetingCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProjectContextSnapshot {
-  initialDescription: string | null;
-  contextMarkdown: string | null;
-}
-
-export interface ProjectMeetingSummary {
-  id: string;
-  title: string;
-  status: string;
-  externalMeetingId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProjectDetail extends ProjectSummary {
-  context: ProjectContextSnapshot | null;
-  recentMeetings: ProjectMeetingSummary[];
-}
 
 const normalizeOptionalText = (value?: string | null): string | null => {
   const trimmed = value?.trim();
@@ -117,7 +76,8 @@ const toProjectSummary = (project: {
   title: project.title,
   description: project.description,
   isDraft: project.isDraft,
-  notionDestinationMode: project.notionDestinationMode,
+  notionDestinationMode:
+    project.notionDestinationMode as NotionProjectDestinationMode | null,
   notionProjectPageId: project.notionProjectPageId,
   notionTaskDatabaseId: project.notionTaskDatabaseId,
   meetingCount: project._count.meetings,
@@ -156,7 +116,7 @@ const toProjectDetail = (project: {
   recentMeetings: project.meetings.map((meeting) => ({
     id: meeting.id,
     title: meeting.title,
-    status: meeting.status,
+    status: meeting.status as MeetingStatus,
     externalMeetingId: meeting.externalMeetingId,
     createdAt: meeting.createdAt.toISOString(),
     updatedAt: meeting.updatedAt.toISOString(),

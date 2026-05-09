@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { MEETING_STATUS } from "@kapter/contracts/domain"
 import { ArrowLeft, LoaderCircle, RefreshCw, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -84,9 +85,9 @@ export function MeetingDetailExperience({
   onDeleteMeeting,
 }: MeetingDetailExperienceProps) {
   const { t } = useTranslation(["meeting", "common"])
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
-  const [isDeletingMeeting, setIsDeletingMeeting] = React.useState(false)
-  const [deleteError, setDeleteError] = React.useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeletingMeeting, setIsDeletingMeeting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   if (status === "loading" && !meeting) {
     return <MeetingDetailLoadingState />
@@ -251,7 +252,9 @@ export function MeetingDetailExperience({
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {t("detailExperience.deleteMeetingHint", {
                   ns: "meeting",
-                  project: meeting.project.title,
+                  project:
+                    meeting.projectTitle ??
+                    t("overview.draftProject", { ns: "meeting" }),
                 })}
               </p>
             </div>

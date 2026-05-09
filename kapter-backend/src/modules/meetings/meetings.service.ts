@@ -7,6 +7,12 @@ import {
   MEETING_STATUS,
   type AudioSourceType,
   type CaptureContext,
+  type DashboardMeetingActionItem,
+  type DashboardMeetingContextProposal,
+  type DashboardMeetingDetail,
+  type DashboardMeetingSummary,
+  type DashboardMeetingTranscriptMergeStrategy,
+  type MeetingArtifactReviewStatus,
 } from "@kapter/contracts";
 
 import { PrismaService } from "../../database/prisma.service";
@@ -136,120 +142,6 @@ const normalizeOptionalText = (value?: string | null): string | null => {
   return trimmed ? trimmed : null;
 };
 
-export interface DashboardMeetingSummary {
-  id: string;
-  title: string;
-  status: string;
-  artifactReviewStatus: string;
-  captureContext: CaptureContext | null;
-  degradedWithoutSelfMic: boolean;
-  activeSourceTypes: AudioSourceType[];
-  externalMeetingId: string | null;
-  projectId: string | null;
-  projectTitle: string | null;
-  createdAt: string;
-  updatedAt: string;
-  totalDurationMs: number;
-}
-
-export interface DashboardMeetingSpeaker {
-  id: string;
-  aiLabel: string;
-  realName: string | null;
-  segmentCount: number;
-  actionItemCount: number;
-}
-
-export type DashboardMeetingTranscriptMergeStrategy =
-  | "PREFERRED_SELF_MIC_DUPLICATE"
-  | "AMBIGUOUS_OVERLAP";
-
-export interface DashboardMeetingTranscriptSegment {
-  id: string;
-  speakerId: string;
-  aiLabel: string;
-  realName: string | null;
-  content: string;
-  startTime: number;
-  endTime: number;
-  sourceType: AudioSourceType | null;
-  mergeStrategy: DashboardMeetingTranscriptMergeStrategy | null;
-  mergeSourceType: AudioSourceType | null;
-}
-
-export interface DashboardMeetingActionItem {
-  id: string;
-  taskContent: string;
-  deadline: string | null;
-  status: string;
-  isSynced: boolean;
-  notionPageId: string | null;
-  assigneeId: string | null;
-  assigneeAiLabel: string | null;
-  assigneeRealName: string | null;
-  createdAt: string;
-}
-
-export interface DashboardMeetingContextProposal {
-  id: string;
-  proposedContextMarkdown: string;
-  changeSummary: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DashboardMeetingNotionWorkspace {
-  id: string;
-  name: string | null;
-  icon: string | null;
-}
-
-export interface DashboardMeetingSyncReadiness {
-  notion: {
-    connected: boolean;
-    workspace: DashboardMeetingNotionWorkspace | null;
-  };
-  projectDestination: {
-    mode: "PROJECT_PAGE" | "EXISTING_PAGE" | null;
-    projectPageId: string | null;
-    taskDatabaseId: string | null;
-  };
-  syncedActionItemCount: number;
-  unsyncedActionItemCount: number;
-}
-
-export interface DashboardMeetingProcessing {
-  totalBatches: number;
-  completedBatches: number;
-  failedBatches: number;
-  pendingBatches: number;
-  transcriptSegmentCount: number;
-  latestProcessedAt: string | null;
-}
-
-export interface DashboardMeetingArtifactProcessing {
-  totalChunks: number;
-  completedChunks: number;
-  failedChunks: number;
-  pendingChunks: number;
-  latestProcessedAt: string | null;
-  finalizationStatus: string | null;
-}
-
-export interface DashboardMeetingDetail extends DashboardMeetingSummary {
-  summary: string | null;
-  artifactExtractionError: string | null;
-  artifactApprovedAt: string | null;
-  speakers: DashboardMeetingSpeaker[];
-  transcriptSegments: DashboardMeetingTranscriptSegment[];
-  actionItems: DashboardMeetingActionItem[];
-  pendingContextProposal: DashboardMeetingContextProposal | null;
-  syncReadiness: DashboardMeetingSyncReadiness;
-  processing: DashboardMeetingProcessing;
-  artifactProcessing: DashboardMeetingArtifactProcessing;
-}
-
 const dashboardMeetingSelect = {
   id: true,
   title: true,
@@ -293,8 +185,9 @@ const toDashboardMeetingSummary = (meeting: {
 }): DashboardMeetingSummary => ({
   id: meeting.id,
   title: meeting.title,
-  status: meeting.status,
-  artifactReviewStatus: meeting.artifactReviewStatus,
+  status: meeting.status as DashboardMeetingSummary["status"],
+  artifactReviewStatus:
+    meeting.artifactReviewStatus as MeetingArtifactReviewStatus,
   captureContext: toContractCaptureContext(meeting.captureContext),
   degradedWithoutSelfMic: meeting.degradedWithoutSelfMic,
   activeSourceTypes: deriveDashboardActiveSourceTypes({
@@ -596,7 +489,7 @@ const toDashboardMeetingDetail = (meeting: {
       id: actionItem.id,
       taskContent: actionItem.taskContent,
       deadline: actionItem.deadline?.toISOString() ?? null,
-      status: actionItem.status,
+      status: actionItem.status as DashboardMeetingActionItem["status"],
       isSynced: actionItem.isSynced,
       notionPageId: actionItem.notionPageId,
       assigneeId: actionItem.assigneeId,
@@ -610,7 +503,8 @@ const toDashboardMeetingDetail = (meeting: {
           proposedContextMarkdown:
             meeting.contextUpdateProposals[0].proposedContextMarkdown,
           changeSummary: meeting.contextUpdateProposals[0].changeSummary,
-          status: meeting.contextUpdateProposals[0].status,
+          status: meeting.contextUpdateProposals[0]
+            .status as DashboardMeetingContextProposal["status"],
           createdAt: meeting.contextUpdateProposals[0].createdAt.toISOString(),
           updatedAt: meeting.contextUpdateProposals[0].updatedAt.toISOString(),
         }
