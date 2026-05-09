@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm build",
+  "buildCommand": "cd .. && pnpm build:contracts && pnpm build:webapp",
   "outputDirectory": "dist",
+  "installCommand": "cd .. && pnpm i && cd kapter-webapp",
+  "framework": "vite",
   "routes": [
     {
       "handle": "filesystem"
