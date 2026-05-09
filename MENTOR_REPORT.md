@@ -11,40 +11,47 @@ Hệ thống Kapter được thiết kế theo kiến trúc Microservices hiện
 
 ```mermaid
 graph TD
-    %% Định nghĩa các node
-    subgraph "Client Layer (Frontend)"
-        EXT["🔌 Chrome Extension<br/>(Ghi âm & Streaming)"]
-        WEB["💻 Web Dashboard<br/>(Quản lý & Kiểm duyệt)"]
+    %% Styling
+    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef core fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef ai fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    classDef data fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+
+    subgraph "FRONTEND / CLIENT"
+        EXT["🔌 Chrome Extension<br/>(Real-time Audio Capture)"]
+        WEB["💻 Next.js Dashboard<br/>(Review & Workspace)"]
     end
 
-    subgraph "Core Service Layer (Backend)"
-        API["⚙️ Backend API<br/>(NestJS / WebSocket)"]
-        AI["🧠 AI Worker<br/>(Python / ML Inference)"]
+    subgraph "BACKEND SERVICES"
+        API["🚀 NestJS API Gateway<br/>(WebSocket & REST)"]
     end
 
-    subgraph "Data & External Layer"
+    subgraph "AI PROCESSING PIPELINE"
+        WRK["🧠 AI Worker (Python)<br/>(Whisper + Pyannote)"]
+    end
+
+    subgraph "DATA & INTEGRATION"
         DB[("🗄️ PostgreSQL<br/>(Prisma ORM)")]
-        LLM["🤖 LLM Services<br/>(OpenAI/Gemini)"]
-        NOTION["📝 Notion API<br/>(Task Sync)"]
+        LLM["🤖 LLM Services<br/>(OpenAI / Gemini)"]
+        NOTION["📝 Notion API<br/>(Sync Task/Action Items)"]
     end
 
-    %% Định nghĩa luồng dữ liệu
-    EXT -- "Audio Stream (WebSocket)" --> API
-    WEB -- "HTTP REST (View/Edit/Approve)" --> API
-    API -- "Audio Chunks" --> AI
-    AI -- "Transcripts & Diarization" --> API
-    API -- "Prompt & Context" --> LLM
-    LLM -- "Summary & Action Items" --> API
-    API <--> DB
-    API -- "Sync Approved Actions" --> NOTION
+    %% Connections
+    EXT -- "Audio Chunks (WS)" --> API
+    API -- "Broadcast stream" --> WRK
+    WRK -- "Transcripts & Speakers" --> API
     
-    classDef client fill:#d4edda,stroke:#28a745,stroke-width:2px;
-    classDef core fill:#cce5ff,stroke:#007bff,stroke-width:2px;
-    classDef external fill:#fff3cd,stroke:#ffc107,stroke-width:2px;
+    API -- "Persist Data" --> DB
+    WEB -- "Manage/Edit" --> API
     
+    API -- "Summarize Content" --> LLM
+    API -- "Export Tasks" --> NOTION
+
+    %% Apply Styles
     class EXT,WEB client;
-    class API,AI core;
-    class DB,LLM,NOTION external;
+    class API core;
+    class WRK ai;
+    class DB,LLM,NOTION data;
 ```
 
 **Mô tả các thành phần chính:**
