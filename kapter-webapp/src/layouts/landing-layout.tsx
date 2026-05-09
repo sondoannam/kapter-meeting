@@ -64,6 +64,12 @@ export default function LandingLayout() {
             >
               {t("layout.nav.extensionSetup", { ns: "landing" })}
             </a>
+            <Link
+              className="transition-colors hover:text-tx dark:hover:text-dk-tx"
+              to={ROUTES.PRICING}
+            >
+              Pricing
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3">

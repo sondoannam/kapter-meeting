@@ -4,6 +4,7 @@ import DashboardLayout from "@/layouts/dashboard-layout"
 import LandingLayout from "@/layouts/landing-layout"
 import RootLayout from "@/layouts/root-layout"
 import { Landing } from "@/pages/landing"
+import { PricingPage } from "@/pages/pricing"
 import Dashboard from "@/pages/dashboard"
 import MeetingDetailPage from "@/pages/meeting-detail"
 import ExtensionBridgePage from "@/pages/extension-bridge"
@@ -16,7 +17,10 @@ export const router = createBrowserRouter([
     children: [
       { 
         element: <LandingLayout />,
-        children: [{ path: ROUTES.HOME, element: <Landing /> }]
+        children: [
+          { path: ROUTES.HOME, element: <Landing /> },
+          { path: ROUTES.PRICING, element: <PricingPage /> },
+        ]
       },
       {
         element: <DashboardLayout />,

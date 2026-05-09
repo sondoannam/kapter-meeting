@@ -27,6 +27,8 @@
     "close": "Close",
     "retry": "Retry",
     "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
     "saveChanges": "Save changes",
     "clearFilters": "Clear filters",
     "viewDetails": "View details",

@@ -48,6 +48,12 @@ const createService = () => {
   const persistWorkerBatch = mock.fn(
     async (_batch: unknown) => undefined as unknown,
   );
+  const ensureCanStartRecording = mock.fn(
+    async (_userId: string) => undefined as unknown,
+  );
+  const recordMeetingUsage = mock.fn(
+    async (_meetingId: string) => undefined as unknown,
+  );
   const notifyMeetingCaptureCompleted = mock.fn(
     async (_meetingId: string) => undefined as unknown,
   );
@@ -73,6 +79,7 @@ const createService = () => {
     markMeetingCompleted,
     markMeetingFailed,
   };
+  const billingService = { ensureCanStartRecording, recordMeetingUsage };
   const aiWorkerClient = { processAudioBatch };
   const transcriptPersistence = { persistWorkerBatch };
   const meetingArtifactExtraction = { notifyMeetingCaptureCompleted };
@@ -87,20 +94,24 @@ const createService = () => {
     aiWorkerClient as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[2],
-    transcriptPersistence as unknown as ConstructorParameters<
+    billingService as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[3],
-    meetingArtifactExtraction as unknown as ConstructorParameters<
+    transcriptPersistence as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[4],
-    config as unknown as ConstructorParameters<typeof AudioStreamService>[5],
-    logger as unknown as ConstructorParameters<typeof AudioStreamService>[6],
+    meetingArtifactExtraction as unknown as ConstructorParameters<
+      typeof AudioStreamService
+    >[5],
+    config as unknown as ConstructorParameters<typeof AudioStreamService>[6],
+    logger as unknown as ConstructorParameters<typeof AudioStreamService>[7],
   );
 
   return {
     service,
     sessionStore,
     meetingsService,
+    billingService,
     aiWorkerClient,
     transcriptPersistence,
     meetingArtifactExtraction,
@@ -123,7 +134,7 @@ const getSourceState = (
 
 void describe("AudioStreamService", () => {
   void it("passes an explicit project id into recording meeting creation", async () => {
-    const { service, meetingsService } = createService();
+    const { service, meetingsService, billingService } = createService();
 
     const ack = await service.beginStream("client_1", actor, {
       streamId: "stream_1",
@@ -133,6 +144,7 @@ void describe("AudioStreamService", () => {
     } as never);
 
     assert.equal(meetingsService.createRecordingMeeting.mock.callCount(), 1);
+    assert.equal(billingService.ensureCanStartRecording.mock.callCount(), 1);
     assert.deepEqual(
       meetingsService.createRecordingMeeting.mock.calls[0]?.arguments[0],
       {

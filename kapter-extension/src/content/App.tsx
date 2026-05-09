@@ -81,6 +81,7 @@ function readMeetLocalMicSnapshot(): MeetLocalMicSnapshot {
   const micControls = Array.from(
     document.querySelectorAll(MEET_MIC_CONTROL_SELECTOR),
   );
+  let fallbackSnapshot: MeetLocalMicSnapshot | null = null;
 
   for (const control of micControls) {
     const labels = getMeetControlLabels(control);
@@ -92,14 +93,24 @@ function readMeetLocalMicSnapshot(): MeetLocalMicSnapshot {
         continue;
       }
 
+      const state = resolveMeetLocalMicStateFromLabel(normalizedLabel);
+
+      if (state === "unknown") {
+        fallbackSnapshot ??= {
+          state,
+          controlLabel: label,
+        };
+        continue;
+      }
+
       return {
-        state: resolveMeetLocalMicStateFromLabel(normalizedLabel),
+        state,
         controlLabel: label,
       };
     }
   }
 
-  return { state: "unknown" };
+  return fallbackSnapshot ?? { state: "unknown" };
 }
 
 function formatMeetLocalMicState(state: MeetLocalMicState): string {

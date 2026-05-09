@@ -11,6 +11,7 @@ import type { Logger } from "winston";
 import { appConfig } from "../../config/app.config";
 import { MeetingArtifactExtractionService } from "../meetings/meeting-artifact-extraction.service";
 import { AiWorkerClient } from "../ai-worker/ai-worker.client";
+import { BillingService } from "../billing/billing.service";
 import { MeetingsService } from "../meetings/meetings.service";
 import { TranscriptPersistenceService } from "../meetings/transcript-persistence.service";
 import {
@@ -53,6 +54,7 @@ export class AudioStreamService {
     @Inject(STREAM_SESSION_STORE)
     private readonly sessionStore: StreamSessionStore,
     private readonly aiWorkerClient: AiWorkerClient,
+    private readonly billingService: BillingService,
     private readonly transcriptPersistence: TranscriptPersistenceService,
     private readonly meetingArtifactExtraction: MeetingArtifactExtractionService,
     @Inject(appConfig.KEY)
@@ -73,6 +75,8 @@ export class AudioStreamService {
         `Stream ${payload.streamId} is already active.`,
       );
     }
+
+    await this.billingService.ensureCanStartRecording(actor.localUserId);
 
     const meeting = await this.meetingsService.createRecordingMeeting({
       userId: actor.localUserId,
@@ -590,6 +594,7 @@ export class AudioStreamService {
     }
 
     await this.meetingsService.markMeetingCompleted(session.backendMeetingId);
+    await this.recordMeetingUsage(session.backendMeetingId, session.streamId);
     this.clearDisconnectTimeout(streamId);
     this.sessionStore.delete(streamId);
     this.resolveSessionCompletion(streamId);
@@ -603,5 +608,20 @@ export class AudioStreamService {
         error,
       });
     });
+  }
+
+  private async recordMeetingUsage(
+    backendMeetingId: string,
+    streamId: string,
+  ): Promise<void> {
+    try {
+      await this.billingService.recordMeetingUsage(backendMeetingId);
+    } catch (error) {
+      this.logger.error("Failed to record meeting usage for billing quota", {
+        streamId,
+        backendMeetingId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 }

@@ -20,6 +20,7 @@ import type { CaptureStatus, MeetLocalMicState } from "@/shared/types/messages";
 import type { AudioSourceType, CaptureContext } from "@kapter/contracts";
 
 import { syncBackendSession } from "./backend-auth";
+import { fetchBillingQuota } from "./backend-billing";
 import { fetchProjects } from "./backend-projects";
 
 const DEFAULT_CAPTURE_STATUS: CaptureStatus = { state: "idle" };
@@ -59,7 +60,10 @@ interface PendingMicPermissionRequest {
 }
 
 const pendingOffscreenSignals = new Map<string, PendingOffscreenSignal>();
-const pendingMicPermissionRequests = new Map<number, PendingMicPermissionRequest>();
+const pendingMicPermissionRequests = new Map<
+  number,
+  PendingMicPermissionRequest
+>();
 
 async function getAuthState() {
   return normalizeAuthState(await getStorage("auth"));
@@ -99,8 +103,9 @@ async function getFreshAuthState() {
 
   const expiredState = buildDisconnectedAuthState({
     updatedAt: now,
-    lastError:
-      authState.sessionToken ? "Stored extension session expired. Attempting silent reconnect..." : null,
+    lastError: authState.sessionToken
+      ? "Stored extension session expired. Attempting silent reconnect..."
+      : null,
   });
 
   // We don't overwrite the state to "disconnected" if it's already "pending"
@@ -144,14 +149,18 @@ async function refreshAuthToken(): Promise<boolean> {
         updatedAt: Date.now(),
       });
 
-      console.log(`[bg] Attempting silent refresh via ${tabs.length} tab(s)...`);
+      console.log(
+        `[bg] Attempting silent refresh via ${tabs.length} tab(s)...`,
+      );
 
       for (const tab of tabs) {
         if (tab.id) {
-          await browser.tabs.sendMessage(tab.id, {
-            type: BRIDGE_SILENT_TOKEN_REQUEST,
-            payload: { requestId },
-          }).catch(() => undefined);
+          await browser.tabs
+            .sendMessage(tab.id, {
+              type: BRIDGE_SILENT_TOKEN_REQUEST,
+              payload: { requestId },
+            })
+            .catch(() => undefined);
         }
       }
 
@@ -281,6 +290,12 @@ async function getSelectedProjectId(): Promise<string | null> {
 
 async function setSelectedProjectId(projectId: string | null): Promise<void> {
   await setStorage("selectedProjectId", projectId);
+}
+
+async function setQuotaStatus(
+  quota: Awaited<ReturnType<typeof fetchBillingQuota>> | null,
+): Promise<void> {
+  await setStorage("quotaStatus", quota);
 }
 
 function normalizeProjectId(projectId: unknown): string | null {
@@ -647,6 +662,42 @@ onMessage(async (message, sender) => {
       }
     }
 
+    case "GET_BILLING_STATUS": {
+      const authState = await getFreshAuthState();
+
+      if (authState.status !== "connected" || !authState.sessionToken) {
+        await setQuotaStatus(null);
+        return {
+          success: true,
+          data: null,
+        };
+      }
+
+      try {
+        const quota = await fetchBillingQuota(authState.sessionToken);
+        await setQuotaStatus(quota);
+
+        return {
+          success: true,
+          data: quota,
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+
+        if (/unauthorized|token|session/i.test(errorMessage)) {
+          await setAuthState(
+            buildDisconnectedAuthState({
+              updatedAt: Date.now(),
+              lastError: errorMessage,
+            }),
+          );
+        }
+
+        return { success: false, error: errorMessage };
+      }
+    }
+
     case "SET_PROJECT_SELECTION": {
       await setSelectedProjectId(
         normalizeProjectId(message.payload?.projectId),
@@ -818,6 +869,23 @@ onMessage(async (message, sender) => {
         meetLocalMicUpdatedAt,
       });
 
+      const captureStatus = await getCaptureStatus();
+
+      if (
+        captureStatus.state === "recording" &&
+        captureStatus.captureContext === "google_meet_room"
+      ) {
+        await chrome.runtime
+          .sendMessage({
+            type: "OFFSCREEN_MEET_LOCAL_MIC_STATE_CHANGED",
+            payload: {
+              state: meetLocalMicState,
+              detectedAt: meetLocalMicUpdatedAt,
+            },
+          })
+          .catch(() => undefined);
+      }
+
       return { success: true };
     }
 
@@ -838,6 +906,17 @@ onMessage(async (message, sender) => {
 
         try {
           await syncBackendSession(authState.sessionToken);
+          const quota = await fetchBillingQuota(authState.sessionToken);
+          await setQuotaStatus(quota);
+
+          if (!quota.canRecord) {
+            return {
+              success: false,
+              error:
+                quota.reason ??
+                "Recording quota is exhausted for the current billing period.",
+            };
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
@@ -897,10 +976,7 @@ onMessage(async (message, sender) => {
         }
 
         if (
-          shouldRequestRecorderMicPermission(
-            captureContext,
-            meetLocalMicState,
-          )
+          shouldRequestRecorderMicPermission(captureContext, meetLocalMicState)
         ) {
           await ensureRecorderMicrophonePermission();
         }
@@ -1057,6 +1133,11 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
     const selectedProjectId = await getStorage("selectedProjectId");
     if (selectedProjectId === undefined) {
       await setSelectedProjectId(null);
+    }
+
+    const quotaStatus = await getStorage("quotaStatus");
+    if (quotaStatus === undefined) {
+      await setQuotaStatus(null);
     }
   })();
 });

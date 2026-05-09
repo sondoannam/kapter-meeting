@@ -9,13 +9,26 @@ const createService = () => {
   const findFirst = mock.fn(async (_args: unknown) => null as unknown);
   const create = mock.fn(async (_args: unknown) => undefined as unknown);
   const update = mock.fn(async (_args: unknown) => undefined as unknown);
+  const remove = mock.fn(async (_args: unknown) => undefined as unknown);
+  const deleteManyMeetings = mock.fn(async (_args: unknown) => ({ count: 0 }));
+  const upsert = mock.fn(async (_args: unknown) => undefined as unknown);
 
   const prisma = {
+    $transaction: mock.fn(async (callback: (tx: typeof prisma) => unknown) =>
+      callback(prisma),
+    ),
     project: {
       findMany,
       findFirst,
       create,
       update,
+      delete: remove,
+    },
+    meeting: {
+      deleteMany: deleteManyMeetings,
+    },
+    projectContext: {
+      upsert,
     },
   };
 
@@ -28,7 +41,15 @@ const createService = () => {
       findFirst,
       create,
       update,
+      delete: remove,
     },
+    meeting: {
+      deleteMany: deleteManyMeetings,
+    },
+    projectContext: {
+      upsert,
+    },
+    prisma,
   };
 };
 
@@ -249,6 +270,7 @@ void describe("ProjectsService", () => {
 
     project.findFirst.mock.mockImplementation(async () => ({
       id: "project_1",
+      context: null,
       title: "Platform Revamp",
       description: "Q2 planning",
       isDraft: true,
@@ -260,7 +282,6 @@ void describe("ProjectsService", () => {
       _count: {
         meetings: 0,
       },
-      context: null,
       meetings: [],
     }));
 
@@ -306,6 +327,105 @@ void describe("ProjectsService", () => {
       updatedAt: "2026-04-25T10:30:00.000Z",
       context: null,
       recentMeetings: [],
+    });
+  });
+
+  void it("updates project context fields while preserving omitted values", async () => {
+    const { service, project, projectContext } = createService();
+
+    project.findFirst.mock.mockImplementation(async () => ({
+      id: "project_1",
+      context: {
+        initialDescription: "Initial scope",
+        contextMarkdown: "# Existing context",
+      },
+    }));
+
+    project.update.mock.mockImplementation(async () => ({
+      id: "project_1",
+      title: "Platform Revamp",
+      description: "Updated scope",
+      isDraft: false,
+      notionDestinationMode: null,
+      notionProjectPageId: null,
+      notionTaskDatabaseId: null,
+      createdAt: new Date("2026-04-25T09:00:00.000Z"),
+      updatedAt: new Date("2026-04-25T10:45:00.000Z"),
+      _count: {
+        meetings: 0,
+      },
+      context: {
+        initialDescription: "Initial scope",
+        contextMarkdown: "# Refined context",
+      },
+      meetings: [],
+    }));
+
+    const updatedProject = await service.updateProject(
+      "clerk_user_1",
+      "project_1",
+      {
+        description: " Updated scope ",
+        contextMarkdown: " # Refined context ",
+      },
+    );
+
+    assert.equal(projectContext.upsert.mock.callCount(), 1);
+    assert.deepEqual(projectContext.upsert.mock.calls[0]?.arguments[0], {
+      where: {
+        projectId: "project_1",
+      },
+      create: {
+        projectId: "project_1",
+        initialDescription: "Initial scope",
+        contextMarkdown: "# Refined context",
+      },
+      update: {
+        initialDescription: "Initial scope",
+        contextMarkdown: "# Refined context",
+      },
+    });
+    assert.deepEqual(updatedProject, {
+      id: "project_1",
+      title: "Platform Revamp",
+      description: "Updated scope",
+      isDraft: false,
+      notionDestinationMode: null,
+      notionProjectPageId: null,
+      notionTaskDatabaseId: null,
+      meetingCount: 0,
+      createdAt: "2026-04-25T09:00:00.000Z",
+      updatedAt: "2026-04-25T10:45:00.000Z",
+      context: {
+        initialDescription: "Initial scope",
+        contextMarkdown: "# Refined context",
+      },
+      recentMeetings: [],
+    });
+  });
+
+  void it("deletes a project and all linked meetings owned by the current Clerk user", async () => {
+    const { service, project, meeting, prisma } = createService();
+
+    project.findFirst.mock.mockImplementation(async () => ({
+      id: "project_1",
+    }));
+
+    await service.deleteProject("clerk_user_1", "project_1");
+
+    assert.equal(project.findFirst.mock.callCount(), 1);
+    assert.equal(prisma.$transaction.mock.callCount(), 1);
+    assert.equal(meeting.deleteMany.mock.callCount(), 1);
+    assert.deepEqual(meeting.deleteMany.mock.calls[0]?.arguments[0], {
+      where: {
+        projectId: "project_1",
+      },
+    });
+    assert.equal(project.delete.mock.callCount(), 1);
+    assert.deepEqual(project.delete.mock.calls[0]?.arguments[0], {
+      where: {
+        id: "project_1",
+      },
     });
   });
 
