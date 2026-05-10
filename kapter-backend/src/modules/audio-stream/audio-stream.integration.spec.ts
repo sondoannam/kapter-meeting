@@ -19,6 +19,7 @@ import dotenv from "dotenv";
 import { PrismaClient } from "prisma/generated/prisma/client";
 
 import { AiWorkerClient } from "../ai-worker/ai-worker.client";
+import { BillingService } from "../billing/billing.service";
 import { MeetingsService } from "../meetings/meetings.service";
 import { TranscriptPersistenceService } from "../meetings/transcript-persistence.service";
 import { InMemoryStreamSessionStore } from "./in-memory-stream-session.store";
@@ -93,9 +94,11 @@ const cleanDatabase = async () => {
   await prisma.actionItem.deleteMany();
   await prisma.speakerProfile.deleteMany();
   await prisma.meetingAudioBatch.deleteMany();
+  await prisma.usageLedger.deleteMany();
   await prisma.meeting.deleteMany();
   await prisma.projectContext.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.subscription.deleteMany();
   await prisma.user.deleteMany();
 };
 
@@ -134,20 +137,24 @@ const createService = () => {
     prisma as unknown as ConstructorParameters<typeof AiWorkerClient>[1],
     logger as unknown as ConstructorParameters<typeof AiWorkerClient>[2],
   );
+  const billingService = new BillingService(
+    prisma as unknown as ConstructorParameters<typeof BillingService>[0],
+  );
   const service = new AudioStreamService(
     meetingsService as ConstructorParameters<typeof AudioStreamService>[0],
     sessionStore as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[1],
     aiWorkerClient as ConstructorParameters<typeof AudioStreamService>[2],
+    billingService as ConstructorParameters<typeof AudioStreamService>[3],
     transcriptPersistence as ConstructorParameters<
       typeof AudioStreamService
-    >[3],
+    >[4],
     meetingArtifactExtraction as unknown as ConstructorParameters<
       typeof AudioStreamService
-    >[4],
-    config as unknown as ConstructorParameters<typeof AudioStreamService>[5],
-    logger as unknown as ConstructorParameters<typeof AudioStreamService>[6],
+    >[5],
+    config as unknown as ConstructorParameters<typeof AudioStreamService>[6],
+    logger as unknown as ConstructorParameters<typeof AudioStreamService>[7],
   );
 
   return {

@@ -1,5 +1,9 @@
 import type { ExtensionAuthState } from "@/shared/lib/auth-bridge";
-import type { AudioSourceType, CaptureContext } from "@kapter/contracts";
+import type {
+  AudioSourceType,
+  CaptureContext,
+  QuotaSnapshot,
+} from "@kapter/contracts";
 import type {
   StreamAckPayload,
   StreamChunkPayload,
@@ -68,6 +72,7 @@ export type ExtensionMessage =
       payload: { requestId: string };
     }
   | { type: "GET_PROJECT_SELECTION" }
+  | { type: "GET_BILLING_STATUS" }
   | {
       type: "SET_PROJECT_SELECTION";
       payload: { projectId: string | null };
@@ -122,6 +127,13 @@ export type ExtensionMessage =
       payload: { streamId?: string; error: string };
     }
   | {
+      type: "OFFSCREEN_MEET_LOCAL_MIC_STATE_CHANGED";
+      payload: {
+        state: MeetLocalMicState;
+        detectedAt: number;
+      };
+    }
+  | {
       type: "CHUNK_SENT";
       payload: { sequence: number; byteLength: number };
     };
@@ -140,6 +152,7 @@ interface MessageResponseMap {
   AUTH_REFRESH_TOKEN: { success: boolean };
   BRIDGE_SILENT_TOKEN_REQUEST: void;
   GET_PROJECT_SELECTION: ProjectSelectionState;
+  GET_BILLING_STATUS: QuotaSnapshot | null;
   SET_PROJECT_SELECTION: void;
   START_CAPTURE: { sessionId: string; streamId: string };
   STOP_CAPTURE: void;
@@ -152,6 +165,7 @@ interface MessageResponseMap {
   OFFSCREEN_RECORDING_STARTED: void;
   OFFSCREEN_STOPPED: void;
   OFFSCREEN_ERROR: void;
+  OFFSCREEN_MEET_LOCAL_MIC_STATE_CHANGED: void;
   CHUNK_SENT: void;
 }
 

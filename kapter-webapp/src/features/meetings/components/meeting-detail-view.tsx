@@ -1,5 +1,6 @@
 import * as React from "react"
 import { MEETING_STATUS } from "@kapter/contracts/domain"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   ArrowLeft,
   Clock3,
@@ -11,6 +12,7 @@ import {
   Trash2,
   Radar,
 } from "lucide-react"
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
@@ -21,8 +23,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { ROUTES } from "@/routes/routes.constants"
 
+import {
+  actionItemStatuses,
+  buildMeetingReviewFormSchema,
+  buildMeetingReviewPayload,
+  createEmptyReviewActionItem,
+  toDateInputValue,
+  UNASSIGNED_ASSIGNEE_VALUE,
+  type MeetingReviewFormValues,
+} from "../forms/meeting-form"
 import { formatDuration, formatMeetingDateTime } from "../lib/formatters"
 import {
   getMeetingWorkflowStage,
@@ -54,23 +74,11 @@ interface MeetingDetailViewProps {
   onDismissProposal: (proposalId: string) => Promise<void>
 }
 
-interface ReviewTaskDraft {
-  taskContent: string
-  deadline: string
-  assigneeId: string
-  status: ActionItemStatus
-}
-
-const actionItemStatuses: ActionItemStatus[] = ["TODO", "IN_PROGRESS", "DONE"]
-
 const actionItemStatusLabels: Record<ActionItemStatus, string> = {
   TODO: "Todo",
   IN_PROGRESS: "In progress",
   DONE: "Done",
 }
-
-const toDateInputValue = (value: string | null): string =>
-  value ? value.slice(0, 10) : ""
 
 export function MeetingDetailView({
   lastSyncResult,
@@ -525,19 +533,44 @@ function MeetingReviewPanel({
   onRetryExtraction,
   onApproveCurrentReview,
 }: MeetingReviewPanelProps) {
-  const [summaryDraft, setSummaryDraft] = React.useState(meeting.summary ?? "")
-  const [taskDrafts, setTaskDrafts] = React.useState<ReviewTaskDraft[]>(
-    meeting.actionItems.map((actionItem) => ({
-      taskContent: actionItem.taskContent,
-      deadline: toDateInputValue(actionItem.deadline),
-      assigneeId: actionItem.assigneeId ?? "",
-      status: actionItem.status,
-    }))
+  const initialReviewValues = React.useMemo<MeetingReviewFormValues>(
+    () => ({
+      summary: meeting.summary ?? "",
+      actionItems: meeting.actionItems.map((actionItem) => ({
+        taskContent: actionItem.taskContent,
+        deadline: toDateInputValue(actionItem.deadline),
+        assigneeId: actionItem.assigneeId ?? "",
+        status: actionItem.status,
+      })),
+    }),
+    [meeting.summary, meeting.actionItems]
   )
+  const reviewSchema = React.useMemo(
+    () => buildMeetingReviewFormSchema("Summary is required."),
+    []
+  )
+  const form = useForm<
+    MeetingReviewFormValues,
+    unknown,
+    MeetingReviewFormValues
+  >({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: initialReviewValues,
+  })
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "actionItems",
+  })
   const [mutationError, setMutationError] = React.useState<string | null>(null)
   const [mutationStatus, setMutationStatus] = React.useState<
     "idle" | "saving" | "retrying" | "approving"
   >("idle")
+  const summaryDraft =
+    useWatch({
+      control: form.control,
+      name: "summary",
+      defaultValue: initialReviewValues.summary,
+    }) ?? ""
   const isApproved = meeting.artifactReviewStatus === "APPROVED"
   const isMutating = mutationStatus !== "idle"
   const canSaveReview = summaryDraft.trim().length > 0 && !isMutating
@@ -553,13 +586,9 @@ function MeetingReviewPanel({
     meeting.status !== MEETING_STATUS.RECORDING &&
     !isMutating
 
-  const updateTaskDraft = (index: number, patch: Partial<ReviewTaskDraft>) => {
-    setTaskDrafts((currentDrafts) =>
-      currentDrafts.map((task, taskIndex) =>
-        taskIndex === index ? { ...task, ...patch } : task
-      )
-    )
-  }
+  React.useEffect(() => {
+    form.reset(initialReviewValues)
+  }, [form, initialReviewValues])
 
   const runMutation = async (
     nextStatus: typeof mutationStatus,
@@ -579,26 +608,20 @@ function MeetingReviewPanel({
     }
   }
 
-  const buildReviewPayload = (): SaveMeetingReviewRequest => ({
-    summary: summaryDraft,
-    actionItems: taskDrafts
-      .map((task) => ({
-        taskContent: task.taskContent.trim(),
-        deadline: task.deadline ? `${task.deadline}T00:00:00.000Z` : null,
-        assigneeId: task.assigneeId || null,
-        status: task.status,
-      }))
-      .filter((task) => task.taskContent.length > 0),
-  })
-
   const handleSaveReview = async () => {
-    await runMutation("saving", () => onSaveReview(buildReviewPayload()))
+    await form.handleSubmit((values) =>
+      runMutation("saving", () =>
+        onSaveReview(buildMeetingReviewPayload(values))
+      )
+    )()
   }
 
   const handleApproveReview = async () => {
-    await runMutation("approving", () =>
-      onApproveCurrentReview(buildReviewPayload())
-    )
+    await form.handleSubmit((values) =>
+      runMutation("approving", () =>
+        onApproveCurrentReview(buildMeetingReviewPayload(values))
+      )
+    )()
   }
 
   return (
@@ -676,12 +699,17 @@ function MeetingReviewPanel({
           <label className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
             Summary
           </label>
-          <textarea
-            className="min-h-36 w-full rounded-[1.25rem] border border-border/80 bg-background px-4 py-3 text-sm leading-7 text-foreground transition outline-none focus:border-primary dark:border-white/10 dark:bg-slate-950/55"
-            onChange={(event) => setSummaryDraft(event.target.value)}
+          <Textarea
+            className="min-h-36 rounded-[1.25rem] border-border/80 bg-background px-4 py-3 text-sm leading-7 dark:border-white/10 dark:bg-slate-950/55"
             placeholder="Extraction has not produced a summary yet."
             value={summaryDraft}
+            {...form.register("summary")}
           />
+          {form.formState.errors.summary?.message ? (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.summary.message}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-3">
@@ -690,17 +718,7 @@ function MeetingReviewPanel({
               Action items
             </p>
             <Button
-              onClick={() =>
-                setTaskDrafts((currentDrafts) => [
-                  ...currentDrafts,
-                  {
-                    taskContent: "",
-                    deadline: "",
-                    assigneeId: "",
-                    status: "TODO",
-                  },
-                ])
-              }
+              onClick={() => append(createEmptyReviewActionItem())}
               type="button"
               variant="outline"
             >
@@ -709,75 +727,79 @@ function MeetingReviewPanel({
             </Button>
           </div>
 
-          {taskDrafts.length > 0 ? (
+          {fields.length > 0 ? (
             <div className="space-y-3">
-              {taskDrafts.map((task, index) => (
+              {fields.map((field, index) => (
                 <div
                   className="grid gap-3 rounded-[1.25rem] border border-border/70 bg-muted/25 p-4 dark:border-white/10 dark:bg-white/4"
-                  key={`${index}-${task.status}`}
+                  key={field.id}
                 >
-                  <textarea
-                    className="min-h-20 rounded-[1rem] border border-border/80 bg-background px-3 py-2 text-sm leading-6 text-foreground transition outline-none focus:border-primary dark:border-white/10 dark:bg-slate-950/55"
-                    onChange={(event) =>
-                      updateTaskDraft(index, {
-                        taskContent: event.target.value,
-                      })
-                    }
+                  <Textarea
+                    className="min-h-20 rounded-[1rem] border-border/80 bg-background px-3 py-2 text-sm leading-6 dark:border-white/10 dark:bg-slate-950/55"
                     placeholder="Describe the follow-up task"
-                    value={task.taskContent}
+                    {...form.register(`actionItems.${index}.taskContent`)}
                   />
                   <div className="grid gap-3 md:grid-cols-3">
-                    <select
-                      className="rounded-[1rem] border border-border/80 bg-background px-3 py-2 text-sm text-foreground dark:border-white/10 dark:bg-slate-950/55"
-                      onChange={(event) =>
-                        updateTaskDraft(index, {
-                          status: event.target.value as ActionItemStatus,
-                        })
-                      }
-                      value={task.status}
-                    >
-                      {actionItemStatuses.map((itemStatus) => (
-                        <option key={itemStatus} value={itemStatus}>
-                          {actionItemStatusLabels[itemStatus]}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      className="rounded-[1rem] border border-border/80 bg-background px-3 py-2 text-sm text-foreground dark:border-white/10 dark:bg-slate-950/55"
-                      onChange={(event) =>
-                        updateTaskDraft(index, {
-                          assigneeId: event.target.value,
-                        })
-                      }
-                      value={task.assigneeId}
-                    >
-                      <option value="">Unassigned</option>
-                      {meeting.speakers.map((speaker) => (
-                        <option key={speaker.id} value={speaker.id}>
-                          {speaker.realName || speaker.aiLabel}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className="rounded-[1rem] border border-border/80 bg-background px-3 py-2 text-sm text-foreground dark:border-white/10 dark:bg-slate-950/55"
-                      onChange={(event) =>
-                        updateTaskDraft(index, {
-                          deadline: event.target.value,
-                        })
-                      }
+                    <Controller
+                      control={form.control}
+                      name={`actionItems.${index}.status`}
+                      render={({ field: controllerField }) => (
+                        <Select
+                          onValueChange={controllerField.onChange}
+                          value={controllerField.value}
+                        >
+                          <SelectTrigger className="h-10 w-full rounded-[1rem] border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {actionItemStatuses.map((itemStatus) => (
+                              <SelectItem key={itemStatus} value={itemStatus}>
+                                {actionItemStatusLabels[itemStatus]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <Controller
+                      control={form.control}
+                      name={`actionItems.${index}.assigneeId`}
+                      render={({ field: controllerField }) => (
+                        <Select
+                          onValueChange={(value) =>
+                            controllerField.onChange(
+                              value === UNASSIGNED_ASSIGNEE_VALUE ? "" : value
+                            )
+                          }
+                          value={
+                            controllerField.value || UNASSIGNED_ASSIGNEE_VALUE
+                          }
+                        >
+                          <SelectTrigger className="h-10 w-full rounded-[1rem] border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={UNASSIGNED_ASSIGNEE_VALUE}>
+                              Unassigned
+                            </SelectItem>
+                            {meeting.speakers.map((speaker) => (
+                              <SelectItem key={speaker.id} value={speaker.id}>
+                                {speaker.realName || speaker.aiLabel}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <Input
+                      className="h-10 rounded-[1rem] border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55"
                       type="date"
-                      value={task.deadline}
+                      {...form.register(`actionItems.${index}.deadline`)}
                     />
                   </div>
                   <Button
                     className="w-fit"
-                    onClick={() =>
-                      setTaskDrafts((currentDrafts) =>
-                        currentDrafts.filter(
-                          (_task, taskIndex) => taskIndex !== index
-                        )
-                      )
-                    }
+                    onClick={() => remove(index)}
                     type="button"
                     variant="outline"
                   >

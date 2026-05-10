@@ -1,5 +1,6 @@
 import * as React from "react"
 import { MEETING_STATUS } from "@kapter/contracts/domain"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   CalendarDays,
   CheckCircle2,
@@ -7,6 +8,16 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+  type Control,
+  type FieldArrayWithId,
+  type UseFormRegister,
+  type UseFormRegisterReturn,
+} from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -29,6 +40,17 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  actionItemStatuses,
+  buildMeetingReviewFormSchema,
+  buildMeetingReviewPayload,
+  createEmptyReviewActionItem,
+  fromLocalDateValue,
+  toDateInputValue,
+  toLocalDateValue,
+  UNASSIGNED_ASSIGNEE_VALUE,
+  type MeetingReviewFormValues,
+} from "@/features/meetings/forms/meeting-form"
 import {
   Select,
   SelectContent,
@@ -53,29 +75,6 @@ interface MeetingDetailReviewPanelProps {
   onApproveCurrentReview: (payload: SaveMeetingReviewRequest) => Promise<void>
 }
 
-interface ReviewTaskDraft {
-  taskContent: string
-  deadline: string
-  assigneeId: string
-  status: ActionItemStatus
-}
-
-const actionItemStatuses: ActionItemStatus[] = ["TODO", "IN_PROGRESS", "DONE"]
-
-const toDateInputValue = (value: string | null): string =>
-  value ? value.slice(0, 10) : ""
-
-const toLocalDateValue = (value: Date) => {
-  const year = value.getFullYear()
-  const month = `${value.getMonth() + 1}`.padStart(2, "0")
-  const day = `${value.getDate()}`.padStart(2, "0")
-
-  return `${year}-${month}-${day}`
-}
-
-const fromLocalDateValue = (value: string) =>
-  value ? new Date(`${value}T00:00:00`) : undefined
-
 export function MeetingDetailReviewPanel({
   meeting,
   onSaveReview,
@@ -83,19 +82,43 @@ export function MeetingDetailReviewPanel({
   onApproveCurrentReview,
 }: MeetingDetailReviewPanelProps) {
   const { t, i18n } = useTranslation(["meeting", "common"])
-  const [summaryDraft, setSummaryDraft] = React.useState(meeting.summary ?? "")
-  const [taskDrafts, setTaskDrafts] = React.useState<ReviewTaskDraft[]>(
-    meeting.actionItems.map((actionItem) => ({
-      taskContent: actionItem.taskContent,
-      deadline: toDateInputValue(actionItem.deadline),
-      assigneeId: actionItem.assigneeId ?? "",
-      status: actionItem.status,
-    }))
+  const initialReviewValues = React.useMemo<MeetingReviewFormValues>(
+    () => ({
+      summary: meeting.summary ?? "",
+      actionItems: meeting.actionItems.map((actionItem) => ({
+        taskContent: actionItem.taskContent,
+        deadline: toDateInputValue(actionItem.deadline),
+        assigneeId: actionItem.assigneeId ?? "",
+        status: actionItem.status,
+      })),
+    }),
+    [meeting.summary, meeting.actionItems]
   )
+  const reviewSchema = React.useMemo(
+    () =>
+      buildMeetingReviewFormSchema(
+        t("reviewPanel.summaryRequired", { ns: "meeting" })
+      ),
+    [t]
+  )
+  const form = useForm<MeetingReviewFormValues>({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: initialReviewValues,
+  })
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "actionItems",
+  })
   const [mutationError, setMutationError] = React.useState<string | null>(null)
   const [mutationStatus, setMutationStatus] = React.useState<
     "idle" | "saving" | "retrying" | "approving"
   >("idle")
+  const summaryDraft =
+    useWatch({
+      control: form.control,
+      name: "summary",
+      defaultValue: initialReviewValues.summary,
+    }) ?? ""
 
   const isApproved = meeting.artifactReviewStatus === "APPROVED"
   const isMutating = mutationStatus !== "idle"
@@ -126,13 +149,9 @@ export function MeetingDetailReviewPanel({
     [i18n.language, i18n.resolvedLanguage]
   )
 
-  const updateTaskDraft = (index: number, patch: Partial<ReviewTaskDraft>) => {
-    setTaskDrafts((currentDrafts) =>
-      currentDrafts.map((task, taskIndex) =>
-        taskIndex === index ? { ...task, ...patch } : task
-      )
-    )
-  }
+  React.useEffect(() => {
+    form.reset(initialReviewValues)
+  }, [form, initialReviewValues])
 
   const runMutation = async (
     nextStatus: typeof mutationStatus,
@@ -153,18 +172,6 @@ export function MeetingDetailReviewPanel({
       setMutationStatus("idle")
     }
   }
-
-  const buildReviewPayload = (): SaveMeetingReviewRequest => ({
-    summary: summaryDraft,
-    actionItems: taskDrafts
-      .map((task) => ({
-        taskContent: task.taskContent.trim(),
-        deadline: task.deadline ? `${task.deadline}T00:00:00.000Z` : null,
-        assigneeId: task.assigneeId || null,
-        status: task.status,
-      }))
-      .filter((task) => task.taskContent.length > 0),
-  })
 
   return (
     <Card className="flex h-full flex-col border-border/70 bg-background/92 shadow-md shadow-foreground/5 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.84))] dark:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.72)]">
@@ -217,16 +224,17 @@ export function MeetingDetailReviewPanel({
         <div className="hidden min-h-0 grow lg:block">
           <ResizablePanelGroup orientation="horizontal" className="h-auto py-4">
             <ResizablePanel defaultSize={60} minSize={38} className="px-2">
-            <SummaryEditorPanel
-              description={t("reviewPanel.summaryDescription", {
-                ns: "meeting",
-              })}
-                onSummaryChange={setSummaryDraft}
-              placeholder={t("reviewPanel.summaryPlaceholder", {
-                ns: "meeting",
-              })}
+              <SummaryEditorPanel
+                description={t("reviewPanel.summaryDescription", {
+                  ns: "meeting",
+                })}
+                placeholder={t("reviewPanel.summaryPlaceholder", {
+                  ns: "meeting",
+                })}
+                register={form.register("summary")}
+                summaryError={form.formState.errors.summary?.message ?? null}
                 summaryDraft={summaryDraft}
-              title={t("reviewPanel.summaryTitle", { ns: "meeting" })}
+                title={t("reviewPanel.summaryTitle", { ns: "meeting" })}
               />
             </ResizablePanel>
             <ResizableHandle withHandle className="my-4" />
@@ -236,28 +244,12 @@ export function MeetingDetailReviewPanel({
                 actionItemStatusLabels={actionItemStatusLabels}
                 deadlineLabelFormatter={deadlineLabelFormatter}
                 fromLocalDateValue={fromLocalDateValue}
+                control={form.control}
+                fields={fields}
                 meeting={meeting}
-                onAddTask={() =>
-                  setTaskDrafts((currentDrafts) => [
-                    ...currentDrafts,
-                    {
-                      taskContent: "",
-                      deadline: "",
-                      assigneeId: "",
-                      status: "TODO",
-                    },
-                  ])
-                }
-                onRemoveTask={(index) =>
-                  setTaskDrafts((currentDrafts) =>
-                    currentDrafts.filter(
-                      (_task, taskIndex) => taskIndex !== index
-                    )
-                  )
-                }
-                onUpdateTask={updateTaskDraft}
+                onAddTask={() => append(createEmptyReviewActionItem())}
+                onRemoveTask={remove}
                 addTaskLabel={t("actions.addTask", { ns: "common" })}
-                taskDrafts={taskDrafts}
                 assigneePlaceholder={t("reviewPanel.assigneePlaceholder", {
                   ns: "meeting",
                 })}
@@ -276,6 +268,7 @@ export function MeetingDetailReviewPanel({
                   ns: "meeting",
                 })}
                 title={t("reviewPanel.actionItemsTitle", { ns: "meeting" })}
+                register={form.register}
                 toLocalDateValue={toLocalDateValue}
                 unassignedLabel={t("reviewPanel.unassigned", { ns: "meeting" })}
               />
@@ -286,10 +279,11 @@ export function MeetingDetailReviewPanel({
         <div className="space-y-4 lg:hidden">
           <SummaryEditorPanel
             description={t("reviewPanel.summaryDescription", { ns: "meeting" })}
-            onSummaryChange={setSummaryDraft}
             placeholder={t("reviewPanel.summaryPlaceholder", {
               ns: "meeting",
             })}
+            register={form.register("summary")}
+            summaryError={form.formState.errors.summary?.message ?? null}
             summaryDraft={summaryDraft}
             title={t("reviewPanel.summaryTitle", { ns: "meeting" })}
           />
@@ -303,35 +297,24 @@ export function MeetingDetailReviewPanel({
             description={t("reviewPanel.actionItemsDescription", {
               ns: "meeting",
             })}
+            control={form.control}
             deadlineLabelFormatter={deadlineLabelFormatter}
             emptyLabel={t("reviewPanel.emptyTasks", { ns: "meeting" })}
             fromLocalDateValue={fromLocalDateValue}
+            fields={fields}
             meeting={meeting}
-            onAddTask={() =>
-              setTaskDrafts((currentDrafts) => [
-                ...currentDrafts,
-                {
-                  taskContent: "",
-                  deadline: "",
-                  assigneeId: "",
-                  status: "TODO",
-                },
-              ])
-            }
-            onRemoveTask={(index) =>
-              setTaskDrafts((currentDrafts) =>
-                currentDrafts.filter((_task, taskIndex) => taskIndex !== index)
-              )
-            }
-            onUpdateTask={updateTaskDraft}
+            onAddTask={() => append(createEmptyReviewActionItem())}
+            onRemoveTask={remove}
             removeLabel={t("actions.remove", { ns: "common" })}
             setDeadlineLabel={t("reviewPanel.setDeadline", { ns: "meeting" })}
-            taskDrafts={taskDrafts}
-            taskPlaceholder={t("reviewPanel.taskPlaceholder", { ns: "meeting" })}
+            taskPlaceholder={t("reviewPanel.taskPlaceholder", {
+              ns: "meeting",
+            })}
             taskStatusPlaceholder={t("reviewPanel.taskStatusPlaceholder", {
               ns: "meeting",
             })}
             title={t("reviewPanel.actionItemsTitle", { ns: "meeting" })}
+            register={form.register}
             toLocalDateValue={toLocalDateValue}
             unassignedLabel={t("reviewPanel.unassigned", { ns: "meeting" })}
           />
@@ -357,9 +340,11 @@ export function MeetingDetailReviewPanel({
           <Button
             disabled={!canSaveReview}
             onClick={() =>
-              void runMutation("saving", () =>
-                onSaveReview(buildReviewPayload())
-              )
+              void form.handleSubmit((values) =>
+                runMutation("saving", () =>
+                  onSaveReview(buildMeetingReviewPayload(values))
+                )
+              )()
             }
             variant="outline"
           >
@@ -381,9 +366,11 @@ export function MeetingDetailReviewPanel({
           <Button
             disabled={!canApproveReview}
             onClick={() =>
-              void runMutation("approving", () =>
-                onApproveCurrentReview(buildReviewPayload())
-              )
+              void form.handleSubmit((values) =>
+                runMutation("approving", () =>
+                  onApproveCurrentReview(buildMeetingReviewPayload(values))
+                )
+              )()
             }
           >
             {mutationStatus === "approving" ? (
@@ -399,13 +386,15 @@ export function MeetingDetailReviewPanel({
 
 function SummaryEditorPanel({
   summaryDraft,
-  onSummaryChange,
+  register,
+  summaryError,
   title,
   description,
   placeholder,
 }: {
   summaryDraft: string
-  onSummaryChange: (value: string) => void
+  register: UseFormRegisterReturn
+  summaryError: string | null
   title: string
   description: string
   placeholder: string
@@ -416,17 +405,18 @@ function SummaryEditorPanel({
         <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
           {title}
         </p>
-        <p className="text-sm text-muted-foreground">
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       <Textarea
         className="mt-4 max-h-full flex-1 rounded-[1.3rem] border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55"
-        onChange={(event) => onSummaryChange(event.target.value)}
         placeholder={placeholder}
         value={summaryDraft}
+        {...register}
       />
+      {summaryError ? (
+        <p className="mt-2 text-xs text-destructive">{summaryError}</p>
+      ) : null}
     </div>
   )
 }
@@ -434,13 +424,14 @@ function SummaryEditorPanel({
 function ActionItemsEditorPanel({
   actionItemStatuses,
   actionItemStatusLabels,
+  control,
   deadlineLabelFormatter,
+  fields,
   fromLocalDateValue,
   meeting,
   onAddTask,
   onRemoveTask,
-  onUpdateTask,
-  taskDrafts,
+  register,
   toLocalDateValue,
   title,
   description,
@@ -453,15 +444,16 @@ function ActionItemsEditorPanel({
   removeLabel,
   emptyLabel,
 }: {
-  actionItemStatuses: ActionItemStatus[]
+  actionItemStatuses: readonly ActionItemStatus[]
   actionItemStatusLabels: Record<ActionItemStatus, string>
+  control: Control<MeetingReviewFormValues>
   deadlineLabelFormatter: Intl.DateTimeFormat
+  fields: FieldArrayWithId<MeetingReviewFormValues, "actionItems", "id">[]
   fromLocalDateValue: (value: string) => Date | undefined
   meeting: DashboardMeetingDetail
   onAddTask: () => void
   onRemoveTask: (index: number) => void
-  onUpdateTask: (index: number, patch: Partial<ReviewTaskDraft>) => void
-  taskDrafts: ReviewTaskDraft[]
+  register: UseFormRegister<MeetingReviewFormValues>
   toLocalDateValue: (value: Date) => string
   title: string
   description: string
@@ -481,9 +473,7 @@ function ActionItemsEditorPanel({
           <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
             {title}
           </p>
-          <p className="text-sm text-muted-foreground">
-            {description}
-          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
 
         <Button onClick={onAddTask} type="button" variant="outline">
@@ -493,97 +483,109 @@ function ActionItemsEditorPanel({
       </div>
 
       <ScrollArea className="mt-4 flex h-auto min-h-0 flex-col pr-3">
-        {taskDrafts.length > 0 ? (
-          taskDrafts.map((task, index) => (
+        {fields.length > 0 ? (
+          fields.map((field, index) => (
             <div
               className={cn(
                 "space-y-3 rounded-xl border border-border/70 bg-background/85 p-4 dark:border-white/10 dark:bg-slate-950/55",
                 index !== 0 && "mt-3"
               )}
-              key={`${index}-${task.status}`}
+              key={field.id}
             >
               <Textarea
                 className="min-h-20 rounded-[1rem] border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55"
-                onChange={(event) =>
-                  onUpdateTask(index, {
-                    taskContent: event.target.value,
-                  })
-                }
                 placeholder={taskPlaceholder}
-                value={task.taskContent}
+                {...register(`actionItems.${index}.taskContent`)}
               />
 
               <div className="grid gap-3 xl:grid-cols-2">
-                <Select
-                  onValueChange={(value) =>
-                    onUpdateTask(index, {
-                      status: value as ActionItemStatus,
-                    })
-                  }
-                  value={task.status}
-                >
-                  <SelectTrigger className="w-full border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
-                    <SelectValue placeholder={taskStatusPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {actionItemStatuses.map((itemStatus) => (
-                      <SelectItem key={itemStatus} value={itemStatus}>
-                        {actionItemStatusLabels[itemStatus]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name={`actionItems.${index}.status`}
+                  render={({ field: controllerField }) => (
+                    <Select
+                      onValueChange={controllerField.onChange}
+                      value={controllerField.value}
+                    >
+                      <SelectTrigger className="w-full border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
+                        <SelectValue placeholder={taskStatusPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {actionItemStatuses.map((itemStatus) => (
+                          <SelectItem key={itemStatus} value={itemStatus}>
+                            {actionItemStatusLabels[itemStatus]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
 
-                <Select
-                  onValueChange={(value) =>
-                    onUpdateTask(index, {
-                      assigneeId: value === "unassigned" ? "" : value,
-                    })
-                  }
-                  value={task.assigneeId || "unassigned"}
-                >
-                  <SelectTrigger className="w-full border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
-                    <SelectValue placeholder={assigneePlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">{unassignedLabel}</SelectItem>
-                    {meeting.speakers.map((speaker) => (
-                      <SelectItem key={speaker.id} value={speaker.id}>
-                        {speaker.realName || speaker.aiLabel}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name={`actionItems.${index}.assigneeId`}
+                  render={({ field: controllerField }) => (
+                    <Select
+                      onValueChange={(value) =>
+                        controllerField.onChange(
+                          value === UNASSIGNED_ASSIGNEE_VALUE ? "" : value
+                        )
+                      }
+                      value={controllerField.value || UNASSIGNED_ASSIGNEE_VALUE}
+                    >
+                      <SelectTrigger className="w-full border border-border/80 bg-background dark:border-white/10 dark:bg-slate-950/55">
+                        <SelectValue placeholder={assigneePlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={UNASSIGNED_ASSIGNEE_VALUE}>
+                          {unassignedLabel}
+                        </SelectItem>
+                        {meeting.speakers.map((speaker) => (
+                          <SelectItem key={speaker.id} value={speaker.id}>
+                            {speaker.realName || speaker.aiLabel}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      className="justify-start rounded-[1rem] border border-border/80 bg-background text-left font-normal dark:border-white/10 dark:bg-slate-950/55"
-                      type="button"
-                      variant="outline"
-                    >
-                      <CalendarDays className="size-4 text-muted-foreground" />
-                      {task.deadline
-                        ? deadlineLabelFormatter.format(
-                            fromLocalDateValue(task.deadline) ?? new Date()
-                          )
-                        : setDeadlineLabel}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      onSelect={(value) =>
-                        onUpdateTask(index, {
-                          deadline: value ? toLocalDateValue(value) : "",
-                        })
-                      }
-                      selected={fromLocalDateValue(task.deadline)}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Controller
+                  control={control}
+                  name={`actionItems.${index}.deadline`}
+                  render={({ field: controllerField }) => (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          className="justify-start rounded-[1rem] border border-border/80 bg-background text-left font-normal dark:border-white/10 dark:bg-slate-950/55"
+                          type="button"
+                          variant="outline"
+                        >
+                          <CalendarDays className="size-4 text-muted-foreground" />
+                          {controllerField.value
+                            ? deadlineLabelFormatter.format(
+                                fromLocalDateValue(controllerField.value) ??
+                                  new Date()
+                              )
+                            : setDeadlineLabel}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          onSelect={(value) =>
+                            controllerField.onChange(
+                              value ? toLocalDateValue(value) : ""
+                            )
+                          }
+                          selected={fromLocalDateValue(controllerField.value)}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
 
                 <Button
                   onClick={() => onRemoveTask(index)}

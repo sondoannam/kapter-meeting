@@ -9,6 +9,7 @@ import { appConfig, BACKEND_ROOT_DIR } from "./config/app.config";
 import { envValidationSchema } from "./config/env.validation";
 import { AiWorkerModule } from "./modules/ai-worker/ai-worker.module";
 import { AudioStreamModule } from "./modules/audio-stream/audio-stream.module";
+import { BillingModule } from "./modules/billing/billing.module";
 import { ClerkModule } from "./modules/clerk/clerk.module";
 import { HealthModule } from "./modules/health/health.module";
 import { LlmModule } from "./modules/llm/llm.module";
@@ -36,6 +37,7 @@ import { ProjectsModule } from "./modules/projects/projects.module";
     HealthModule,
     ClerkModule,
     AiWorkerModule,
+    BillingModule,
     MeetingsModule,
     ProjectsModule,
     AudioStreamModule,

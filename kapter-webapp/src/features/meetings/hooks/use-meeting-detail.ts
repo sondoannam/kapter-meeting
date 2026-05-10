@@ -6,6 +6,7 @@ import { createNotionAuthorizationUrl } from "@/features/projects/api/notion-api
 import { buildMeetingDetailRoute } from "@/routes/routes.constants"
 
 import {
+  deleteMeeting,
   applyContextProposal,
   approveMeetingReview,
   dismissContextProposal,
@@ -13,12 +14,14 @@ import {
   retryMeetingExtraction,
   saveMeetingReview,
   syncMeetingToNotion,
+  updateMeetingMetadata,
 } from "../api/meetings-api"
 import type {
   DashboardMeetingDetail,
   MeetingNotionSyncResult,
   MeetingsRequestStatus,
   SaveMeetingReviewRequest,
+  UpdateMeetingMetadataRequest,
 } from "../types"
 
 const LIVE_MEETING_STATUSES: ReadonlySet<string> = new Set([
@@ -123,6 +126,14 @@ export function useMeetingDetail(
     async (payload: SaveMeetingReviewRequest) =>
       runMeetingMutation((sessionToken, currentMeetingId) =>
         saveMeetingReview(sessionToken, currentMeetingId, payload)
+      ),
+    [runMeetingMutation]
+  )
+
+  const saveMetadata = React.useCallback(
+    async (payload: UpdateMeetingMetadataRequest) =>
+      runMeetingMutation((sessionToken, currentMeetingId) =>
+        updateMeetingMetadata(sessionToken, currentMeetingId, payload)
       ),
     [runMeetingMutation]
   )
@@ -243,6 +254,34 @@ export function useMeetingDetail(
     [runMeetingMutation]
   )
 
+  const removeMeeting = React.useCallback(async () => {
+    if (!meetingId || !isLoaded || !isSignedIn) {
+      return
+    }
+
+    try {
+      setErrorMessage(null)
+      const sessionToken = await getToken()
+
+      if (!sessionToken) {
+        throw new Error("Unable to mint a Clerk session token.")
+      }
+
+      await deleteMeeting(sessionToken, meetingId)
+      setMeeting(null)
+      setLastSyncResult(null)
+      setStatus("ready")
+    } catch (error) {
+      setStatus("error")
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the requested meeting."
+      )
+      throw error
+    }
+  }, [getToken, isLoaded, isSignedIn, meetingId])
+
   React.useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void refresh()
@@ -281,6 +320,7 @@ export function useMeetingDetail(
     status: authErrorMessage ? "error" : status,
     errorMessage: authErrorMessage || errorMessage,
     refresh,
+    saveMetadata,
     saveReview,
     approveReview,
     approveCurrentReview,
@@ -289,5 +329,6 @@ export function useMeetingDetail(
     connectNotion,
     applyProposal,
     dismissProposal,
+    deleteMeeting: removeMeeting,
   }
 }

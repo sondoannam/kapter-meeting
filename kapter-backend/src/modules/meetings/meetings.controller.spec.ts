@@ -193,6 +193,98 @@ void describe("MeetingsController", () => {
     });
   });
 
+  void it("deletes the requested meeting for the current Clerk user", async () => {
+    const deleteMeeting = mock.fn(async () => undefined);
+
+    const controller = new MeetingsController({
+      listMeetingHistory: mock.fn(async () => []),
+      getActiveMeeting: mock.fn(async () => null),
+      getMeetingDetail: mock.fn(async () => undefined),
+      deleteMeeting,
+    } as never);
+
+    const response = await controller.deleteMeetingForUser(
+      {
+        userId: "clerk_user_1",
+        sessionId: null,
+        authorizedParty: null,
+        claims: {},
+      },
+      "meeting_detail_1",
+    );
+
+    assert.equal(deleteMeeting.mock.callCount(), 1);
+    assert.deepEqual(deleteMeeting.mock.calls[0]?.arguments, [
+      "clerk_user_1",
+      "meeting_detail_1",
+    ]);
+    assert.deepEqual(response, {
+      deletedMeetingId: "meeting_detail_1",
+    });
+  });
+
+  void it("updates editable meeting metadata for the current Clerk user", async () => {
+    const updateMeetingMetadata = mock.fn(async () => ({
+      id: "meeting_detail_1",
+      title: "Renamed meeting",
+      status: "COMPLETED",
+      artifactReviewStatus: "READY",
+      externalMeetingId: "room-123",
+      projectId: "project_2",
+      projectTitle: "Platform Revamp",
+      createdAt: "2026-04-21T12:00:00.000Z",
+      updatedAt: "2026-04-21T12:10:00.000Z",
+      totalDurationMs: 720000,
+    }));
+
+    const controller = new MeetingsController({
+      listMeetingHistory: mock.fn(async () => []),
+      getActiveMeeting: mock.fn(async () => null),
+      getMeetingDetail: mock.fn(async () => undefined),
+      updateMeetingMetadata,
+    } as never);
+
+    const response = await controller.updateMeetingMetadataForUser(
+      {
+        userId: "clerk_user_1",
+        sessionId: null,
+        authorizedParty: null,
+        claims: {},
+      },
+      "meeting_detail_1",
+      {
+        title: "Renamed meeting",
+        externalMeetingId: "room-123",
+        projectId: "project_2",
+      },
+    );
+
+    assert.equal(updateMeetingMetadata.mock.callCount(), 1);
+    assert.deepEqual(updateMeetingMetadata.mock.calls[0]?.arguments, [
+      "clerk_user_1",
+      "meeting_detail_1",
+      {
+        title: "Renamed meeting",
+        externalMeetingId: "room-123",
+        projectId: "project_2",
+      },
+    ]);
+    assert.deepEqual(response, {
+      meeting: {
+        id: "meeting_detail_1",
+        title: "Renamed meeting",
+        status: "COMPLETED",
+        artifactReviewStatus: "READY",
+        externalMeetingId: "room-123",
+        projectId: "project_2",
+        projectTitle: "Platform Revamp",
+        createdAt: "2026-04-21T12:00:00.000Z",
+        updatedAt: "2026-04-21T12:10:00.000Z",
+        totalDurationMs: 720000,
+      },
+    });
+  });
+
   void it("syncs approved meeting action items to Notion and returns refreshed detail", async () => {
     const getMeetingDetail = mock.fn(async () => ({
       id: "meeting_detail_1",

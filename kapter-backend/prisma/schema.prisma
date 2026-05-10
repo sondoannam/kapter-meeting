@@ -23,6 +23,8 @@ model User {
   meetings         Meeting[]
   NotionConnection NotionConnection?
   projects         Project[]
+  subscription     Subscription?
+  usageLedgers     UsageLedger[]
 }
 
 model Meeting {
@@ -52,9 +54,45 @@ model Meeting {
   contextUpdateProposals  ProjectContextUpdateProposal[]
   speakers                SpeakerProfile[]
   transcript              TranscriptSegment[]
+  usageLedger             UsageLedger?
 
   @@index([externalMeetingId])
   @@index([projectId, createdAt])
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String             @unique
+  tier                   PlanTier           @default(FREE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  billingProvider        String?
+  providerCustomerId     String?
+  providerSubscriptionId String?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tier, status])
+  @@index([providerCustomerId])
+  @@index([providerSubscriptionId])
+}
+
+model UsageLedger {
+  id          String   @id @default(cuid())
+  userId      String
+  meetingId   String   @unique
+  periodStart DateTime
+  periodEnd   DateTime
+  usedSeconds Int
+  source      String   @default("meeting_capture")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodStart, periodEnd])
 }
 
 model Project {
@@ -283,4 +321,17 @@ enum MeetingArtifactDraftFinalizationStatus {
 enum NotionProjectDestinationMode {
   PROJECT_PAGE
   EXISTING_PAGE
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  TEAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
 }

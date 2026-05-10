@@ -7,6 +7,15 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 from kapter_ai_worker.core.entities import DiarizedTranscriptSegment
 
 
+def normalize_non_negative_timestamp(value: float) -> float:
+    normalized = float(value)
+
+    if normalized < 0:
+        return 0.0
+
+    return normalized
+
+
 class BackendContractModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -84,8 +93,8 @@ class WorkerTranscriptSegment(BackendContractModel):
         source_type: str | None = None,
     ) -> "WorkerTranscriptSegment":
         return cls(
-            start_time=segment.start_time,
-            end_time=segment.end_time,
+            start_time=normalize_non_negative_timestamp(segment.start_time),
+            end_time=normalize_non_negative_timestamp(segment.end_time),
             content=segment.text,
             ai_label=segment.speaker_label,
             confidence=segment.confidence,

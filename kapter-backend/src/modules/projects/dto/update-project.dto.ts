@@ -10,6 +10,14 @@ export class UpdateProjectDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  initialDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  contextMarkdown?: string;
+
+  @IsOptional()
   @IsBoolean()
   isDraft?: boolean;
 }

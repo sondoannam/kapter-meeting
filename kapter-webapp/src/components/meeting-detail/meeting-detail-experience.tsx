@@ -1,5 +1,6 @@
+import { useState } from "react"
 import { MEETING_STATUS } from "@kapter/contracts/domain"
-import { ArrowLeft, RefreshCw } from "lucide-react"
+import { ArrowLeft, LoaderCircle, RefreshCw, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
@@ -13,6 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { getMeetingWorkflowStage } from "@/features/meetings/lib/meeting-workflow-stage"
 import { buildTranscriptTurns } from "@/features/meetings/lib/transcript-turns"
 import { ROUTES } from "@/routes/routes.constants"
@@ -32,13 +41,21 @@ import type {
   MeetingsRequestStatus,
   SaveMeetingReviewRequest,
 } from "@/features/meetings/types"
+import type {
+  DashboardProjectSummary,
+  ProjectsRequestStatus,
+} from "@/features/projects/types"
+import type { UpdateMeetingMetadataRequest } from "@/features/meetings/types"
 
 interface MeetingDetailExperienceProps {
   lastSyncResult: MeetingNotionSyncResult | null
   meeting: DashboardMeetingDetail | null
   status: MeetingsRequestStatus
   errorMessage: string | null
+  projectOptions: DashboardProjectSummary[]
+  projectStatus: ProjectsRequestStatus
   onRefresh: () => Promise<void>
+  onSaveMetadata: (payload: UpdateMeetingMetadataRequest) => Promise<void>
   onSaveReview: (payload: SaveMeetingReviewRequest) => Promise<void>
   onRetryExtraction: () => Promise<void>
   onApproveCurrentReview: (payload: SaveMeetingReviewRequest) => Promise<void>
@@ -46,6 +63,7 @@ interface MeetingDetailExperienceProps {
   onConnectNotion: () => Promise<void>
   onApplyProposal: (proposalId: string) => Promise<void>
   onDismissProposal: (proposalId: string) => Promise<void>
+  onDeleteMeeting: () => Promise<void>
 }
 
 export function MeetingDetailExperience({
@@ -53,7 +71,10 @@ export function MeetingDetailExperience({
   meeting,
   status,
   errorMessage,
+  projectOptions,
+  projectStatus,
   onRefresh,
+  onSaveMetadata,
   onSaveReview,
   onRetryExtraction,
   onApproveCurrentReview,
@@ -61,8 +82,12 @@ export function MeetingDetailExperience({
   onConnectNotion,
   onApplyProposal,
   onDismissProposal,
+  onDeleteMeeting,
 }: MeetingDetailExperienceProps) {
   const { t } = useTranslation(["meeting", "common"])
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeletingMeeting, setIsDeletingMeeting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   if (status === "loading" && !meeting) {
     return <MeetingDetailLoadingState />
@@ -83,6 +108,22 @@ export function MeetingDetailExperience({
   const transcriptTurns = buildTranscriptTurns(meeting.transcriptSegments)
   const workflowStage = getMeetingWorkflowStage(meeting)
 
+  const handleDeleteMeeting = async () => {
+    setDeleteError(null)
+    setIsDeletingMeeting(true)
+
+    try {
+      await onDeleteMeeting()
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : t("detailExperience.deleteMeetingError", { ns: "meeting" })
+      )
+      setIsDeletingMeeting(false)
+    }
+  }
+
   return (
     <AppShellContainer className="flex min-h-[calc(100svh-6rem)] flex-col gap-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -93,15 +134,30 @@ export function MeetingDetailExperience({
           </Link>
         </Button>
 
-        <Button onClick={() => void onRefresh()} variant="outline">
-          <RefreshCw />
-          {t("detailExperience.refreshSnapshot", { ns: "meeting" })}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => void onRefresh()} variant="outline">
+            <RefreshCw />
+            {t("detailExperience.refreshSnapshot", { ns: "meeting" })}
+          </Button>
+          <Button
+            onClick={() => {
+              setDeleteError(null)
+              setIsDeleteDialogOpen(true)
+            }}
+            variant="destructive"
+          >
+            <Trash2 />
+            {t("detailExperience.deleteMeeting", { ns: "meeting" })}
+          </Button>
+        </div>
       </div>
 
       <MeetingDetailOverview
         isLive={isLive}
         meeting={meeting}
+        onSaveMetadata={onSaveMetadata}
+        projectOptions={projectOptions}
+        projectStatus={projectStatus}
         rawTranscriptSegmentCount={meeting.processing.transcriptSegmentCount}
         transcriptTurnCount={transcriptTurns.length}
         workflowStage={workflowStage}
@@ -171,6 +227,76 @@ export function MeetingDetailExperience({
           {errorMessage}
         </div>
       ) : null}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {t("detailExperience.deleteDialogTitle", { ns: "meeting" })}
+            </DialogTitle>
+            <DialogDescription>
+              {t("detailExperience.deleteDialogDescription", {
+                ns: "meeting",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-[1.3rem] border border-destructive/20 bg-destructive/8 px-4 py-4 dark:border-destructive/30 dark:bg-destructive/16">
+              <p className="text-[11px] font-medium tracking-[0.12em] text-destructive uppercase">
+                {t("detailExperience.deleteMeetingSignal", { ns: "meeting" })}
+              </p>
+              <p className="mt-2 text-base font-medium text-foreground">
+                {meeting.title}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {t("detailExperience.deleteMeetingHint", {
+                  ns: "meeting",
+                  project:
+                    meeting.projectTitle ??
+                    t("overview.draftProject", { ns: "meeting" }),
+                })}
+              </p>
+            </div>
+
+            {deleteError ? (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive dark:border-destructive/30 dark:bg-destructive/16 dark:text-red-200">
+                {deleteError}
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setDeleteError(null)
+              }}
+              type="button"
+              variant="outline"
+            >
+              {t("actions.cancel", { ns: "common" })}
+            </Button>
+            <Button
+              disabled={isDeletingMeeting}
+              onClick={() => void handleDeleteMeeting()}
+              type="button"
+              variant="destructive"
+            >
+              {isDeletingMeeting ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <Trash2 />
+              )}
+              {isDeletingMeeting
+                ? t("detailExperience.deletingMeeting", { ns: "meeting" })
+                : t("detailExperience.deleteMeetingConfirm", {
+                    ns: "meeting",
+                  })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShellContainer>
   )
 }
@@ -183,9 +309,11 @@ function MeetingDetailLoadingState() {
       className="min-h-[calc(100svh-8.5rem)]"
       description={t("detailExperience.loadingDescription")}
       title={t("detailExperience.loadingTitle")}
-      steps={t("detailExperience.loadingSteps", {
-        returnObjects: true,
-      }) as string[]}
+      steps={
+        t("detailExperience.loadingSteps", {
+          returnObjects: true,
+        }) as string[]
+      }
     />
   )
 }
@@ -210,7 +338,9 @@ function MeetingDetailUnavailableState({
 
       <Card className="border-border/70 bg-background/92 shadow-md shadow-foreground/5 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.84))]">
         <CardHeader>
-          <CardTitle>{t("detailExperience.unavailableTitle", { ns: "meeting" })}</CardTitle>
+          <CardTitle>
+            {t("detailExperience.unavailableTitle", { ns: "meeting" })}
+          </CardTitle>
           <CardDescription>
             {t("detailExperience.unavailableDescription", { ns: "meeting" })}
           </CardDescription>

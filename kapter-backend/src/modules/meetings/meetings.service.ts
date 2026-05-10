@@ -7,6 +7,12 @@ import {
   MEETING_STATUS,
   type AudioSourceType,
   type CaptureContext,
+  type DashboardMeetingActionItem,
+  type DashboardMeetingContextProposal,
+  type DashboardMeetingDetail,
+  type DashboardMeetingSummary,
+  type DashboardMeetingTranscriptMergeStrategy,
+  type MeetingArtifactReviewStatus,
 } from "@kapter/contracts";
 
 import { PrismaService } from "../../database/prisma.service";
@@ -23,6 +29,13 @@ interface CreateRecordingMeetingOptions {
 
 interface UpdateRecordingMeetingCaptureStateOptions {
   degradedWithoutSelfMic?: boolean;
+}
+
+interface UpdateMeetingMetadataInput {
+  title?: string;
+  description?: string | null;
+  externalMeetingId?: string | null;
+  projectId?: string;
 }
 
 const toPrismaCaptureContext = (
@@ -123,119 +136,11 @@ const buildMeetingTitle = (externalMeetingId: string | null): string => {
 const buildDraftProjectTitle = (): string =>
   `Draft Project ${new Date().toISOString()}`;
 
-export interface DashboardMeetingSummary {
-  id: string;
-  title: string;
-  status: string;
-  artifactReviewStatus: string;
-  captureContext: CaptureContext | null;
-  degradedWithoutSelfMic: boolean;
-  activeSourceTypes: AudioSourceType[];
-  externalMeetingId: string | null;
-  projectId: string | null;
-  projectTitle: string | null;
-  createdAt: string;
-  updatedAt: string;
-  totalDurationMs: number;
-}
+const normalizeOptionalText = (value?: string | null): string | null => {
+  const trimmed = value?.trim();
 
-export interface DashboardMeetingSpeaker {
-  id: string;
-  aiLabel: string;
-  realName: string | null;
-  segmentCount: number;
-  actionItemCount: number;
-}
-
-export type DashboardMeetingTranscriptMergeStrategy =
-  | "PREFERRED_SELF_MIC_DUPLICATE"
-  | "AMBIGUOUS_OVERLAP";
-
-export interface DashboardMeetingTranscriptSegment {
-  id: string;
-  speakerId: string;
-  aiLabel: string;
-  realName: string | null;
-  content: string;
-  startTime: number;
-  endTime: number;
-  sourceType: AudioSourceType | null;
-  mergeStrategy: DashboardMeetingTranscriptMergeStrategy | null;
-  mergeSourceType: AudioSourceType | null;
-}
-
-export interface DashboardMeetingActionItem {
-  id: string;
-  taskContent: string;
-  deadline: string | null;
-  status: string;
-  isSynced: boolean;
-  notionPageId: string | null;
-  assigneeId: string | null;
-  assigneeAiLabel: string | null;
-  assigneeRealName: string | null;
-  createdAt: string;
-}
-
-export interface DashboardMeetingContextProposal {
-  id: string;
-  proposedContextMarkdown: string;
-  changeSummary: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DashboardMeetingNotionWorkspace {
-  id: string;
-  name: string | null;
-  icon: string | null;
-}
-
-export interface DashboardMeetingSyncReadiness {
-  notion: {
-    connected: boolean;
-    workspace: DashboardMeetingNotionWorkspace | null;
-  };
-  projectDestination: {
-    mode: "PROJECT_PAGE" | "EXISTING_PAGE" | null;
-    projectPageId: string | null;
-    taskDatabaseId: string | null;
-  };
-  syncedActionItemCount: number;
-  unsyncedActionItemCount: number;
-}
-
-export interface DashboardMeetingProcessing {
-  totalBatches: number;
-  completedBatches: number;
-  failedBatches: number;
-  pendingBatches: number;
-  transcriptSegmentCount: number;
-  latestProcessedAt: string | null;
-}
-
-export interface DashboardMeetingArtifactProcessing {
-  totalChunks: number;
-  completedChunks: number;
-  failedChunks: number;
-  pendingChunks: number;
-  latestProcessedAt: string | null;
-  finalizationStatus: string | null;
-}
-
-export interface DashboardMeetingDetail extends DashboardMeetingSummary {
-  summary: string | null;
-  artifactExtractionError: string | null;
-  artifactApprovedAt: string | null;
-  speakers: DashboardMeetingSpeaker[];
-  transcriptSegments: DashboardMeetingTranscriptSegment[];
-  actionItems: DashboardMeetingActionItem[];
-  pendingContextProposal: DashboardMeetingContextProposal | null;
-  syncReadiness: DashboardMeetingSyncReadiness;
-  processing: DashboardMeetingProcessing;
-  artifactProcessing: DashboardMeetingArtifactProcessing;
-}
+  return trimmed ? trimmed : null;
+};
 
 const dashboardMeetingSelect = {
   id: true,
@@ -280,8 +185,9 @@ const toDashboardMeetingSummary = (meeting: {
 }): DashboardMeetingSummary => ({
   id: meeting.id,
   title: meeting.title,
-  status: meeting.status,
-  artifactReviewStatus: meeting.artifactReviewStatus,
+  status: meeting.status as DashboardMeetingSummary["status"],
+  artifactReviewStatus:
+    meeting.artifactReviewStatus as MeetingArtifactReviewStatus,
   captureContext: toContractCaptureContext(meeting.captureContext),
   degradedWithoutSelfMic: meeting.degradedWithoutSelfMic,
   activeSourceTypes: deriveDashboardActiveSourceTypes({
@@ -583,7 +489,7 @@ const toDashboardMeetingDetail = (meeting: {
       id: actionItem.id,
       taskContent: actionItem.taskContent,
       deadline: actionItem.deadline?.toISOString() ?? null,
-      status: actionItem.status,
+      status: actionItem.status as DashboardMeetingActionItem["status"],
       isSynced: actionItem.isSynced,
       notionPageId: actionItem.notionPageId,
       assigneeId: actionItem.assigneeId,
@@ -597,7 +503,8 @@ const toDashboardMeetingDetail = (meeting: {
           proposedContextMarkdown:
             meeting.contextUpdateProposals[0].proposedContextMarkdown,
           changeSummary: meeting.contextUpdateProposals[0].changeSummary,
-          status: meeting.contextUpdateProposals[0].status,
+          status: meeting.contextUpdateProposals[0]
+            .status as DashboardMeetingContextProposal["status"],
           createdAt: meeting.contextUpdateProposals[0].createdAt.toISOString(),
           updatedAt: meeting.contextUpdateProposals[0].updatedAt.toISOString(),
         }
@@ -689,6 +596,35 @@ export class MeetingsService {
     });
 
     return draftProject.id;
+  }
+
+  private async resolveExistingProjectId(
+    userId: string,
+    requestedProjectId: string,
+  ): Promise<string> {
+    const normalizedProjectId = requestedProjectId.trim();
+
+    if (!normalizedProjectId) {
+      throw new BadRequestException("Meeting projectId cannot be empty.");
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: {
+        id: normalizedProjectId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!project || project.userId !== userId) {
+      throw new NotFoundException(
+        `Project ${normalizedProjectId} was not found for the current user.`,
+      );
+    }
+
+    return project.id;
   }
 
   async createRecordingMeeting({
@@ -847,6 +783,130 @@ export class MeetingsService {
     }
 
     return toDashboardMeetingDetail(meeting);
+  }
+
+  async deleteMeeting(clerkUserId: string, meetingId: string): Promise<void> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException("Meeting not found.");
+    }
+
+    await this.prisma.meeting.delete({
+      where: {
+        id: meeting.id,
+      },
+    });
+  }
+
+  async updateMeetingMetadata(
+    clerkUserId: string,
+    meetingId: string,
+    input: UpdateMeetingMetadataInput,
+  ): Promise<DashboardMeetingDetail> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        user: {
+          is: {
+            clerkId: clerkUserId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+        projectId: true,
+        artifactReviewStatus: true,
+        actionItems: {
+          where: {
+            isSynced: true,
+          },
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException("Meeting not found.");
+    }
+
+    const data: {
+      title?: string;
+      description?: string | null;
+      externalMeetingId?: string | null;
+      projectId?: string;
+    } = {};
+
+    if (typeof input.title === "string") {
+      const trimmedTitle = input.title.trim();
+
+      if (!trimmedTitle) {
+        throw new BadRequestException("Meeting title cannot be empty.");
+      }
+
+      data.title = trimmedTitle;
+    }
+
+    if (input.description !== undefined) {
+      data.description = normalizeOptionalText(input.description);
+    }
+
+    if (input.externalMeetingId !== undefined) {
+      data.externalMeetingId = normalizeOptionalText(input.externalMeetingId);
+    }
+
+    if (input.projectId !== undefined) {
+      const normalizedProjectId = input.projectId.trim();
+
+      if (!normalizedProjectId) {
+        throw new BadRequestException("Meeting projectId cannot be empty.");
+      }
+
+      if (normalizedProjectId !== meeting.projectId) {
+        if (
+          meeting.artifactReviewStatus === "APPROVED" ||
+          meeting.actionItems.length > 0
+        ) {
+          throw new BadRequestException(
+            "Approved or synced meetings cannot be moved to another project.",
+          );
+        }
+
+        data.projectId = await this.resolveExistingProjectId(
+          meeting.userId,
+          normalizedProjectId,
+        );
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.getMeetingDetail(clerkUserId, meeting.id);
+    }
+
+    await this.prisma.meeting.update({
+      where: { id: meeting.id },
+      data,
+    });
+
+    return this.getMeetingDetail(clerkUserId, meeting.id);
   }
 
   async saveMeetingReview(

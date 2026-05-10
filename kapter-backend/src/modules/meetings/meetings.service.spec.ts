@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 import { MeetingsService } from "./meetings.service";
 
@@ -10,6 +10,7 @@ const createService = () => {
   const findUnique = mock.fn(async (_args: unknown) => null as unknown);
   const create = mock.fn(async (_args: unknown) => undefined as unknown);
   const update = mock.fn(async (_args: unknown) => undefined as unknown);
+  const remove = mock.fn(async (_args: unknown) => undefined as unknown);
   const projectFindUnique = mock.fn(async (_args: unknown) => null as unknown);
   const projectCreate = mock.fn(async (_args: unknown) => undefined as unknown);
 
@@ -20,6 +21,7 @@ const createService = () => {
       findUnique,
       create,
       update,
+      delete: remove,
     },
     project: {
       findUnique: projectFindUnique,
@@ -37,6 +39,7 @@ const createService = () => {
       findUnique,
       create,
       update,
+      delete: remove,
     },
     project: {
       findUnique: projectFindUnique,
@@ -89,6 +92,7 @@ void describe("MeetingsService", () => {
         userId: "local_user_1",
         title: "Recording abc-defg-hij",
         status: "RECORDING",
+        captureContext: undefined,
         externalMeetingId: "abc-defg-hij",
         projectId: "project_1",
       },
@@ -203,24 +207,31 @@ void describe("MeetingsService", () => {
         title: "Design Review",
         status: "COMPLETED",
         artifactReviewStatus: "READY",
+        captureContext: null,
+        degradedWithoutSelfMic: false,
         externalMeetingId: "abc-defg-hij",
         projectId: "project_1",
         project: { title: "Kapter" },
         createdAt: new Date("2026-04-21T10:00:00.000Z"),
         updatedAt: new Date("2026-04-21T10:45:00.000Z"),
-        audioBatches: [{ durationMs: 1200000 }, { durationMs: 300000 }],
+        audioBatches: [
+          { durationMs: 1200000, sourceType: null },
+          { durationMs: 300000, sourceType: null },
+        ],
       },
       {
         id: "meeting_1",
         title: "Daily Standup",
         status: "PROCESSING",
         artifactReviewStatus: "PENDING",
+        captureContext: null,
+        degradedWithoutSelfMic: false,
         externalMeetingId: null,
         projectId: "project_1",
         project: { title: "Kapter" },
         createdAt: new Date("2026-04-21T08:00:00.000Z"),
         updatedAt: new Date("2026-04-21T08:15:00.000Z"),
-        audioBatches: [{ durationMs: 900000 }],
+        audioBatches: [{ durationMs: 900000, sourceType: null }],
       },
     ]);
 
@@ -233,6 +244,9 @@ void describe("MeetingsService", () => {
         title: "Design Review",
         status: "COMPLETED",
         artifactReviewStatus: "READY",
+        captureContext: null,
+        degradedWithoutSelfMic: false,
+        activeSourceTypes: [],
         externalMeetingId: "abc-defg-hij",
         projectId: "project_1",
         projectTitle: "Kapter",
@@ -245,6 +259,9 @@ void describe("MeetingsService", () => {
         title: "Daily Standup",
         status: "PROCESSING",
         artifactReviewStatus: "PENDING",
+        captureContext: null,
+        degradedWithoutSelfMic: false,
+        activeSourceTypes: [],
         externalMeetingId: null,
         projectId: "project_1",
         projectTitle: "Kapter",
@@ -255,6 +272,51 @@ void describe("MeetingsService", () => {
     ]);
   });
 
+  void it("deletes an owned meeting and its persisted artifacts", async () => {
+    const { service, meeting } = createService();
+
+    meeting.findFirst.mock.mockImplementation(async () => ({
+      id: "meeting_1",
+    }));
+
+    await service.deleteMeeting("clerk_user_1", "meeting_1");
+
+    assert.equal(meeting.findFirst.mock.callCount(), 1);
+    assert.deepEqual(meeting.findFirst.mock.calls[0]?.arguments[0], {
+      where: {
+        id: "meeting_1",
+        user: {
+          is: {
+            clerkId: "clerk_user_1",
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    assert.equal(meeting.delete.mock.callCount(), 1);
+    assert.deepEqual(meeting.delete.mock.calls[0]?.arguments[0], {
+      where: {
+        id: "meeting_1",
+      },
+    });
+  });
+
+  void it("throws when deleting a meeting that does not belong to the current Clerk user", async () => {
+    const { service, meeting } = createService();
+
+    meeting.findFirst.mock.mockImplementation(async () => null);
+
+    await assert.rejects(
+      () => service.deleteMeeting("clerk_user_1", "missing_meeting"),
+      NotFoundException,
+    );
+
+    assert.equal(meeting.delete.mock.callCount(), 0);
+  });
+
   void it("returns the latest active dashboard meeting snapshot", async () => {
     const { service, meeting } = createService();
 
@@ -263,12 +325,17 @@ void describe("MeetingsService", () => {
       title: "Sprint Planning",
       status: "RECORDING",
       artifactReviewStatus: "PENDING",
+      captureContext: null,
+      degradedWithoutSelfMic: false,
       externalMeetingId: "planning-room",
       projectId: "project_1",
       project: { title: "Kapter" },
       createdAt: new Date("2026-04-21T12:00:00.000Z"),
       updatedAt: new Date("2026-04-21T12:05:00.000Z"),
-      audioBatches: [{ durationMs: 600000 }, { durationMs: 120000 }],
+      audioBatches: [
+        { durationMs: 600000, sourceType: null },
+        { durationMs: 120000, sourceType: null },
+      ],
     }));
 
     const activeMeeting = await service.getActiveMeeting("clerk_user_1");
@@ -279,6 +346,9 @@ void describe("MeetingsService", () => {
       title: "Sprint Planning",
       status: "RECORDING",
       artifactReviewStatus: "PENDING",
+      captureContext: null,
+      degradedWithoutSelfMic: false,
+      activeSourceTypes: [],
       externalMeetingId: "planning-room",
       projectId: "project_1",
       projectTitle: "Kapter",
@@ -306,6 +376,8 @@ void describe("MeetingsService", () => {
       artifactReviewStatus: "READY",
       artifactExtractionError: null,
       artifactApprovedAt: null,
+      captureContext: null,
+      degradedWithoutSelfMic: false,
       externalMeetingId: "planning-room",
       projectId: "project_1",
       project: {
@@ -315,7 +387,7 @@ void describe("MeetingsService", () => {
         notionTaskDatabaseId: "notion_task_db_1",
       },
       user: {
-        notionConnection: {
+        NotionConnection: {
           workspaceId: "workspace_1",
           workspaceName: "Kapter Workspace",
           workspaceIcon: "https://example.com/notion-workspace.png",
@@ -330,12 +402,14 @@ void describe("MeetingsService", () => {
           status: "COMPLETED",
           processedAt: new Date("2026-04-21T12:09:00.000Z"),
           durationMs: 120000,
+          sourceType: null,
         },
         {
           id: "batch_2",
           status: "PENDING",
           processedAt: null,
           durationMs: 60000,
+          sourceType: null,
         },
       ],
       speakers: [
@@ -356,6 +430,9 @@ void describe("MeetingsService", () => {
           startTime: 0,
           endTime: 4.2,
           speakerId: "speaker_1",
+          sourceType: null,
+          mergeStrategy: null,
+          mergeSourceType: null,
           speaker: {
             aiLabel: "Speaker 0",
             realName: null,
@@ -422,6 +499,9 @@ void describe("MeetingsService", () => {
       artifactReviewStatus: "READY",
       artifactExtractionError: null,
       artifactApprovedAt: null,
+      captureContext: null,
+      degradedWithoutSelfMic: false,
+      activeSourceTypes: [],
       externalMeetingId: "planning-room",
       projectId: "project_1",
       projectTitle: "Kapter",
@@ -448,6 +528,9 @@ void describe("MeetingsService", () => {
           content: "Let us review the sprint goals.",
           startTime: 0,
           endTime: 4.2,
+          sourceType: null,
+          mergeStrategy: null,
+          mergeSourceType: null,
         },
       ],
       actionItems: [
@@ -519,6 +602,86 @@ void describe("MeetingsService", () => {
       () => service.getMeetingDetail("clerk_user_1", "missing_meeting"),
       NotFoundException,
     );
+  });
+
+  void it("updates editable meeting metadata and reassigns the meeting before approval", async () => {
+    const { service, meeting, project } = createService();
+
+    meeting.findFirst.mock.mockImplementation(async () => ({
+      id: "meeting_1",
+      userId: "local_user_1",
+      projectId: "project_1",
+      artifactReviewStatus: "READY",
+      actionItems: [],
+    }));
+    project.findUnique.mock.mockImplementation(async () => ({
+      id: "project_2",
+      userId: "local_user_1",
+    }));
+
+    const getMeetingDetail = mock.method(
+      service,
+      "getMeetingDetail",
+      async () =>
+        ({
+          id: "meeting_1",
+          title: "Renamed meeting",
+          status: "COMPLETED",
+        }) as never,
+    );
+
+    await service.updateMeetingMetadata("clerk_user_1", "meeting_1", {
+      title: " Renamed meeting ",
+      description: " Updated notes ",
+      externalMeetingId: " ext-room-123 ",
+      projectId: " project_2 ",
+    });
+
+    assert.equal(project.findUnique.mock.callCount(), 1);
+    assert.deepEqual(project.findUnique.mock.calls[0]?.arguments[0], {
+      where: {
+        id: "project_2",
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+    assert.equal(meeting.update.mock.callCount(), 1);
+    assert.deepEqual(meeting.update.mock.calls[0]?.arguments[0], {
+      where: {
+        id: "meeting_1",
+      },
+      data: {
+        title: "Renamed meeting",
+        description: "Updated notes",
+        externalMeetingId: "ext-room-123",
+        projectId: "project_2",
+      },
+    });
+    assert.equal(getMeetingDetail.mock.callCount(), 1);
+  });
+
+  void it("blocks meeting project reassignment after approval", async () => {
+    const { service, meeting } = createService();
+
+    meeting.findFirst.mock.mockImplementation(async () => ({
+      id: "meeting_1",
+      userId: "local_user_1",
+      projectId: "project_1",
+      artifactReviewStatus: "APPROVED",
+      actionItems: [],
+    }));
+
+    await assert.rejects(
+      () =>
+        service.updateMeetingMetadata("clerk_user_1", "meeting_1", {
+          projectId: "project_2",
+        }),
+      BadRequestException,
+    );
+
+    assert.equal(meeting.update.mock.callCount(), 0);
   });
 
   void it("returns immediately after scheduling retry extraction in the background", async () => {

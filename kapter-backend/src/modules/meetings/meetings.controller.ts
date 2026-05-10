@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import type { ClerkSessionAuth } from "../clerk/clerk-auth.service";
 import { CurrentUser } from "../clerk/current-user.decorator";
 import { NotionService } from "../notion/notion.service";
 import { SaveMeetingReviewDto } from "./dto/save-meeting-review.dto";
+import { UpdateMeetingMetadataDto } from "./dto/update-meeting-metadata.dto";
 import { MeetingsService } from "./meetings.service";
 
 @ApiTags("meetings")
@@ -63,6 +65,39 @@ export class MeetingsController {
     };
   }
 
+  @Delete(":meetingId")
+  @ApiOperation({
+    summary: "Delete one meeting and its persisted artifacts for the authenticated user",
+  })
+  async deleteMeetingForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("meetingId") meetingId: string,
+  ) {
+    await this.meetingsService.deleteMeeting(currentUser.userId, meetingId);
+
+    return {
+      deletedMeetingId: meetingId,
+    };
+  }
+
+  @Patch(":meetingId")
+  @ApiOperation({
+    summary: "Update editable meeting metadata for the authenticated user",
+  })
+  async updateMeetingMetadataForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("meetingId") meetingId: string,
+    @Body() body: UpdateMeetingMetadataDto,
+  ) {
+    return {
+      meeting: await this.meetingsService.updateMeetingMetadata(
+        currentUser.userId,
+        meetingId,
+        body,
+      ),
+    };
+  }
+
   @Patch(":meetingId/review")
   @ApiOperation({
     summary: "Save edited meeting summary and action items before approval",
@@ -83,7 +118,8 @@ export class MeetingsController {
 
   @Post(":meetingId/review/approve")
   @ApiOperation({
-    summary: "Approve the current meeting artifacts and propose context updates",
+    summary:
+      "Approve the current meeting artifacts and propose context updates",
   })
   async approveMeetingReviewForUser(
     @CurrentUser() currentUser: ClerkSessionAuth,

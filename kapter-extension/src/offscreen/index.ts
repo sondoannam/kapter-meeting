@@ -58,6 +58,7 @@ interface PcmCapturePipeline {
   chunkFrameTarget: number;
   mimeType: string;
   sampleRate: number;
+  playbackElement?: HTMLAudioElement;
 }
 
 interface ActiveCaptureSource {
@@ -76,6 +77,7 @@ let queuedChunks: QueuedChunk[] = [];
 let chunkProcessorEpoch: number | null = null;
 let chunkProcessorPromise: Promise<void> | null = null;
 let stopInProgress = false;
+let lastKnownMeetLocalMicState: MeetLocalMicState = "unknown";
 
 function sendDebug(message: string): void {
   console.log(`[offscreen] ${message}`);
@@ -358,6 +360,12 @@ function clearQueuedChunks(epoch?: number): void {
   queuedChunks = [];
 }
 
+function clearQueuedChunksForSource(sourceType: AudioSourceType): void {
+  queuedChunks = queuedChunks.filter(
+    (chunk) => chunk.sourceType !== sourceType,
+  );
+}
+
 async function connectTransportSocket(initialToken: string): Promise<Socket> {
   let currentToken = initialToken;
 
@@ -396,7 +404,9 @@ async function connectTransportSocket(initialToken: string): Promise<Socket> {
           // Socket.io will automatically retry with the new token because auth is a function
         }
       } else {
-        sendDebug("Silent refresh failed. Recording might stop if connection cannot be recovered.");
+        sendDebug(
+          "Silent refresh failed. Recording might stop if connection cannot be recovered.",
+        );
       }
     }
   });
@@ -446,7 +456,9 @@ function attachDisconnectListener(socket: Socket): void {
     if (reason === "io server disconnect") {
       // The server kicked us. This might be due to an expired session.
       // We'll try to refresh the token and reconnect manually once.
-      sendDebug("Server-side disconnect detected, attempting one-time manual reconnect with fresh auth...");
+      sendDebug(
+        "Server-side disconnect detected, attempting one-time manual reconnect with fresh auth...",
+      );
       void (async () => {
         const refreshResult = await chrome.runtime.sendMessage({
           type: "AUTH_REFRESH_TOKEN",
@@ -531,7 +543,9 @@ async function emitWithAck(
   });
 }
 
-async function createCapturedTabStream(tabStreamId: string): Promise<MediaStream> {
+async function createCapturedTabStream(
+  tabStreamId: string,
+): Promise<MediaStream> {
   let stream: MediaStream | null = null;
 
   try {
@@ -650,6 +664,15 @@ function handlePcmAudioProcess(
     return;
   }
 
+  if (
+    sourceType === SELF_MIC_AUDIO_SOURCE_TYPE &&
+    lastKnownMeetLocalMicState === "muted"
+  ) {
+    pipeline.bufferedChunks = [];
+    pipeline.bufferedFrameCount = 0;
+    return;
+  }
+
   const monoSamples = mixInputBufferToMono(event.inputBuffer);
 
   if (monoSamples.length === 0) {
@@ -672,6 +695,17 @@ async function processQueuedChunks(epoch: number): Promise<void> {
     }
 
     const nextChunk = queuedChunks[nextChunkIndex];
+
+    if (
+      nextChunk.sourceType === SELF_MIC_AUDIO_SOURCE_TYPE &&
+      lastKnownMeetLocalMicState === "muted"
+    ) {
+      queuedChunks.splice(nextChunkIndex, 1);
+      sendDebug(
+        `Dropped queued self-mic chunk #${nextChunk.sequence} because the local Meet microphone is muted.`,
+      );
+      continue;
+    }
 
     try {
       const socket = transportSocket;
@@ -758,7 +792,9 @@ async function processQueuedChunks(epoch: number): Promise<void> {
         /disconnected before acknowledging/i.test(errorMessage) ||
         /transport is unavailable/i.test(errorMessage)
       ) {
-        sendDebug(`Chunk #${nextChunk.sequence} failed due to disconnect. Retrying...`);
+        sendDebug(
+          `Chunk #${nextChunk.sequence} failed due to disconnect. Retrying...`,
+        );
         await new Promise((resolve) => setTimeout(resolve, 500));
         continue;
       }
@@ -786,9 +822,24 @@ async function setupPcmCapturePipeline(
     PCM_CHANNEL_COUNT,
   );
   const outputNode = audioContext.createGain();
-  outputNode.gain.value = 0;
+  // Chỉ phát lại âm thanh của tab để người dùng có thể nghe thấy cuộc họp.
+  // Không phát lại âm thanh từ mic của chính họ để tránh bị vọng âm (echo).
+  outputNode.gain.value = sourceType === "tab_mix" ? 1 : 0;
 
   const sampleRate = audioContext.sampleRate;
+  
+  let playbackElement: HTMLAudioElement | undefined;
+  if (sourceType === "tab_mix") {
+    playbackElement = document.createElement("audio");
+    playbackElement.srcObject = stream;
+    playbackElement.autoplay = true;
+    playbackElement.muted = false;
+    document.body.appendChild(playbackElement);
+    playbackElement.play().catch(() => {
+      sendDebug("Failed to play tab_mix audio element automatically.");
+    });
+  }
+
   const pipeline: PcmCapturePipeline = {
     sourceType,
     audioContext,
@@ -803,18 +854,97 @@ async function setupPcmCapturePipeline(
     ),
     mimeType: buildPcmMimeType(sampleRate),
     sampleRate,
+    playbackElement,
   };
 
   processorNode.onaudioprocess = (event) => {
     handlePcmAudioProcess(sourceType, event);
   };
   sourceNode.connect(processorNode);
-  processorNode.connect(outputNode);
+  // ScriptProcessorNode vẫn cần được connect tới destination để sự kiện onaudioprocess luôn chạy trên Chrome
+  processorNode.connect(audioContext.destination);
+  
+  // Vẫn connect Web Audio API để tránh lỗi, nhưng âm lượng đã được mute trong outputNode
+  sourceNode.connect(outputNode);
   outputNode.connect(audioContext.destination);
 
   sendDebug(`PCM capture started for ${sourceType} at ${sampleRate} Hz.`);
 
   return pipeline;
+}
+
+async function stopSourceCapture(
+  sourceType: AudioSourceType,
+  options?: {
+    discardBufferedAudio?: boolean;
+    clearQueuedAudio?: boolean;
+  },
+): Promise<void> {
+  const source = getActiveSource(sourceType);
+
+  if (!source) {
+    return;
+  }
+
+  if (options?.clearQueuedAudio) {
+    clearQueuedChunksForSource(sourceType);
+  }
+
+  if (source.pipeline) {
+    const pipeline = source.pipeline;
+
+    if (options?.discardBufferedAudio) {
+      pipeline.bufferedChunks = [];
+      pipeline.bufferedFrameCount = 0;
+    } else {
+      flushBufferedPcmChunk(sourceType, true);
+    }
+
+    source.pipeline = null;
+    pipeline.processorNode.onaudioprocess = null;
+    pipeline.sourceNode.disconnect();
+    pipeline.processorNode.disconnect();
+    pipeline.outputNode.disconnect();
+    await pipeline.audioContext.close().catch(() => undefined);
+    sendDebug(
+      `PCM capture stopped for ${sourceType} after ${source.nextSequence} chunk(s).`,
+    );
+  }
+
+  if (source.stream) {
+    source.stream.getTracks().forEach((track) => track.stop());
+    source.stream = null;
+  }
+
+  delete activeSources[sourceType];
+}
+
+async function handleMeetLocalMicStateChanged(
+  state: MeetLocalMicState,
+): Promise<void> {
+  lastKnownMeetLocalMicState = state;
+
+  const session = activeSession;
+
+  if (!session || session.captureContext !== "google_meet_room") {
+    return;
+  }
+
+  if (state !== "muted") {
+    return;
+  }
+
+  if (!getActiveSource(SELF_MIC_AUDIO_SOURCE_TYPE)) {
+    return;
+  }
+
+  await stopSourceCapture(SELF_MIC_AUDIO_SOURCE_TYPE, {
+    discardBufferedAudio: true,
+    clearQueuedAudio: true,
+  });
+  sendDebug(
+    "Google Meet local microphone is muted; dropped recorder microphone capture for the active session.",
+  );
 }
 
 async function stopCapturePipelineGracefully(): Promise<void> {
@@ -835,6 +965,13 @@ async function stopCapturePipelineGracefully(): Promise<void> {
     pipeline.sourceNode.disconnect();
     pipeline.processorNode.disconnect();
     pipeline.outputNode.disconnect();
+    
+    if (pipeline.playbackElement) {
+      pipeline.playbackElement.pause();
+      pipeline.playbackElement.srcObject = null;
+      pipeline.playbackElement.remove();
+    }
+
     await pipeline.audioContext.close().catch(() => undefined);
     sendDebug(
       `PCM capture stopped for ${source.sourceType} after ${source.nextSequence} chunk(s).`,
@@ -848,6 +985,11 @@ function releaseCaptureResources(): void {
   )) {
     if (source.pipeline) {
       source.pipeline.processorNode.onaudioprocess = null;
+      if (source.pipeline.playbackElement) {
+        source.pipeline.playbackElement.pause();
+        source.pipeline.playbackElement.srcObject = null;
+        source.pipeline.playbackElement.remove();
+      }
       source.pipeline.sourceNode.disconnect();
       source.pipeline.processorNode.disconnect();
       source.pipeline.outputNode.disconnect();
@@ -875,6 +1017,7 @@ function releaseCaptureResources(): void {
   clearQueuedChunks();
   chunkProcessorEpoch = null;
   chunkProcessorPromise = null;
+  lastKnownMeetLocalMicState = "unknown";
 }
 
 async function handleFatalError(
@@ -916,6 +1059,7 @@ async function startCapture(payload: OffscreenStartPayload): Promise<void> {
     ...payload,
     epoch: ++sessionEpoch,
   };
+  lastKnownMeetLocalMicState = payload.meetLocalMicState ?? "unknown";
   activeSources = {};
   registerActiveSource(DEFAULT_AUDIO_SOURCE_TYPE, {
     stream,
@@ -1071,6 +1215,20 @@ chrome.runtime.onMessage.addListener(
             error instanceof Error ? error.message : String(error);
           void handleFatalError(errorMessage, streamId);
         });
+        break;
+      }
+
+      case "OFFSCREEN_MEET_LOCAL_MIC_STATE_CHANGED": {
+        const state = message.payload?.state;
+
+        if (state === "muted" || state === "unmuted" || state === "unknown") {
+          void handleMeetLocalMicStateChanged(state).catch((error: unknown) => {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            void handleFatalError(errorMessage, activeSession?.streamId);
+          });
+        }
+
         break;
       }
 
