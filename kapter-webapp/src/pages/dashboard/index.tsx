@@ -3,18 +3,19 @@ import { useSearchParams } from "react-router"
 
 import { AppShellContainer } from "@/components/app-shell-container"
 import { useActiveMeeting } from "@/features/meetings/hooks/use-active-meeting"
-import { useMeetingHistory } from "@/features/meetings/hooks/use-meeting-history"
+import { useDashboardMeetingHistory } from "@/features/meetings/context/dashboard-meeting-history"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 import { DashboardMetricGrid } from "@/components/dashboard/dashboard-metric-grid"
 import { DashboardNotionCallbackBanner } from "@/components/dashboard/dashboard-notion-callback-banner"
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header"
-import { DashboardProjectSetupAccordion } from "@/components/dashboard/dashboard-project-setup-accordion"
+import { DashboardProjectSetupSection } from "@/components/dashboard/dashboard-project-setup-section"
 import { ErrorBanner } from "@/components/dashboard/error-banner"
 import { MeetingPanel } from "@/components/dashboard/meeting-panel"
 import { ProjectPanel } from "@/components/dashboard/project-panel"
 import { ActiveSessionBanner } from "@/features/meetings/components/active-session-banner"
 
 import type { DashboardMeetingSummary } from "@/features/meetings/types"
+import { scrollToSection } from "@/lib/utils"
 
 type MeetingStatusFilter = "all" | DashboardMeetingSummary["status"]
 type MeetingReviewFilter =
@@ -33,15 +34,22 @@ export default function Dashboard() {
   const {
     meetings,
     status: historyStatus,
+    activeMeetingDeleteId,
+    deleteMeeting,
     refresh: refreshMeetingHistory,
-  } = useMeetingHistory()
+  } = useDashboardMeetingHistory()
   const {
     projects,
     status: projectsStatus,
     errorMessage: projectsErrorMessage,
     isCreating,
+    activeProjectUpdateId,
+    activeProjectDeleteId,
     refresh: refreshProjects,
     createProject,
+    getProjectDetail,
+    updateProject,
+    deleteProject,
     notionConnection,
     notionStatus,
     notionErrorMessage,
@@ -278,9 +286,8 @@ export default function Dashboard() {
         />
       ) : null}
 
-      <DashboardProjectSetupAccordion
+      <DashboardProjectSetupSection
         activeNotionProjectId={activeNotionProjectId}
-        errorMessage={projectsErrorMessage}
         isConnectingNotion={isConnectingNotion}
         isCreating={isCreating}
         notionConnection={notionConnection}
@@ -290,11 +297,11 @@ export default function Dashboard() {
         onConfigureProjectNotionDestination={configureProjectNotionDestination}
         onConnectNotion={connectNotion}
         onCreateProject={createProject}
-        onRefresh={refreshProjects}
         onRefreshNotion={refreshNotionConnection}
+        onRefreshProjects={refreshProjects}
         onSearchNotionPages={searchNotionPages}
         projects={projects}
-        status={projectsStatus}
+        selectedProjectId={effectiveSelectedProjectId}
       />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -307,9 +314,11 @@ export default function Dashboard() {
           />
 
           <MeetingPanel
+            activeMeetingDeleteId={activeMeetingDeleteId}
             filtersActive={hasActiveFilters}
             meetings={filteredMeetings}
             onClearFilters={clearFilters}
+            onDeleteMeeting={deleteMeeting}
             onRefresh={refreshMeetingHistory}
             onReviewFilterChange={handleReviewFilterChange}
             onSearchQueryChange={setSearchQuery}
@@ -323,14 +332,26 @@ export default function Dashboard() {
         </div>
 
         <ProjectPanel
+          activeProjectDeleteId={activeProjectDeleteId}
+          activeProjectUpdateId={activeProjectUpdateId}
+          errorMessage={projectsErrorMessage}
           networkError={historyStatus === "error"}
           notionConnection={notionConnection}
+          onDeleteProject={async (projectId) => {
+            const deletedProjectId = await deleteProject(projectId)
+            await Promise.all([refreshMeetingHistory(), refreshActiveMeeting()])
+            return deletedProjectId
+          }}
+          onGetProjectDetail={getProjectDetail}
           onSelectProjectId={(projectId) => {
             setActiveMetricId("all")
             setSelectedProjectId(projectId)
+            scrollToSection("notion-setup-section")
           }}
+          onUpdateProject={updateProject}
           projects={projects}
           selectedProjectId={effectiveSelectedProjectId}
+          status={projectsStatus}
         />
       </div>
     </AppShellContainer>

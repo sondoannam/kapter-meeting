@@ -332,51 +332,6 @@
     background: var(--color-primary);
   }
 
-  .dashboard-sidebar-item {
-    cursor: pointer;
-    border-radius: 1rem;
-    color: var(--color-tx2);
-    transition:
-      background 0.12s,
-      color 0.12s,
-      border-color 0.12s,
-      transform 0.12s;
-  }
-
-  .dashboard-sidebar-item:hover {
-    background: color-mix(in oklch, var(--color-surface2) 82%, white 18%);
-    color: var(--color-tx);
-    transform: translateY(-1px);
-  }
-
-  .dashboard-sidebar-item.active {
-    border-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
-    background: var(--color-accent-bg);
-    color: var(--color-primary);
-    font-weight: 500;
-    box-shadow: 0 16px 38px -30px rgba(194, 65, 12, 0.52);
-  }
-
-  .dashboard-sidebar-item.active .dashboard-sidebar-badge {
-    background: var(--color-primary);
-    color: var(--color-primary-foreground);
-  }
-
-  .dashboard-sidebar-badge {
-    background: color-mix(in oklch, var(--color-surface2) 86%, white 14%);
-    color: var(--color-tx3);
-  }
-
-  .dashboard-sidebar-add {
-    color: var(--color-tx3);
-    font-size: 12px;
-  }
-
-  .dashboard-sidebar-add:hover {
-    background: var(--color-accent-bg);
-    color: var(--color-primary);
-  }
-
   .dashboard-metric-card {
     cursor: pointer;
     transition:
