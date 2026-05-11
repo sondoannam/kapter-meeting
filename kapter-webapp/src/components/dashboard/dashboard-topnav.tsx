@@ -1,4 +1,3 @@
-import { Link } from "react-router"
 import { UserButton } from "@clerk/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -7,7 +6,6 @@ import { AppShellContainer } from "@/components/app-shell-container"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { ROUTES } from "@/routes/routes.constants"
 
 export function DashboardTopNav() {
   const { t } = useTranslation(["common", "dashboardShell"])
