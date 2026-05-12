@@ -7,11 +7,9 @@ import { ROUTES } from "@/routes/routes.constants"
 import { AppLoadingScreen } from "@/components/app-loading-screen"
 import { DashboardTopNav } from "@/components/dashboard/dashboard-topnav"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { DashboardMeetingHistoryProvider } from "@/features/meetings/context/dashboard-meeting-history-context"
+import { Toaster } from "@/components/ui/sonner"
 
 export default function DashboardLayout() {
   const { userId, isLoaded } = useAuth()
@@ -59,6 +57,7 @@ export default function DashboardLayout() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <Toaster position="top-right" />
     </DashboardMeetingHistoryProvider>
   )
 }

@@ -10,6 +10,81 @@
     "meetingsCount": "{{count}} meetings",
     "projectsCount": "{{count}} projects"
   },
+  "modeSwitch": {
+    "openGuided": "View beginner dashboard"
+  },
+  "coachmark": {
+    "title": "Need a simpler first-run view?",
+    "description": "You are still early in the workflow. Switch back to the beginner dashboard for a calmer, step-by-step surface.",
+    "dismiss": "Dismiss"
+  },
+  "guided": {
+    "badge": "Beginner view",
+    "eyebrow": "Guided onboarding",
+    "title": "Get to your first reviewed meeting",
+    "description": "Kapter keeps this page focused on the next useful action so first-time users do not have to learn the whole operations dashboard at once.",
+    "switchToStandard": "Open standard dashboard",
+    "standardHint": "Move to the standard dashboard anytime for full filters, project setup, and Notion destination management.",
+    "stepNumber": "Step {{value}}",
+    "currentStep": "Current",
+    "steps": {
+      "extension": {
+        "title": "Install the extension",
+        "description": "Use the extension to create the first meeting record and send it back here."
+      },
+      "capture": {
+        "title": "Capture the meeting",
+        "description": "Join Google Meet, start recording, and let Kapter process the session."
+      },
+      "review": {
+        "title": "Review the AI output",
+        "description": "Open the meeting detail page, confirm the summary, and approve the action items."
+      },
+      "handoff": {
+        "title": "Move into operations",
+        "description": "Use the standard dashboard for deeper project management, queue work, and Notion setup."
+      }
+    },
+    "primary": {
+      "title": "Your next step",
+      "subtitle": "One action at a time. Finish this step and Kapter will move you forward.",
+      "installLabel": "Start here",
+      "meetingLabel": "Continue here",
+      "handoffLabel": "Ready for handoff",
+      "installTitle": "Install the extension before your first capture",
+      "installDescription": "The extension creates the first meeting record and brings it back here for review.",
+      "installAction": "Download test extension",
+      "confirmInstallAction": "I have installed it",
+      "installAdvanceHint": "Kapter cannot inspect Chrome's extension list from the dashboard alone. If auto-detection does not happen right after you install the extension, refresh this dashboard tab or use “I have installed it” to move to the capture step.",
+      "reviewTitle": "Review your first ready meeting",
+      "reviewDescription": "{{title}} is ready for human review. Open it now to check the summary and action items.",
+      "reviewAction": "Open review workspace",
+      "captureSetupTitle": "Open Google Meet and start your first capture",
+      "captureSetupDescription": "Now that the extension is installed, open Google Meet, pin Kapter in Chrome, and start recording. The first meeting will appear here automatically once capture begins.",
+      "captureSetupAction": "Open Google Meet",
+      "backToInstallAction": "Back to install step",
+      "captureSetupBackHint": "If you still need to re-download the extension or reopen the setup instructions, go back to the install step.",
+      "extensionDetectedTitle": "Extension detected on this dashboard tab",
+      "extensionDetectedHint": "Kapter received a live response from the extension, so you can go straight to Google Meet and start the first capture.",
+      "captureTitle": "Keep the first capture moving",
+      "captureDescription": "{{title}} is still recording or processing. Open it to monitor progress and stay close to the workflow.",
+      "captureAction": "Open live meeting",
+      "latestTitle": "Open the latest meeting and continue",
+      "latestDescription": "{{title}} is the best next surface to keep your first workflow moving forward.",
+      "latestAction": "Open latest meeting",
+      "handoffTitle": "You are ready for the full operations dashboard",
+      "handoffDescription": "You already have a reviewed meeting. Move into the standard dashboard for project management, Notion setup, and the full meeting queue."
+    },
+    "secondaryTitle": "What stays in the standard dashboard",
+    "secondaryDescription": "Project setup, Notion destinations, and deeper filters stay in the operations view so this beginner surface can stay focused.",
+    "secondaryProject": "Project brief and setup",
+    "secondaryNotion": "Notion connection and sync setup",
+    "recent": {
+      "title": "Recent meetings",
+      "description": "Keep the last few sessions nearby without opening the full filtered workspace.",
+      "empty": "Once the extension creates the first meeting, the latest sessions will appear here."
+    }
+  },
   "metrics": {
     "live": {
       "label": "In flight",
