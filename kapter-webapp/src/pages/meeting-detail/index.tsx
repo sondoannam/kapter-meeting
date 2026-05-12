@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router"
 
 import { MeetingDetailExperience } from "@/components/meeting-detail/meeting-detail-experience"
+import { setStoredDashboardMode } from "@/features/dashboard/lib/dashboard-mode"
 import { useMeetingDetail } from "@/features/meetings/hooks/use-meeting-detail"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 
@@ -33,7 +34,10 @@ export default function MeetingDetailPage() {
       lastSyncResult={lastSyncResult}
       meeting={meeting}
       onApplyProposal={applyProposal}
-      onApproveCurrentReview={approveCurrentReview}
+      onApproveCurrentReview={async (payload) => {
+        await approveCurrentReview(payload)
+        setStoredDashboardMode("standard")
+      }}
       onConnectNotion={connectNotion}
       onDeleteMeeting={async () => {
         await deleteMeeting()

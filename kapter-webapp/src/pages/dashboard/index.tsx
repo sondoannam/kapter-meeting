@@ -2,6 +2,7 @@ import * as React from "react"
 import { useSearchParams } from "react-router"
 
 import { AppShellContainer } from "@/components/app-shell-container"
+import { GuidedDashboard } from "@/components/dashboard/guided-dashboard"
 import { useActiveMeeting } from "@/features/meetings/hooks/use-active-meeting"
 import { useDashboardMeetingHistory } from "@/features/meetings/context/dashboard-meeting-history"
 import { useProjects } from "@/features/projects/hooks/use-projects"
@@ -12,7 +13,10 @@ import { DashboardProjectSetupSection } from "@/components/dashboard/dashboard-p
 import { ErrorBanner } from "@/components/dashboard/error-banner"
 import { MeetingPanel } from "@/components/dashboard/meeting-panel"
 import { ProjectPanel } from "@/components/dashboard/project-panel"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ActiveSessionBanner } from "@/features/meetings/components/active-session-banner"
+import { useDashboardMode } from "@/features/dashboard/hooks/use-dashboard-mode"
 
 import type { DashboardMeetingSummary } from "@/features/meetings/types"
 import { scrollToSection } from "@/lib/utils"
@@ -85,6 +89,23 @@ export default function Dashboard() {
     }
   }, [sidebarStatus])
   const effectiveMetricId = sidebarMetricId ?? activeMetricId
+  const hasApprovedReview = React.useMemo(
+    () =>
+      meetings.some((meeting) => meeting.artifactReviewStatus === "APPROVED"),
+    [meetings]
+  )
+  const {
+    coachmarkDismissed,
+    dismissCoachmark,
+    hasStoredMode,
+    mode: dashboardMode,
+    setMode: setDashboardMode,
+  } = useDashboardMode(hasApprovedReview)
+  const shouldForceStandardMode =
+    sidebarMetricId !== null || notionCallbackStatus !== null
+  const effectiveDashboardMode = shouldForceStandardMode
+    ? "standard"
+    : dashboardMode
 
   const activeMeetingKey = activeMeeting
     ? `${activeMeeting.id}:${activeMeeting.status}`
@@ -260,12 +281,75 @@ export default function Dashboard() {
     searchQuery.trim().length > 0 ||
     statusFilter !== "all" ||
     reviewFilter !== "all"
+  const showGuidedCoachmark =
+    effectiveDashboardMode === "standard" &&
+    dashboardMode === "standard" &&
+    !hasApprovedReview &&
+    !coachmarkDismissed
+
+  const openGuidedDashboard = React.useCallback(() => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+
+    nextSearchParams.delete("sidebar_status")
+    nextSearchParams.delete("notion_status")
+    nextSearchParams.delete("reason")
+
+    setSearchParams(nextSearchParams, { replace: true })
+    setDashboardMode("guided")
+  }, [searchParams, setDashboardMode, setSearchParams])
+
+  const openStandardDashboard = React.useCallback(() => {
+    dismissCoachmark()
+    setDashboardMode("standard")
+  }, [dismissCoachmark, setDashboardMode])
+
+  if (
+    !shouldForceStandardMode &&
+    !hasStoredMode &&
+    historyStatus === "loading"
+  ) {
+    return (
+      <AppShellContainer className="space-y-5 py-6">
+        <Card
+          className="rounded-[1.85rem] border border-border/70 bg-white/82 py-0 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.36)] dark:border-white/10 dark:bg-white/5"
+          size="sm"
+        >
+          <CardContent className="space-y-4 p-5 sm:p-6">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-10 w-72 max-w-full" />
+            <Skeleton className="h-20 w-full" />
+            <div className="grid gap-3 lg:grid-cols-4">
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </AppShellContainer>
+    )
+  }
+
+  if (effectiveDashboardMode === "guided") {
+    return (
+      <GuidedDashboard
+        activeMeeting={activeMeeting}
+        meetings={meetings}
+        meetingsStatus={historyStatus}
+        onRefreshMeetings={refreshMeetingHistory}
+        onSwitchToStandard={openStandardDashboard}
+      />
+    )
+  }
 
   return (
     <AppShellContainer className="space-y-5 py-6">
       <DashboardPageHeader
         meetingCount={meetings.length}
+        onDismissGuidedCoachmark={dismissCoachmark}
+        onOpenGuidedDashboard={openGuidedDashboard}
         projectCount={projects.length}
+        showGuidedCoachmark={showGuidedCoachmark}
       />
 
       {historyStatus === "error" && (

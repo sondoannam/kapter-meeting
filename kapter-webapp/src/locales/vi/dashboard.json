@@ -10,6 +10,79 @@
     "meetingsCount": "{{count}} cuộc họp",
     "projectsCount": "{{count}} dự án"
   },
+  "modeSwitch": {
+    "openGuided": "Xem dashboard cho người mới"
+  },
+  "coachmark": {
+    "title": "Muốn một bề mặt dễ bắt đầu hơn?",
+    "description": "Bạn vẫn đang ở giai đoạn đầu của workflow. Hãy quay lại dashboard cho người mới để đi từng bước rõ ràng hơn.",
+    "dismiss": "Ẩn nhắc nhở"
+  },
+  "guided": {
+    "badge": "Chế độ người mới",
+    "eyebrow": "Luồng hướng dẫn",
+    "title": "Đi đến cuộc họp đầu tiên đã được duyệt",
+    "description": "Kapter giữ trang này tập trung vào bước hữu ích tiếp theo để người mới không phải học toàn bộ dashboard vận hành ngay từ đầu.",
+    "switchToStandard": "Mở dashboard tiêu chuẩn",
+    "standardHint": "Bạn có thể chuyển sang dashboard tiêu chuẩn bất cứ lúc nào để dùng bộ lọc đầy đủ, thiết lập dự án và quản lý đích Notion.",
+    "stepNumber": "Bước {{value}}",
+    "currentStep": "Hiện tại",
+    "steps": {
+      "extension": {
+        "title": "Cài extension",
+        "description": "Dùng extension để tạo bản ghi cuộc họp đầu tiên và đưa nó quay lại đây."
+      },
+      "capture": {
+        "title": "Ghi lại cuộc họp",
+        "description": "Vào Google Meet, bắt đầu ghi và để Kapter xử lý phiên họp."
+      },
+      "review": {
+        "title": "Duyệt đầu ra của AI",
+        "description": "Mở trang chi tiết cuộc họp, xác nhận tóm tắt và duyệt các action item."
+      },
+      "handoff": {
+        "title": "Chuyển sang chế độ vận hành",
+        "description": "Dùng dashboard tiêu chuẩn cho quản lý dự án sâu hơn, xử lý hàng chờ và thiết lập Notion."
+      }
+    },
+    "primary": {
+      "title": "Bước tiếp theo dành cho bạn",
+      "subtitle": "Làm từng việc một. Xong bước này rồi Kapter sẽ đẩy bạn sang bước tiếp theo.",
+      "installLabel": "Bắt đầu ở đây",
+      "meetingLabel": "Tiếp tục ở đây",
+      "handoffLabel": "Sẵn sàng bàn giao",
+      "installTitle": "Cài extension trước khi ghi cuộc họp đầu tiên",
+      "installDescription": "Extension sẽ tạo bản ghi cuộc họp đầu tiên và đưa nó quay lại đây để review.",
+      "installAction": "Tải extension thử nghiệm",
+      "confirmInstallAction": "Tôi đã cài xong",
+      "installAdvanceHint": "Từ dashboard, Kapter không thể tự xem danh sách extension trong Chrome. Sau khi nạp extension vào trình duyệt, hãy dùng nút “Tôi đã cài xong” để chuyển sang bước ghi cuộc họp.",
+      "reviewTitle": "Duyệt cuộc họp đầu tiên đã sẵn sàng",
+      "reviewDescription": "{{title}} đã sẵn sàng cho bước review của con người. Hãy mở ngay để kiểm tra tóm tắt và action item.",
+      "reviewAction": "Mở không gian review",
+      "captureSetupTitle": "Mở Google Meet và bắt đầu lần ghi đầu tiên",
+      "captureSetupDescription": "Bây giờ extension đã được cài, hãy mở Google Meet, ghim Kapter trong Chrome và bắt đầu ghi. Cuộc họp đầu tiên sẽ tự xuất hiện tại đây khi quá trình capture bắt đầu.",
+      "captureSetupAction": "Mở Google Meet",
+      "backToInstallAction": "Quay lại bước cài đặt",
+      "captureSetupBackHint": "Nếu bạn cần tải lại extension hoặc mở lại hướng dẫn cài đặt, hãy quay lại bước cài extension.",
+      "captureTitle": "Giữ cho lần ghi đầu tiên tiếp tục tiến lên",
+      "captureDescription": "{{title}} vẫn đang ghi hoặc xử lý. Mở nó để theo dõi tiến trình và bám sát workflow.",
+      "captureAction": "Mở cuộc họp đang chạy",
+      "latestTitle": "Mở cuộc họp mới nhất và tiếp tục",
+      "latestDescription": "{{title}} là bề mặt phù hợp nhất lúc này để tiếp tục workflow đầu tiên của bạn.",
+      "latestAction": "Mở cuộc họp mới nhất",
+      "handoffTitle": "Bạn đã sẵn sàng cho dashboard vận hành đầy đủ",
+      "handoffDescription": "Bạn đã có ít nhất một cuộc họp được duyệt. Hãy chuyển sang dashboard tiêu chuẩn để quản lý dự án, thiết lập Notion và xử lý toàn bộ hàng chờ."
+    },
+    "secondaryTitle": "Những gì vẫn ở dashboard tiêu chuẩn",
+    "secondaryDescription": "Thiết lập dự án, cấu hình đích Notion và các bộ lọc sâu hơn vẫn nằm ở chế độ vận hành để bề mặt người mới luôn gọn và rõ.",
+    "secondaryProject": "Brief và thiết lập dự án",
+    "secondaryNotion": "Kết nối Notion và thiết lập đồng bộ",
+    "recent": {
+      "title": "Các cuộc họp gần đây",
+      "description": "Giữ vài phiên gần nhất trong tầm mắt mà không cần mở toàn bộ workspace đầy bộ lọc.",
+      "empty": "Sau khi extension tạo cuộc họp đầu tiên, các phiên gần nhất sẽ xuất hiện tại đây."
+    }
+  },
   "metrics": {
     "live": {
       "label": "Đang xử lý",
