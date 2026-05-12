@@ -26,31 +26,23 @@
   "hero": {
     "eyebrow": "Operations center for meeting outcomes",
     "title": "Turn Google Meet into accountable follow-through.",
-    "description": "Kapter records meetings directly in Chrome, separates who said what, prepares review-ready action items, and gives small technical teams one place to confirm ownership before anything reaches Notion.",
+    "description": "Kapter records meetings, analyzes them with AI, and automatically converts them into clear tasks on Notion.",
     "ctas": {
-      "extensionTesting": "Install test extension"
+      "primary": "Get started",
+      "secondary": "See how it works"
     },
-    "signals": [
-      "Record Google Meet directly in Chrome",
-      "Separate speakers and summarize by speaker",
-      "Keep a human review step before Notion sync"
-    ],
-    "metricsLabel": "Project targets",
     "metrics": [
       {
         "value": "70%",
-        "label": "handoff time reduction target",
-        "detail": "Measured from the end of the meeting to the point where the task list is ready in Notion."
+        "label": "time saved"
       },
       {
-        "value": "80%+",
-        "label": "target assignment accuracy",
-        "detail": "Speaker recognition plus review helps assign responsibility to the right person."
+        "value": "80%",
+        "label": "assignment accuracy"
       },
       {
         "value": "3-10",
-        "label": "people in the target team",
-        "detail": "Kapter is designed for small technical teams that need speed more than process overhead."
+        "label": "users"
       }
     ]
   },

@@ -35,6 +35,7 @@ It reflects the current implementation state of the dashboard client based on th
 - [x] Meeting detail now supports direct Notion OAuth connection back to the current meeting and manual sync of approved action items to Notion from the same review surface. (2026-05-02 16:36 +07:00)
 - [x] Addressed review feedback by keeping meeting-detail Notion connection failures local to the sync card instead of also setting page-level error state. (2026-05-02 17:51 +07:00)
 - [x] Meeting-detail Notion sync now matches the backend auto-create destination behavior and shows the real task queue before/after sync. (2026-05-04 21:13 +07:00)
+- [x] Converted the landing page to a Single-Screen UI with Bento Box layout, dialog modal, and updated locale translations for the hero section as specified in `fix.md`. (2026-05-10)
 - [x] Dashboard shell now uses a shadcn/ui sidebar layout with a rebuilt navigation model, mobile trigger flow, shared sidebar meeting counts, and a dashboard-scoped pricing route. (2026-05-11 00:17 +07:00)
 
 ## Phase 1: Project Scaffolding
