@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import {
   ArrowRight,
   BadgeCheck,
-  Clock3,
+  // Clock3,
   Link2,
   Mic,
   Play,
@@ -60,10 +60,10 @@ export function Landing() {
     returnObjects: true,
   }) as string[]
 
-  const finalSteps = t("finalCta.steps", {
-    ns: "landing",
-    returnObjects: true,
-  }) as string[]
+  // const finalSteps = t("finalCta.steps", {
+  //   ns: "landing",
+  //   returnObjects: true,
+  // }) as string[]
 
   return (
     <div className="relative h-full min-h-[calc(100svh-80px)] w-full overflow-x-hidden overflow-y-auto pt-6 pb-10">
@@ -340,10 +340,10 @@ export function Landing() {
   )
 }
 
-function SectionEyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[0.72rem] font-semibold tracking-[0.3em] text-primary/80 uppercase">
-      {children}
-    </p>
-  )
-}
+// function SectionEyebrow({ children }: { children: React.ReactNode }) {
+//   return (
+//     <p className="text-[0.72rem] font-semibold tracking-[0.3em] text-primary/80 uppercase">
+//       {children}
+//     </p>
+//   )
+// }
