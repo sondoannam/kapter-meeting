@@ -1,4 +1,3 @@
-import * as React from "react"
 import { SignInButton, useAuth } from "@clerk/react-router"
 import { useTranslation } from "react-i18next"
 import {
@@ -35,11 +34,6 @@ interface ShowcaseConfidenceItem {
   confidence: string
 }
 
-interface ShowcaseHandoffItem {
-  title: string
-  description: string
-}
-
 export function Landing() {
   const { t } = useTranslation(["landing", "common"])
   const { isLoaded, userId } = useAuth()
@@ -49,7 +43,7 @@ export function Landing() {
     ns: "landing",
     returnObjects: true,
   }) as DesignTargetCopy[]
-  
+
   const transcriptLines = t("showcase.transcript.lines", {
     ns: "landing",
     returnObjects: true,
@@ -64,15 +58,14 @@ export function Landing() {
   }) as string[]
 
   return (
-    <div className="relative flex h-full min-h-[calc(100svh-80px)] w-full items-center justify-center overflow-x-hidden overflow-y-auto lg:overflow-hidden pb-10 pt-6 lg:pb-0 lg:pt-0">
+    <div className="relative flex h-full min-h-[calc(100svh-80px)] w-full items-center justify-center overflow-x-hidden overflow-y-auto pt-6 pb-10 lg:overflow-hidden lg:pt-0 lg:pb-0">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[40rem] bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.18),_transparent_42%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_32%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-160 bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.18),_transparent_42%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_32%)]"
       />
 
       <section className="relative z-10 w-full">
         <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 lg:grid-cols-[45fr_55fr] lg:items-center">
-          
           {/* LEFT COLUMN: HERO TEXT & CTAs */}
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-xs font-semibold tracking-[0.22em] text-primary uppercase shadow-[0_16px_45px_-36px_rgba(194,65,12,0.9)] backdrop-blur dark:bg-slate-900/80">
@@ -115,7 +108,7 @@ export function Landing() {
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
-                    className="border-border bg-white/70 text-slate-950 hover:bg-white/82 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 cursor-pointer"
+                    className="cursor-pointer border-border bg-white/70 text-slate-950 hover:bg-white/82 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
                     size="lg"
                     variant="outline"
                   >
@@ -123,8 +116,8 @@ export function Landing() {
                     {t("hero.ctas.secondary", { ns: "landing" })}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-6xl sm:max-w-6xl w-[95vw] p-0 border-none bg-transparent shadow-2xl">
-                  <div className="aspect-video w-full rounded-2xl bg-black/90 flex items-center justify-center overflow-hidden border border-white/10 relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                <DialogContent className="w-[95vw] max-w-6xl border-none bg-transparent p-0 shadow-2xl sm:max-w-6xl">
+                  <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                     <iframe
                       allow="autoplay; encrypted-media"
                       allowFullScreen
@@ -139,11 +132,14 @@ export function Landing() {
 
             <div className="mt-12 flex flex-wrap gap-4 md:gap-8">
               {designTargets?.map((target) => (
-                <div key={`${target.value}-${target.label}`} className="flex flex-col gap-1">
+                <div
+                  key={`${target.value}-${target.label}`}
+                  className="flex flex-col gap-1"
+                >
                   <p className="font-heading text-3xl text-slate-950 dark:text-slate-50">
                     {target.value}
                   </p>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-[120px] leading-tight">
+                  <p className="max-w-[120px] text-sm leading-tight font-medium text-slate-600 dark:text-slate-400">
                     {target.label}
                   </p>
                 </div>
@@ -155,15 +151,14 @@ export function Landing() {
           <div className="relative lg:pt-0">
             <div
               aria-hidden
-              className="absolute inset-x-10 top-1/2 -translate-y-1/2 h-64 rounded-full bg-primary/15 blur-[80px]"
+              className="absolute inset-x-10 top-1/2 h-64 -translate-y-1/2 rounded-full bg-primary/15 blur-[80px]"
             />
 
             <div className="landing-grid landing-noise relative overflow-hidden rounded-[2.25rem] border border-primary/15 bg-[linear-gradient(180deg,rgba(255,250,244,0.96),rgba(255,255,255,0.9))] p-4 shadow-[0_38px_90px_-58px_rgba(15,23,42,0.48)] sm:p-6 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(15,23,42,0.6))]">
               {/* Mobile Carousel Wrapper */}
-              <div className="flex snap-x snap-mandatory overflow-x-auto pb-4 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(13rem,0.9fr)] lg:gap-4 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                
+              <div className="flex snap-x snap-mandatory overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(13rem,0.9fr)] lg:gap-4 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
                 {/* CARD 1: TRANSCRIPT */}
-                <article className="drift-card min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-slate-950/8 bg-slate-950 px-5 py-5 text-white shadow-[0_26px_70px_-42px_rgba(15,23,42,0.95)] lg:col-span-1 lg:row-span-2 mr-4 lg:mr-0 dark:bg-slate-950/90 dark:border-white/10">
+                <article className="drift-card mr-4 min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-slate-950/8 bg-slate-950 px-5 py-5 text-white shadow-[0_26px_70px_-42px_rgba(15,23,42,0.95)] lg:col-span-1 lg:row-span-2 lg:mr-0 dark:border-white/10 dark:bg-slate-950/90">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[0.68rem] font-semibold tracking-[0.28em] text-white/55 uppercase">
@@ -202,7 +197,7 @@ export function Landing() {
                 </article>
 
                 {/* CARD 2: AI ANALYSIS */}
-                <article className="drift-card min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-border/70 bg-white/86 p-5 backdrop-blur lg:col-span-1 mr-4 lg:mr-0 dark:bg-slate-900/60 dark:border-white/10">
+                <article className="drift-card mr-4 min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-border/70 bg-white/86 p-5 backdrop-blur lg:col-span-1 lg:mr-0 dark:border-white/10 dark:bg-slate-900/60">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[0.68rem] font-semibold tracking-[0.28em] text-slate-500 uppercase dark:text-slate-400">
@@ -212,17 +207,19 @@ export function Landing() {
                         {t("showcase.confidence.title", { ns: "landing" })}
                       </h2>
                     </div>
-                    <Radar className="size-5 text-primary shrink-0" />
+                    <Radar className="size-5 shrink-0 text-primary" />
                   </div>
 
                   <div className="mt-5 space-y-4">
                     {confidenceItems?.map((item) => (
                       <div className="space-y-2" key={item.task}>
                         <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="font-medium text-slate-900 truncate dark:text-slate-200">
+                          <span className="truncate font-medium text-slate-900 dark:text-slate-200">
                             {item.task}
                           </span>
-                          <span className="text-slate-500 shrink-0 text-xs dark:text-slate-400">{item.owner}</span>
+                          <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                            {item.owner}
+                          </span>
                         </div>
                         <div className="h-1.5 rounded-full bg-muted dark:bg-slate-800">
                           <div
@@ -236,7 +233,7 @@ export function Landing() {
                 </article>
 
                 {/* CARD 3: SYNC TO NOTION */}
-                <article className="drift-card min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-primary/16 bg-[#fff4ea] p-5 shadow-[0_20px_50px_-40px_rgba(194,65,12,0.7)] lg:col-span-1 dark:bg-[rgba(251,146,60,0.1)] dark:border-primary/30">
+                <article className="drift-card min-w-[280px] shrink-0 snap-center rounded-[1.8rem] border border-primary/16 bg-[#fff4ea] p-5 shadow-[0_20px_50px_-40px_rgba(194,65,12,0.7)] lg:col-span-1 dark:border-primary/30 dark:bg-[rgba(251,146,60,0.1)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[0.68rem] font-semibold tracking-[0.28em] text-primary/80 uppercase">
@@ -246,26 +243,25 @@ export function Landing() {
                         {t("showcase.reviewGate.title", { ns: "landing" })}
                       </h2>
                     </div>
-                    <BadgeCheck className="size-5 text-primary shrink-0" />
+                    <BadgeCheck className="size-5 shrink-0 text-primary" />
                   </div>
 
                   <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
                     {reviewGateItems?.slice(0, 2).map((item) => (
-                      <div className="flex gap-3 items-start" key={item}>
+                      <div className="flex items-start gap-3" key={item}>
                         <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
                         <p className="leading-tight">{item}</p>
                       </div>
                     ))}
                   </div>
-                  
-                  <div className="mt-5 pt-4 border-t border-primary/10 flex items-center justify-between">
-                     <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold tracking-[0.1em] text-primary uppercase">
+
+                  <div className="mt-5 flex items-center justify-between border-t border-primary/10 pt-4">
+                    <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold tracking-[0.1em] text-primary uppercase">
                       <Link2 className="size-3.5" />
                       Notion Sync
                     </div>
                   </div>
                 </article>
-
               </div>
             </div>
           </div>

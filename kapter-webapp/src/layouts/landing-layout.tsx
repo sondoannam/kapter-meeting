@@ -13,14 +13,14 @@ export default function LandingLayout() {
   const { t } = useTranslation(["landing", "common"])
   const { isLoaded, userId } = useAuth()
   const isSignedIn = isLoaded && Boolean(userId)
-  const currentYear = new Date().getFullYear()
-  const footerChips = t("layout.footer.chips", {
-    ns: "landing",
-    returnObjects: true,
-  }) as string[]
+  // const currentYear = new Date().getFullYear()
+  // const footerChips = t("layout.footer.chips", {
+  //   ns: "landing",
+  //   returnObjects: true,
+  // }) as string[]
 
   return (
-    <div className="h-svh overflow-hidden bg-background text-tx dark:text-dk-tx flex flex-col">
+    <div className="flex h-svh flex-col overflow-hidden bg-background text-tx dark:text-dk-tx">
       <header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-xl dark:border-dk-border dark:bg-dk-surface/90">
         <AppShellContainer className="flex items-center justify-between gap-4 py-4">
           <Link
@@ -39,8 +39,7 @@ export default function LandingLayout() {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm text-tx2 md:flex dark:text-dk-tx2">
-          </nav>
+          <nav className="hidden items-center gap-6 text-sm text-tx2 md:flex dark:text-dk-tx2"></nav>
 
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
@@ -74,11 +73,9 @@ export default function LandingLayout() {
         </AppShellContainer>
       </header>
 
-      <main className="flex-1 overflow-hidden relative">
+      <main className="relative flex-1 overflow-hidden">
         <Outlet />
       </main>
-
-
     </div>
   )
 }
