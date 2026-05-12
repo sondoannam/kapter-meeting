@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import {
   ArrowRight,
   BadgeCheck,
+  Clock3,
   Link2,
   Mic,
   Play,
@@ -48,22 +49,24 @@ export function Landing() {
     ns: "landing",
     returnObjects: true,
   }) as ShowcaseTranscriptLine[]
+
   const confidenceItems = t("showcase.confidence.items", {
     ns: "landing",
     returnObjects: true,
   }) as ShowcaseConfidenceItem[]
+
   const reviewGateItems = t("showcase.reviewGate.items", {
     ns: "landing",
     returnObjects: true,
   }) as string[]
 
-  return (
-    <div className="relative flex h-full min-h-[calc(100svh-80px)] w-full items-center justify-center overflow-x-hidden overflow-y-auto pt-6 pb-10 lg:overflow-hidden lg:pt-0 lg:pb-0">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-160 bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.18),_transparent_42%),radial-gradient(circle_at_top_right,_rgba(15,23,42,0.08),_transparent_32%)]"
-      />
+  const finalSteps = t("finalCta.steps", {
+    ns: "landing",
+    returnObjects: true,
+  }) as string[]
 
+  return (
+    <div className="relative h-full min-h-[calc(100svh-80px)] w-full overflow-x-hidden overflow-y-auto pt-6 pb-10">
       <section className="relative z-10 w-full">
         <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 lg:grid-cols-[45fr_55fr] lg:items-center">
           {/* LEFT COLUMN: HERO TEXT & CTAs */}
@@ -267,6 +270,80 @@ export function Landing() {
           </div>
         </div>
       </section>
+
+      {/* <section className="mx-auto w-full max-w-7xl px-6 pt-10 pb-24">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-900/10 bg-slate-950 px-8 py-10 text-white shadow-[0_40px_100px_-54px_rgba(15,23,42,0.75)] sm:px-10 sm:py-12">
+          <div
+            aria-hidden
+            className="absolute inset-y-0 right-0 w-2/3 bg-[radial-gradient(circle_at_right,_rgba(251,146,60,0.28),_transparent_44%)]"
+          />
+
+          <div className="relative max-w-3xl">
+            <SectionEyebrow>
+              {t("finalCta.eyebrow", { ns: "landing" })}
+            </SectionEyebrow>
+            <h2 className="mt-4 font-heading text-4xl leading-tight text-balance text-white sm:text-5xl">
+              {t("finalCta.title", { ns: "landing" })}
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-white/72">
+              {t("finalCta.description", { ns: "landing" })}
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              {isSignedIn ? (
+                <Button
+                  asChild
+                  className="bg-primary text-primary-foreground hover:bg-primary/85"
+                  size="lg"
+                >
+                  <Link to={ROUTES.DASHBOARD}>
+                    {t("finalCta.signedInCta", { ns: "landing" })}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <SignInButton>
+                  <Button
+                    className="bg-primary text-primary-foreground hover:bg-primary/85"
+                    size="lg"
+                  >
+                    {t("actions.signInAndStart", { ns: "common" })}
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </SignInButton>
+              )}
+
+              <Button
+                asChild
+                className="border-white/15 bg-white/6 text-white hover:bg-white/10"
+                size="lg"
+                variant="outline"
+              >
+                <a href="#extension-setup">
+                  {t("finalCta.secondaryCta", { ns: "landing" })}
+                </a>
+              </Button>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-4 text-sm text-white/65">
+              {finalSteps.map((item) => (
+                <div className="flex items-center gap-2" key={item}>
+                  <Clock3 className="size-4 text-primary" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section> */}
     </div>
+  )
+}
+
+function SectionEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[0.72rem] font-semibold tracking-[0.3em] text-primary/80 uppercase">
+      {children}
+    </p>
   )
 }

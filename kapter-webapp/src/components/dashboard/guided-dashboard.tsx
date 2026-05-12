@@ -27,6 +27,7 @@ import {
   getGuidedExtensionConfirmed,
   setGuidedExtensionConfirmed,
 } from "@/features/dashboard/lib/dashboard-mode"
+import { useExtensionPresence } from "@/features/dashboard/hooks/use-extension-presence"
 import { MeetingStatusBadge } from "@/features/meetings/components/meeting-status-badge"
 import { ReviewStatusBadge } from "@/features/meetings/components/review-status-badge"
 import { formatMeetingDate } from "@/features/meetings/lib/formatters"
@@ -87,9 +88,11 @@ export function GuidedDashboard({
   const [extensionConfirmed, setExtensionConfirmed] = React.useState(() =>
     getGuidedExtensionConfirmed()
   )
+  const { extensionDetected } = useExtensionPresence()
   const extensionDownloadUrl =
     import.meta.env.VITE_EXTENSION_TEST_BUILD_URL?.trim() ||
     `${ROUTES.HOME}#extension-setup`
+  const captureReady = extensionDetected || extensionConfirmed
   const sortedMeetings = React.useMemo(
     () =>
       [...meetings].sort(
@@ -144,14 +147,14 @@ export function GuidedDashboard({
       return "review"
     }
 
-    if (activeMeeting || inProgressMeeting || extensionConfirmed) {
+    if (activeMeeting || inProgressMeeting || captureReady) {
       return "capture"
     }
 
     return "extension"
   }, [
     activeMeeting,
-    extensionConfirmed,
+    captureReady,
     hasApprovedReview,
     inProgressMeeting,
     latestMeeting,
@@ -192,7 +195,7 @@ export function GuidedDashboard({
       }
     }
 
-    if (extensionConfirmed) {
+    if (captureReady) {
       return {
         kind: "captureSetup",
         title: t("guided.primary.captureSetupTitle", { ns: "dashboard" }),
@@ -243,7 +246,7 @@ export function GuidedDashboard({
     }
   }, [
     activeMeeting,
-    extensionConfirmed,
+    captureReady,
     extensionDownloadUrl,
     hasApprovedReview,
     inProgressMeeting,
@@ -425,16 +428,18 @@ export function GuidedDashboard({
                         {primaryAction.ctaLabel}
                       </a>
                     </Button>
-                    <Button
-                      onClick={goBackToInstallStep}
-                      type="button"
-                      variant="outline"
-                    >
-                      <ArrowLeft />
-                      {t("guided.primary.backToInstallAction", {
-                        ns: "dashboard",
-                      })}
-                    </Button>
+                    {!extensionDetected ? (
+                      <Button
+                        onClick={goBackToInstallStep}
+                        type="button"
+                        variant="outline"
+                      >
+                        <ArrowLeft />
+                        {t("guided.primary.backToInstallAction", {
+                          ns: "dashboard",
+                        })}
+                      </Button>
+                    ) : null}
                   </>
                 ) : primaryAction.kind === "handoff" ? (
                   <Button onClick={onSwitchToStandard} type="button">
@@ -474,9 +479,27 @@ export function GuidedDashboard({
 
             {primaryAction.kind === "captureSetup" ? (
               <div className="rounded-[1.2rem] border border-border/80 bg-muted/25 px-4 py-4 text-sm leading-7 text-muted-foreground dark:border-white/10 dark:bg-white/4">
-                {t("guided.primary.captureSetupBackHint", {
-                  ns: "dashboard",
-                })}
+                {extensionDetected ? (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {t("guided.primary.extensionDetectedTitle", {
+                          ns: "dashboard",
+                        })}
+                      </p>
+                      <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                        {t("guided.primary.extensionDetectedHint", {
+                          ns: "dashboard",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  t("guided.primary.captureSetupBackHint", {
+                    ns: "dashboard",
+                  })
+                )}
               </div>
             ) : null}
 

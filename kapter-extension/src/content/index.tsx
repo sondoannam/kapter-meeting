@@ -3,6 +3,8 @@ import { createRoot, type Root } from "react-dom/client";
 
 import {
   BRIDGE_ACK_MESSAGE_TYPE,
+  BRIDGE_PRESENCE_REQUEST_MESSAGE_TYPE,
+  BRIDGE_PRESENCE_RESPONSE_MESSAGE_TYPE,
   BRIDGE_SILENT_TOKEN_REQUEST,
   BRIDGE_TOKEN_MESSAGE_TYPE,
   isBridgePageLocation,
@@ -26,6 +28,14 @@ interface BridgeWindowMessage {
   };
 }
 
+interface PresenceRequestWindowMessage {
+  source: "kapter-webapp";
+  type: typeof BRIDGE_PRESENCE_REQUEST_MESSAGE_TYPE;
+  payload: {
+    requestId: string;
+  };
+}
+
 function isBridgeWindowMessage(value: unknown): value is BridgeWindowMessage {
   if (!value || typeof value !== "object") {
     return false;
@@ -39,6 +49,23 @@ function isBridgeWindowMessage(value: unknown): value is BridgeWindowMessage {
     !!candidate.payload &&
     typeof candidate.payload.requestId === "string" &&
     typeof candidate.payload.sessionToken === "string"
+  );
+}
+
+function isPresenceRequestWindowMessage(
+  value: unknown,
+): value is PresenceRequestWindowMessage {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<PresenceRequestWindowMessage>;
+
+  return (
+    candidate.source === "kapter-webapp" &&
+    candidate.type === BRIDGE_PRESENCE_REQUEST_MESSAGE_TYPE &&
+    !!candidate.payload &&
+    typeof candidate.payload.requestId === "string"
   );
 }
 
@@ -75,6 +102,29 @@ function registerBridgeRelay() {
         window.location.origin,
       );
     });
+  });
+}
+
+function registerWebappPresenceListener() {
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.source !== window || event.origin !== window.location.origin) {
+      return;
+    }
+
+    if (!isPresenceRequestWindowMessage(event.data)) {
+      return;
+    }
+
+    window.postMessage(
+      {
+        source: "kapter-extension",
+        type: BRIDGE_PRESENCE_RESPONSE_MESSAGE_TYPE,
+        payload: {
+          requestId: event.data.payload.requestId,
+        },
+      },
+      window.location.origin,
+    );
   });
 }
 
@@ -163,6 +213,7 @@ if (isBridgePageLocation(currentLocation)) {
 
 if (isWebappOrigin) {
   registerSilentRefreshListener();
+  registerWebappPresenceListener();
 }
 
 if (
