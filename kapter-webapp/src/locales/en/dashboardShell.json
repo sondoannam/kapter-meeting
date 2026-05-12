@@ -1,18 +1,21 @@
 {
   "brandTagline": "Meeting operations dashboard",
   "reviewBadge": "Workspace review",
+  "workspaceSummary": "Track live recordings, unblock review queues, and keep Notion sync work inside one shell.",
   "sidebar": {
-    "navigationHeading": "Navigation",
+    "landing": "Home",
+    "workspaceHeading": "Workspace",
     "overview": "Overview",
-    "statusHeading": "Status",
+    "reviewHeading": "Review queue",
     "statuses": {
       "processing": "Processing",
       "review": "Needs review",
       "approved": "Approved"
     },
-    "accountHeading": "Account",
+    "resourceHeading": "Resources",
+    "pricing": "Pricing",
     "installExtension": "Install extension",
-    "installExtensionTitle": "Guidance",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "shortcutHint": "Tip: press Ctrl/Command + B to collapse the sidebar."
   }
 }

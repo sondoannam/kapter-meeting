@@ -26,31 +26,23 @@
   "hero": {
     "eyebrow": "Trung tâm điều hành kết quả cuộc họp",
     "title": "Biến Google Meet thành kết quả thực sự có trách nhiệm.",
-    "description": "Kapter ghi âm cuộc họp ngay trong Chrome, phân tách ai nói gì, tạo đầu việc sẵn sàng duyệt, và cho các nhóm kỹ thuật nhỏ một nơi xác nhận từng người chịu trách nhiệm trước khi đưa vào Notion.",
+    "description": "Kapter ghi âm, phân tích AI và tự động chuyển đổi thành đầu việc rõ ràng trên Notion.",
     "ctas": {
-      "extensionTesting": "Cài đặt extension thử nghiệm"
+      "primary": "Bắt đầu ngay",
+      "secondary": "Xem cách hoạt động"
     },
-    "signals": [
-      "Ghi âm Google Meet trực tiếp trên Chrome",
-      "Phân tách giọng nói và tóm tắt theo người nói",
-      "Con người xem xét trước khi đồng bộ Notion"
-    ],
-    "metricsLabel": "Mục tiêu dự án",
     "metrics": [
       {
         "value": "70%",
-        "label": "mục tiêu giảm thời gian bàn giao",
-        "detail": "Đo từ khi cuộc họp kết thúc đến khi danh sách việc cần làm sẵn sàng trên Notion."
+        "label": "tiết kiệm thời gian"
       },
       {
-        "value": "80%+",
-        "label": "độ chính xác phân công mục tiêu",
-        "detail": "Nhận diện người nói kết hợp luồng duyệt giúp gán đúng người chịu trách nhiệm."
+        "value": "80%",
+        "label": "đối chiếu chính xác"
       },
       {
         "value": "3-10",
-        "label": "người trong nhóm mục tiêu",
-        "detail": "Kapter được thiết kế cho các nhóm kỹ thuật nhỏ cần tốc độ hơn quy trình phức tạp."
+        "label": "người dùng"
       }
     ]
   },

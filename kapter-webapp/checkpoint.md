@@ -35,6 +35,8 @@ It reflects the current implementation state of the dashboard client based on th
 - [x] Meeting detail now supports direct Notion OAuth connection back to the current meeting and manual sync of approved action items to Notion from the same review surface. (2026-05-02 16:36 +07:00)
 - [x] Addressed review feedback by keeping meeting-detail Notion connection failures local to the sync card instead of also setting page-level error state. (2026-05-02 17:51 +07:00)
 - [x] Meeting-detail Notion sync now matches the backend auto-create destination behavior and shows the real task queue before/after sync. (2026-05-04 21:13 +07:00)
+- [x] Converted the landing page to a Single-Screen UI with Bento Box layout, dialog modal, and updated locale translations for the hero section as specified in `fix.md`. (2026-05-10)
+- [x] Dashboard shell now uses a shadcn/ui sidebar layout with a rebuilt navigation model, mobile trigger flow, shared sidebar meeting counts, and a dashboard-scoped pricing route. (2026-05-11 00:17 +07:00)
 
 ## Phase 1: Project Scaffolding
 
@@ -228,3 +230,4 @@ Status: pending.
 - [x] 2026-05-09 Consolidated the dashboard into one desktop-first hybrid project list by promoting `ProjectPanel` into the only project surface with selection, create/edit/delete dialogs, Notion actions, and inline destination setup, then removed the old duplicate project list components with passing `pnpm --filter ./kapter-webapp typecheck` and `pnpm --filter ./kapter-webapp lint`.
 - [x] 2026-05-09 Split dashboard project setup away from the compact project list by moving creation and Notion destination controls into a dedicated top setup section, trimming row content for the narrow rail, and bounding the list with a scroll area, validated by passing `pnpm --filter ./kapter-webapp typecheck` and `pnpm --filter ./kapter-webapp lint`.
 - [x] 2026-05-09 Moved the project creation and Notion setup surface to a full-width section directly below the four dashboard metric cards, keeping the right rail focused on project selection plus edit/delete actions, validated by passing `pnpm --filter ./kapter-webapp typecheck` and `pnpm --filter ./kapter-webapp lint`.
+- [x] 2026-05-11 00:17 +07:00 Replaced the custom dashboard sidebar shell with shadcn/ui sidebar primitives, removed the old observer-based positioning code, added a dashboard-scoped pricing route, and validated the refactor with passing `pnpm --filter ./kapter-webapp typecheck` plus a passing escalated `pnpm --filter ./kapter-webapp build` run; `pnpm --filter ./kapter-webapp lint` still fails on pre-existing issues in `src/components/ui/button.tsx`, `src/components/ui/sidebar.tsx`, and `src/hooks/use-mobile.ts`.

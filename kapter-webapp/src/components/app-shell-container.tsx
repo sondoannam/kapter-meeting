@@ -3,7 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 interface AppShellContainerProps extends React.ComponentProps<"div"> {
-  width?: "default" | "narrow"
+  width?: "default" | "narrow" | "full"
 }
 
 const widthClasses: Record<
@@ -12,6 +12,7 @@ const widthClasses: Record<
 > = {
   default: "max-w-[min(80rem,100vw-2rem)]",
   narrow: "max-w-[min(72rem,100vw-2rem)]",
+  full: "max-w-full",
 }
 
 export function AppShellContainer({

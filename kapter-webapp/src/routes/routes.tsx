@@ -30,6 +30,10 @@ export const router = createBrowserRouter([
             element: <Dashboard />,
           },
           {
+            path: ROUTES.DASHBOARD_PRICING,
+            element: <PricingPage />,
+          },
+          {
             path: ROUTES.DASHBOARD_MEETING_DETAIL,
             element: <MeetingDetailPage />,
           },

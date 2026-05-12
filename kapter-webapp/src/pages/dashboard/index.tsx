@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router"
 
 import { AppShellContainer } from "@/components/app-shell-container"
 import { useActiveMeeting } from "@/features/meetings/hooks/use-active-meeting"
-import { useMeetingHistory } from "@/features/meetings/hooks/use-meeting-history"
+import { useDashboardMeetingHistory } from "@/features/meetings/context/dashboard-meeting-history"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 import { DashboardMetricGrid } from "@/components/dashboard/dashboard-metric-grid"
 import { DashboardNotionCallbackBanner } from "@/components/dashboard/dashboard-notion-callback-banner"
@@ -37,7 +37,7 @@ export default function Dashboard() {
     activeMeetingDeleteId,
     deleteMeeting,
     refresh: refreshMeetingHistory,
-  } = useMeetingHistory()
+  } = useDashboardMeetingHistory()
   const {
     projects,
     status: projectsStatus,
