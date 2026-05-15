@@ -9,6 +9,7 @@ soundfile>=0.12.1
 # +cu128 suffix prevents pip from falling back to PyPI's CPU-only builds.
 torch==2.11.0+cu128
 torchaudio==2.11.0+cu128
+torchvision==0.26.0+cu128
 loguru>=0.7.2
 fastapi>=0.115.0
 uvicorn>=0.32.0

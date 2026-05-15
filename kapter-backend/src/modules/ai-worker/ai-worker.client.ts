@@ -1,6 +1,8 @@
 import type {
   WorkerAudioBatchRequest,
   WorkerTranscriptionResponse,
+  WorkerVoiceProfileCacheUpsertRequest,
+  WorkerVoiceProfileEnrollmentResponse,
 } from "@kapter/contracts";
 import { Inject, Injectable } from "@nestjs/common";
 import type { ConfigType } from "@nestjs/config";
@@ -38,6 +40,27 @@ export class AiWorkerClient {
   getProcessAudioUrl(): string {
     return new URL(
       "/api/v1/process-audio",
+      this.config.aiWorker.baseUrl,
+    ).toString();
+  }
+
+  getVoiceProfileEnrollmentUrl(): string {
+    return new URL(
+      "/api/v1/voice-profiles/enrollment-extract",
+      this.config.aiWorker.baseUrl,
+    ).toString();
+  }
+
+  getVoiceProfileCacheUrl(voiceProfileId: string): string {
+    return new URL(
+      `/api/v1/voice-profiles/cache/${voiceProfileId}`,
+      this.config.aiWorker.baseUrl,
+    ).toString();
+  }
+
+  getVoiceProfileCacheCollectionUrl(): string {
+    return new URL(
+      "/api/v1/voice-profiles/cache",
       this.config.aiWorker.baseUrl,
     ).toString();
   }
@@ -91,11 +114,57 @@ export class AiWorkerClient {
     }
   }
 
+  async extractVoiceProfileEnrollment(
+    audioBuffer: Buffer,
+    mimeType: string,
+  ): Promise<WorkerVoiceProfileEnrollmentResponse> {
+    return this.requestJson<WorkerVoiceProfileEnrollmentResponse>(
+      this.getVoiceProfileEnrollmentUrl(),
+      {
+        method: "POST",
+        body: JSON.stringify({
+          mimeType,
+          audioBase64: audioBuffer.toString("base64"),
+        }),
+      },
+    );
+  }
+
+  async upsertVoiceProfileCache(
+    payload: WorkerVoiceProfileCacheUpsertRequest,
+  ): Promise<void> {
+    await this.requestJson(
+      this.getVoiceProfileCacheUrl(payload.voiceProfileId),
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+    );
+  }
+
+  async deleteVoiceProfileCache(voiceProfileId: string): Promise<void> {
+    await this.requestJson(this.getVoiceProfileCacheUrl(voiceProfileId), {
+      method: "DELETE",
+    });
+  }
+
+  async clearVoiceProfileCache(): Promise<void> {
+    await this.requestJson(this.getVoiceProfileCacheCollectionUrl(), {
+      method: "DELETE",
+    });
+  }
+
   private async postWithRetry(
     request: WorkerAudioBatchRequest,
   ): Promise<WorkerTranscriptionResponse> {
     try {
-      return await this.post(request);
+      return await this.requestJson<WorkerTranscriptionResponse>(
+        this.getProcessAudioUrl(),
+        {
+          method: "POST",
+          body: JSON.stringify(request),
+        },
+      );
     } catch (error) {
       if (!this.isTransientFailure(error)) {
         throw error;
@@ -108,13 +177,23 @@ export class AiWorkerClient {
         sequenceEnd: request.sequenceEnd,
       });
 
-      return this.post(request);
+      return this.requestJson<WorkerTranscriptionResponse>(
+        this.getProcessAudioUrl(),
+        {
+          method: "POST",
+          body: JSON.stringify(request),
+        },
+      );
     }
   }
 
-  private async post(
-    request: WorkerAudioBatchRequest,
-  ): Promise<WorkerTranscriptionResponse> {
+  private async requestJson<T>(
+    url: string,
+    init: {
+      method: "POST" | "PUT" | "DELETE";
+      body?: string;
+    },
+  ): Promise<T> {
     const abortController = new AbortController();
     const headers: Record<string, string> = {
       "content-type": "application/json",
@@ -130,10 +209,10 @@ export class AiWorkerClient {
         headers.authorization = `Bearer ${sharedSecret}`;
       }
 
-      const response = await fetch(this.getProcessAudioUrl(), {
-        method: "POST",
+      const response = await fetch(url, {
+        method: init.method,
         headers,
-        body: JSON.stringify(request),
+        body: init.body,
         signal: abortController.signal,
       });
 
@@ -145,7 +224,11 @@ export class AiWorkerClient {
         );
       }
 
-      return (await response.json()) as WorkerTranscriptionResponse;
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      return (await response.json()) as T;
     } finally {
       clearTimeout(timeoutHandle);
     }

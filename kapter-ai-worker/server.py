@@ -1,11 +1,13 @@
 from __future__ import annotations
+
+import base64
 from kapter_ai_worker.utils.determinism import enforce_determinism
 
 enforce_determinism(seed=42, strict_cpu=False)
 
-from contextlib import asynccontextmanager
 import os
 import secrets
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
@@ -15,11 +17,14 @@ from kapter_ai_worker.config.settings import get_settings
 from kapter_ai_worker.contracts.worker_contracts import (
     WorkerAudioBatchRequest,
     WorkerTranscriptionResponse,
+    WorkerVoiceProfileCacheUpsertRequest,
+    WorkerVoiceProfileEnrollmentRequest,
+    WorkerVoiceProfileEnrollmentResponse,
 )
-from kapter_ai_worker.core.speaker_registry import SpeakerRegistry
 from kapter_ai_worker.logging.logger import configure_logging, get_logger
 from kapter_ai_worker.runtime.pipeline_factory import build_pipeline
 from kapter_ai_worker.services.audio_batch_processor import AudioBatchProcessor
+from kapter_ai_worker.services.voice_profile_cache import VoiceProfileCache
 
 logger = get_logger("server")
 
@@ -36,13 +41,13 @@ async def lifespan(app: FastAPI):
     logger.info(
         "Initializing pipeline (use_real_models={})...", settings.use_real_models
     )
-    registry = SpeakerRegistry(
-        match_threshold=settings.speaker_match_threshold,
-        glue_threshold=settings.speaker_glue_threshold,
-        merge_threshold=settings.speaker_merge_threshold,
+    pipeline = build_pipeline(settings)
+    voice_profile_cache = VoiceProfileCache(settings.voice_profile_cache_path)
+    _processor = AudioBatchProcessor(
+        settings=settings,
+        pipeline=pipeline,
+        voice_profile_cache=voice_profile_cache,
     )
-    pipeline = build_pipeline(settings, registry=registry)
-    _processor = AudioBatchProcessor(settings=settings, pipeline=pipeline)
     logger.info("Pipeline ready.")
     yield
     _processor = None
@@ -95,6 +100,64 @@ def process_audio_batch(
             request.stream_id,
         )
         raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.post(
+    "/api/v1/voice-profiles/enrollment-extract",
+    response_model=WorkerVoiceProfileEnrollmentResponse,
+)
+def extract_voice_profile_enrollment(
+    request: WorkerVoiceProfileEnrollmentRequest,
+    _: None = Depends(require_worker_auth),
+) -> WorkerVoiceProfileEnrollmentResponse:
+    try:
+        return get_audio_batch_processor().extract_voice_profile_enrollment(
+            audio_bytes=base64.b64decode(request.audio_base64, validate=True),
+            mime_type=request.mime_type,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:  # noqa: BLE001
+        logger.exception("Failed to extract voice profile enrollment")
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.put("/api/v1/voice-profiles/cache/{voice_profile_id}")
+def upsert_voice_profile_cache(
+    voice_profile_id: str,
+    request: WorkerVoiceProfileCacheUpsertRequest,
+    _: None = Depends(require_worker_auth),
+) -> dict[str, str]:
+    if voice_profile_id != request.voice_profile_id:
+        raise HTTPException(
+            status_code=400,
+            detail="voiceProfileId path parameter must match request body.",
+        )
+
+    get_audio_batch_processor().upsert_voice_profile_cache(
+        voice_profile_id=request.voice_profile_id,
+        display_name=request.display_name,
+        is_active=request.is_active,
+        embeddings=request.embeddings,
+    )
+    return {"status": "ok"}
+
+
+@app.delete("/api/v1/voice-profiles/cache/{voice_profile_id}")
+def delete_voice_profile_cache(
+    voice_profile_id: str,
+    _: None = Depends(require_worker_auth),
+) -> dict[str, str]:
+    get_audio_batch_processor().delete_voice_profile_cache(voice_profile_id)
+    return {"status": "ok"}
+
+
+@app.delete("/api/v1/voice-profiles/cache")
+def clear_voice_profile_cache(
+    _: None = Depends(require_worker_auth),
+) -> dict[str, str]:
+    get_audio_batch_processor().clear_voice_profile_cache()
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

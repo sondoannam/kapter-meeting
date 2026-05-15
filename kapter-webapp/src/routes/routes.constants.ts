@@ -3,6 +3,7 @@ export const ROUTES = {
   PRICING: "/pricing",
   DASHBOARD: "/dashboard",
   DASHBOARD_PRICING: "/dashboard/pricing",
+  DASHBOARD_VOICE_PROFILES: "/dashboard/voice-profiles",
   DASHBOARD_MEETING_DETAIL: "/dashboard/meetings/:meetingId",
   EXTENSION_BRIDGE: "/extension-bridge",
 }

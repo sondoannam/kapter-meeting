@@ -131,13 +131,17 @@ If you already have a hosted Postgres database from Neon, Supabase, Railway, Ren
 In that case:
 
 - do not start `infra/postgres.docker-compose.yml`
-- set `DATABASE_URL` in `kapter-backend/.env` to your hosted Postgres connection string
+- set `DATABASE_URL` in `kapter-backend/.env` to the hosted runtime or pooled Postgres connection string
+- set `DIRECT_URL` in `kapter-backend/.env` to the provider's direct Postgres connection string for Prisma CLI and maintenance scripts
 - make sure the database is reachable from your local backend process
+
+If your provider only gives you one connection string, set both `DATABASE_URL` and `DIRECT_URL` to that same value.
 
 Example shape:
 
 ```dotenv
-DATABASE_URL=postgresql://username:password@db-host.example.com:5432/kapter_db?schema=public
+DATABASE_URL=postgresql://username:password@pooled-db-host.example.com:5432/kapter_db?schema=public
+DIRECT_URL=postgresql://username:password@direct-db-host.example.com:5432/kapter_db?schema=public
 ```
 
 If your password contains special characters, URL-encode it just like the local example does with `Test@123` -> `Test%40123`.
@@ -263,6 +267,7 @@ CLERK_WEBHOOK_SIGNING_SECRET=whsec_replace_me
 CLERK_JWT_KEY=
 CLERK_AUTHORIZED_PARTIES=http://localhost:3000,http://localhost:5173
 DATABASE_URL=postgresql://admin:Test%40123@localhost:5433/kapter_db?schema=public
+DIRECT_URL=postgresql://admin:Test%40123@localhost:5433/kapter_db?schema=public
 AI_WORKER_BASE_URL=http://127.0.0.1:8000
 NOTION_CLIENT_ID=your_client_id
 NOTION_CLIENT_SECRET=your_client_secret
@@ -274,7 +279,8 @@ Notes:
 - Notion setup now uses OAuth app credentials instead of a single static API key.
 - If you are not testing Notion yet, the OAuth values can stay as placeholders until you need the connect-and-sync flow.
 - `AI_WORKER_BASE_URL` should stay local for the standard teammate workflow.
-- `DATABASE_URL` can point either to the local Postgres container on port `5433` or to a managed cloud Postgres instance.
+- `DATABASE_URL` should be the runtime app connection string. On managed Postgres this is usually the pooled URL.
+- `DIRECT_URL` should be the direct Postgres connection string used by Prisma CLI and maintenance scripts. If your provider only exposes one URL, use the same value for both.
 
 Start the backend:
 
@@ -359,6 +365,9 @@ pnpm start:dev
 pnpm build
 pnpm lint
 pnpm typecheck
+pnpm voice-profiles:rebuild-worker-cache
+pnpm db:empty:keep-user
+pnpm exec prisma migrate deploy
 ```
 
 ### AI worker
@@ -368,6 +377,21 @@ cd kapter-ai-worker
 .venv\Scripts\python.exe server.py
 .venv\Scripts\python.exe -m pytest tests/test_process_audio_endpoint.py -q
 ```
+
+## Managed Postgres Manual Runbook
+
+For the voice-profile pipeline against a shared managed Postgres database:
+
+1. Set `DATABASE_URL` to the runtime or pooled connection string and `DIRECT_URL` to the direct connection string in `kapter-backend/.env`.
+2. Run `pnpm exec prisma migrate deploy` inside `kapter-backend`.
+3. Start the worker, backend, dashboard, and extension with the shared cloud DB config.
+4. Create a voice profile and upload enrollment audio from the dashboard.
+5. Confirm `VoiceProfile` and `VoiceProfileSample` rows are written to the shared database.
+6. Confirm the profile returns with `workerCacheStatus=SYNCED`.
+7. Record a meeting with a known speaker and verify the diarized mapping uses the enrolled profile.
+8. Promote an unknown meeting speaker and confirm `MeetingSpeakerSample` plus promoted `VoiceProfileSample` rows are written to the shared database.
+9. Restart the worker, then run `pnpm voice-profiles:rebuild-worker-cache` inside `kapter-backend` to repopulate the worker cache from Postgres.
+10. If you need to reset the shared database while keeping users, run `pnpm db:empty:keep-user` inside `kapter-backend`, then re-enroll profiles from scratch.
 
 ## Known Limitations
 

@@ -7,8 +7,10 @@ import {
 import type {
   ActiveMeetingResponse,
   DeleteMeetingResponse,
+  LinkMeetingSpeakerRequest,
   MeetingDetailResponse,
   MeetingHistoryResponse,
+  MeetingSpeakerPromotionRequest,
   MeetingNotionSyncResponse,
   SaveMeetingReviewRequest,
   UpdateMeetingMetadataRequest,
@@ -134,6 +136,74 @@ export async function updateMeetingMetadata(
   } catch (error) {
     throw new Error(
       toApiErrorMessage(error, "Unable to update the meeting details.")
+    )
+  }
+}
+
+export async function linkMeetingSpeaker(
+  sessionToken: string,
+  meetingId: string,
+  speakerId: string,
+  payload: LinkMeetingSpeakerRequest
+) {
+  try {
+    const response = await apiClient.post<MeetingDetailResponse>(
+      `/api/meetings/${meetingId}/speakers/${speakerId}/link`,
+      payload,
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to link the meeting speaker.")
+    )
+  }
+}
+
+export async function promoteMeetingSpeaker(
+  sessionToken: string,
+  meetingId: string,
+  speakerId: string,
+  payload: MeetingSpeakerPromotionRequest
+) {
+  try {
+    const response = await apiClient.post<MeetingDetailResponse>(
+      `/api/meetings/${meetingId}/speakers/${speakerId}/promote`,
+      payload,
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to promote the meeting speaker.")
+    )
+  }
+}
+
+export async function clearMeetingSpeakerLink(
+  sessionToken: string,
+  meetingId: string,
+  speakerId: string
+) {
+  try {
+    const response = await apiClient.post<MeetingDetailResponse>(
+      `/api/meetings/${meetingId}/speakers/${speakerId}/clear-link`,
+      {},
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to clear the meeting speaker link.")
     )
   }
 }

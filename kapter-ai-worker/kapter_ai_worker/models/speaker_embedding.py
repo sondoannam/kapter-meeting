@@ -77,5 +77,9 @@ class SpeakerEmbedding:
         # Convert to numpy and average across time if multiple windows were returned
         # feature.data is usually (Time, EmbeddingSize)
         embedding = np.mean(feature.data, axis=0).astype(np.float32)
-        
+
+        norm = np.linalg.norm(embedding)
+        if norm > 0:
+            embedding /= norm
+
         return embedding

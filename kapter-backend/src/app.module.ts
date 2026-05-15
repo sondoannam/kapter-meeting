@@ -16,6 +16,7 @@ import { LlmModule } from "./modules/llm/llm.module";
 import { MeetingsModule } from "./modules/meetings/meetings.module";
 import { NotionModule } from "./modules/notion/notion.module";
 import { ProjectsModule } from "./modules/projects/projects.module";
+import { VoiceProfilesModule } from "./modules/voice-profiles/voice-profiles.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ProjectsModule } from "./modules/projects/projects.module";
     BillingModule,
     MeetingsModule,
     ProjectsModule,
+    VoiceProfilesModule,
     AudioStreamModule,
     NotionModule,
     LlmModule,

@@ -33,6 +33,9 @@ const createService = () => {
   const markMeetingFailed = mock.fn(
     async (_meetingId: string, _errorMessage?: string) => undefined as unknown,
   );
+  const listActiveVoiceProfileIdsForUser = mock.fn(
+    async (_userId: string) => ["vp_1", "vp_2"],
+  );
   const processAudioBatch = mock.fn(async (request: any) => ({
     batchId: "batch_1",
     request,
@@ -79,6 +82,7 @@ const createService = () => {
     markMeetingCompleted,
     markMeetingFailed,
   };
+  const voiceProfilesService = { listActiveVoiceProfileIdsForUser };
   const billingService = { ensureCanStartRecording, recordMeetingUsage };
   const aiWorkerClient = { processAudioBatch };
   const transcriptPersistence = { persistWorkerBatch };
@@ -88,23 +92,26 @@ const createService = () => {
     meetingsService as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[0],
-    sessionStore as unknown as ConstructorParameters<
+    voiceProfilesService as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[1],
-    aiWorkerClient as unknown as ConstructorParameters<
+    sessionStore as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[2],
-    billingService as unknown as ConstructorParameters<
+    aiWorkerClient as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[3],
-    transcriptPersistence as unknown as ConstructorParameters<
+    billingService as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[4],
-    meetingArtifactExtraction as unknown as ConstructorParameters<
+    transcriptPersistence as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[5],
-    config as unknown as ConstructorParameters<typeof AudioStreamService>[6],
-    logger as unknown as ConstructorParameters<typeof AudioStreamService>[7],
+    meetingArtifactExtraction as unknown as ConstructorParameters<
+      typeof AudioStreamService
+    >[6],
+    config as unknown as ConstructorParameters<typeof AudioStreamService>[7],
+    logger as unknown as ConstructorParameters<typeof AudioStreamService>[8],
   );
 
   return {
@@ -113,6 +120,7 @@ const createService = () => {
     meetingsService,
     billingService,
     aiWorkerClient,
+    voiceProfilesService,
     transcriptPersistence,
     meetingArtifactExtraction,
     logger,
@@ -227,6 +235,7 @@ void describe("AudioStreamService", () => {
     assert.equal(request.streamOffsetMs, 0);
     assert.equal(request.durationMs, 10_000);
     assert.equal(request.mimeType, "audio/webm;codecs=opus");
+    assert.deepEqual(request.knownVoiceProfileIds, ["vp_1", "vp_2"]);
     assert.equal(
       Buffer.from(request.audioBase64, "base64").toString("utf8"),
       "chunk-1chunk-2chunk-3chunk-4chunk-5",

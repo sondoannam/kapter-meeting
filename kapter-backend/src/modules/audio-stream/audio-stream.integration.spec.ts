@@ -92,7 +92,10 @@ const applyMigrations = async () => {
 const cleanDatabase = async () => {
   await prisma.transcriptSegment.deleteMany();
   await prisma.actionItem.deleteMany();
+  await prisma.meetingSpeakerSample.deleteMany();
+  await prisma.voiceProfileSample.deleteMany();
   await prisma.speakerProfile.deleteMany();
+  await prisma.voiceProfile.deleteMany();
   await prisma.meetingAudioBatch.deleteMany();
   await prisma.usageLedger.deleteMany();
   await prisma.meeting.deleteMany();
@@ -118,8 +121,15 @@ const createService = () => {
     notifyTranscriptPersisted: mock.fn(() => undefined),
     notifyMeetingCaptureCompleted: mock.fn(() => undefined),
   };
+  const meetingsVoiceProfilesService = {
+    getOwnedVoiceProfileSummary: mock.fn(),
+    promoteMeetingSpeakerToVoiceProfile: mock.fn(),
+  };
   const meetingsService = new MeetingsService(
     prisma as unknown as ConstructorParameters<typeof MeetingsService>[0],
+    meetingsVoiceProfilesService as unknown as ConstructorParameters<
+      typeof MeetingsService
+    >[1],
   );
   const transcriptPersistence = new TranscriptPersistenceService(
     prisma as unknown as ConstructorParameters<
@@ -137,24 +147,30 @@ const createService = () => {
     prisma as unknown as ConstructorParameters<typeof AiWorkerClient>[1],
     logger as unknown as ConstructorParameters<typeof AiWorkerClient>[2],
   );
+  const voiceProfilesService = {
+    listActiveVoiceProfileIdsForUser: mock.fn(async () => []),
+  };
   const billingService = new BillingService(
     prisma as unknown as ConstructorParameters<typeof BillingService>[0],
   );
   const service = new AudioStreamService(
     meetingsService as ConstructorParameters<typeof AudioStreamService>[0],
-    sessionStore as unknown as ConstructorParameters<
+    voiceProfilesService as unknown as ConstructorParameters<
       typeof AudioStreamService
     >[1],
-    aiWorkerClient as ConstructorParameters<typeof AudioStreamService>[2],
-    billingService as ConstructorParameters<typeof AudioStreamService>[3],
+    sessionStore as unknown as ConstructorParameters<
+      typeof AudioStreamService
+    >[2],
+    aiWorkerClient as ConstructorParameters<typeof AudioStreamService>[3],
+    billingService as ConstructorParameters<typeof AudioStreamService>[4],
     transcriptPersistence as ConstructorParameters<
       typeof AudioStreamService
-    >[4],
+    >[5],
     meetingArtifactExtraction as unknown as ConstructorParameters<
       typeof AudioStreamService
-    >[5],
-    config as unknown as ConstructorParameters<typeof AudioStreamService>[6],
-    logger as unknown as ConstructorParameters<typeof AudioStreamService>[7],
+    >[6],
+    config as unknown as ConstructorParameters<typeof AudioStreamService>[7],
+    logger as unknown as ConstructorParameters<typeof AudioStreamService>[8],
   );
 
   return {

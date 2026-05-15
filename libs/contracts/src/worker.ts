@@ -13,6 +13,7 @@ export interface WorkerAudioBatchRequest {
   captureContext?: CaptureContext;
   sourceType?: AudioSourceType;
   authoritativeSpeakerLabel?: string | null;
+  knownVoiceProfileIds?: string[];
 }
 
 export interface WorkerTranscriptSegment {
@@ -22,6 +23,46 @@ export interface WorkerTranscriptSegment {
   aiLabel: string;
   confidence: number | null;
   sourceType?: AudioSourceType;
+  voiceProfileId?: string | null;
+}
+
+export interface WorkerSpeakerEvidence {
+  aiLabel: string;
+  voiceProfileId?: string | null;
+  startTime: number;
+  endTime: number;
+  durationSeconds: number;
+  sourceType?: AudioSourceType;
+  embedding: number[];
+  rmsDb: number | null;
+  speechRatio: number | null;
+  qualityScore: number | null;
+  sampleRate: number | null;
+}
+
+export interface WorkerVoiceProfileCacheUpsertRequest {
+  voiceProfileId: string;
+  displayName: string;
+  isActive: boolean;
+  embeddings: number[][];
+}
+
+export interface WorkerVoiceProfileCacheDeleteRequest {
+  voiceProfileId: string;
+}
+
+export interface WorkerVoiceProfileEnrollmentRequest {
+  mimeType: string;
+  audioBase64: string;
+}
+
+export interface WorkerVoiceProfileEnrollmentResponse {
+  embedding: number[];
+  durationSeconds: number;
+  rmsDb: number | null;
+  speechRatio: number | null;
+  qualityScore: number | null;
+  sampleRate: number | null;
 }
 
 export interface WorkerTranscriptionResponse {
@@ -33,4 +74,5 @@ export interface WorkerTranscriptionResponse {
   segments: WorkerTranscriptSegment[];
   captureContext?: CaptureContext;
   sourceType?: AudioSourceType;
+  speakerEvidence?: WorkerSpeakerEvidence[];
 }

@@ -14,16 +14,19 @@ type TableRow = {
 const quoteIdentifier = (value: string): string =>
   `"${value.replace(/"/g, '""')}"`;
 
+const getAdminDatabaseUrl = (): string | undefined =>
+  process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim();
+
 const loadEnvironment = (): void => {
   dotenv.config({ path: ".env" });
 
-  if (!process.env.DATABASE_URL) {
+  if (!getAdminDatabaseUrl()) {
     dotenv.config({ path: "kapter-backend/.env" });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!getAdminDatabaseUrl()) {
     throw new Error(
-      "DATABASE_URL is not set. Configure it in kapter-backend/.env or export it before running the script.",
+      "DIRECT_URL or DATABASE_URL must be set. Configure them in kapter-backend/.env or export them before running the script.",
     );
   }
 };
@@ -31,7 +34,9 @@ const loadEnvironment = (): void => {
 const main = async (): Promise<void> => {
   loadEnvironment();
 
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg({
+    connectionString: getAdminDatabaseUrl()!,
+  });
   const prisma = new PrismaClient({ adapter });
 
   try {

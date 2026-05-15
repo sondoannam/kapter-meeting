@@ -24,8 +24,13 @@ import { MeetingSpeakerRoster } from "@/features/meetings/components/meeting-spe
 import type { MeetingWorkflowStage } from "@/features/meetings/lib/meeting-workflow-stage"
 import type {
   DashboardMeetingDetail,
+  MeetingSpeakerPromotionRequest,
   MeetingNotionSyncResult,
 } from "@/features/meetings/types"
+import type {
+  VoiceProfile,
+  VoiceProfilesRequestStatus,
+} from "@/features/voice-profiles/types"
 import { ROUTES } from "@/routes/routes.constants"
 
 interface MeetingDetailSidebarProps {
@@ -523,10 +528,23 @@ export function ProjectMemoryCard({
   meeting,
   onApplyProposal,
   onDismissProposal,
+  onLinkSpeaker,
+  onPromoteSpeaker,
+  onClearSpeakerLink,
+  voiceProfiles = [],
+  voiceProfilesStatus = "ready",
 }: {
   meeting: DashboardMeetingDetail
   onApplyProposal: (proposalId: string) => Promise<void>
   onDismissProposal: (proposalId: string) => Promise<void>
+  onLinkSpeaker?: (speakerId: string, voiceProfileId: string) => Promise<void>
+  onPromoteSpeaker?: (
+    speakerId: string,
+    payload: MeetingSpeakerPromotionRequest
+  ) => Promise<void>
+  onClearSpeakerLink?: (speakerId: string) => Promise<void>
+  voiceProfiles?: VoiceProfile[]
+  voiceProfilesStatus?: VoiceProfilesRequestStatus
 }) {
   const { t } = useTranslation("meeting")
   const [mutationState, setMutationState] = React.useState<
@@ -566,7 +584,18 @@ export function ProjectMemoryCard({
       </CardHeader>
 
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-        <MeetingSpeakerRoster speakers={meeting.speakers} />
+        <MeetingSpeakerRoster
+          canManage={
+            meeting.status === "COMPLETED" &&
+            meeting.artifactReviewStatus !== "APPROVED"
+          }
+          onClearSpeakerLink={onClearSpeakerLink}
+          onLinkSpeaker={onLinkSpeaker}
+          onPromoteSpeaker={onPromoteSpeaker}
+          speakers={meeting.speakers}
+          voiceProfiles={voiceProfiles}
+          voiceProfilesStatus={voiceProfilesStatus}
+        />
 
         <div className="rounded-[1.25rem] border border-border/70 bg-background/85 p-4 dark:border-white/10 dark:bg-slate-950/55">
           <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
