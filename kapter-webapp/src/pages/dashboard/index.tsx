@@ -13,7 +13,6 @@ import { DashboardProjectSetupSection } from "@/components/dashboard/dashboard-p
 import { ErrorBanner } from "@/components/dashboard/error-banner"
 import { MeetingPanel } from "@/components/dashboard/meeting-panel"
 import { ProjectPanel } from "@/components/dashboard/project-panel"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ActiveSessionBanner } from "@/features/meetings/components/active-session-banner"
 import { useDashboardMode } from "@/features/dashboard/hooks/use-dashboard-mode"
@@ -310,22 +309,31 @@ export default function Dashboard() {
   ) {
     return (
       <AppShellContainer className="space-y-5 py-6">
-        <Card
-          className="rounded-[1.85rem] border border-border/70 bg-white/82 py-0 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.36)] dark:border-white/10 dark:bg-white/5"
-          size="sm"
-        >
-          <CardContent className="space-y-4 p-5 sm:p-6">
-            <Skeleton className="h-3 w-28" />
-            <Skeleton className="h-10 w-72 max-w-full" />
+        {/* Page header skeleton */}
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-8 w-56" />
+        </div>
+
+        {/* Metric grid skeleton */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+
+        {/* Project setup section skeleton */}
+        <Skeleton className="h-20 w-full" />
+
+        {/* 2-col workspace skeleton */}
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="space-y-5">
             <Skeleton className="h-20 w-full" />
-            <div className="grid gap-3 lg:grid-cols-4">
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-            </div>
-          </CardContent>
-        </Card>
+            <Skeleton className="h-64 w-full" />
+          </div>
+          <Skeleton className="h-80 w-full" />
+        </div>
       </AppShellContainer>
     )
   }

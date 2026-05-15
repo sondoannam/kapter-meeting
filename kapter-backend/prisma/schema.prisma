@@ -25,6 +25,8 @@ model User {
   projects         Project[]
   subscription     Subscription?
   usageLedgers     UsageLedger[]
+  voiceProfiles    VoiceProfile[]
+  recurringSpeakerProfiles RecurringSpeakerProfile[]
 }
 
 model Meeting {
@@ -38,6 +40,9 @@ model Meeting {
   artifactReviewStatus    MeetingArtifactReviewStatus    @default(PENDING)
   artifactExtractionError String?
   artifactApprovedAt      DateTime?
+  speakerPostProcessStatus MeetingSpeakerPostProcessStatus @default(PENDING)
+  speakerPostProcessedAt  DateTime?
+  speakerPostProcessError String?
   audioUrl                String?
   summary                 String?
   userId                  String
@@ -49,6 +54,8 @@ model Meeting {
   artifactDraft           MeetingArtifactDraft?
   extractionChunks        MeetingExtractionChunk[]
   project                 Project?                       @relation(fields: [projectId], references: [id])
+  promotedVoiceProfileSamples VoiceProfileSample[]
+  recurringSpeakerSamples RecurringSpeakerSample[]
   user                    User                           @relation(fields: [userId], references: [id])
   audioBatches            MeetingAudioBatch[]
   contextUpdateProposals  ProjectContextUpdateProposal[]
@@ -199,11 +206,22 @@ model SpeakerProfile {
   aiLabel     String
   realName    String?
   meetingId   String
+  voiceProfileId String?
+  recurringSpeakerProfileId String?
+  recurringMatchConfidence Float?
+  recurringMatchSeenCount Int?
   actionItems ActionItem[]
   meeting     Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   segments    TranscriptSegment[]
+  voiceProfile VoiceProfile?      @relation(fields: [voiceProfileId], references: [id], onDelete: SetNull)
+  evidenceSamples MeetingSpeakerSample[]
+  promotedSamples VoiceProfileSample[] @relation("VoiceProfileSampleSourceSpeaker")
+  recurringSpeakerProfile RecurringSpeakerProfile? @relation(fields: [recurringSpeakerProfileId], references: [id], onDelete: SetNull)
+  recurringSamples RecurringSpeakerSample[] @relation("RecurringSpeakerSampleSourceSpeaker")
 
   @@unique([meetingId, aiLabel])
+  @@index([meetingId, voiceProfileId])
+  @@index([meetingId, recurringSpeakerProfileId])
 }
 
 model TranscriptSegment {
@@ -222,6 +240,107 @@ model TranscriptSegment {
   speaker         SpeakerProfile          @relation(fields: [speakerId], references: [id])
 }
 
+model VoiceProfile {
+  id               String                  @id @default(cuid())
+  displayName      String
+  position         String?
+  department       String?
+  isActive         Boolean                 @default(true)
+  workerCacheStatus WorkerCacheSyncStatus  @default(PENDING)
+  workerCacheError String?
+  lastSyncedAt     DateTime?
+  userId           String
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  samples          VoiceProfileSample[]
+  mappedSpeakers   SpeakerProfile[]
+  promotedRecurringSpeakerProfiles RecurringSpeakerProfile[] @relation("PromotedVoiceProfile")
+
+  @@unique([userId, displayName])
+  @@index([userId, isActive, workerCacheStatus])
+}
+
+model RecurringSpeakerProfile {
+  id                    String                        @id @default(cuid())
+  userId                String
+  status                RecurringSpeakerProfileStatus @default(CANDIDATE)
+  lastSeenAt            DateTime
+  meetingCount          Int                           @default(1)
+  sampleCount           Int                           @default(0)
+  promotedVoiceProfileId String?
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  promotedVoiceProfile  VoiceProfile?                 @relation("PromotedVoiceProfile", fields: [promotedVoiceProfileId], references: [id], onDelete: SetNull)
+  user                  User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  samples               RecurringSpeakerSample[]
+  linkedSpeakers        SpeakerProfile[]
+
+  @@index([userId, status, lastSeenAt])
+  @@index([promotedVoiceProfileId])
+}
+
+model RecurringSpeakerSample {
+  id                       String                  @id @default(cuid())
+  recurringSpeakerProfileId String
+  embedding                Json
+  durationSeconds          Float
+  rmsDb                    Float?
+  speechRatio              Float?
+  qualityScore             Float?
+  sampleRate               Int?
+  sourceMeetingId          String?
+  sourceSpeakerProfileId   String?
+  createdAt                DateTime                @default(now())
+  recurringSpeakerProfile  RecurringSpeakerProfile  @relation(fields: [recurringSpeakerProfileId], references: [id], onDelete: Cascade)
+  sourceMeeting            Meeting?                 @relation(fields: [sourceMeetingId], references: [id], onDelete: SetNull)
+  sourceSpeakerProfile     SpeakerProfile?          @relation("RecurringSpeakerSampleSourceSpeaker", fields: [sourceSpeakerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([recurringSpeakerProfileId, createdAt])
+  @@index([sourceMeetingId])
+  @@index([sourceSpeakerProfileId])
+}
+
+model VoiceProfileSample {
+  id                    String                   @id @default(cuid())
+  voiceProfileId        String
+  source                VoiceProfileSampleSource
+  embedding             Json
+  durationSeconds       Float
+  rmsDb                 Float?
+  speechRatio           Float?
+  qualityScore          Float?
+  sampleRate            Int?
+  sourceMeetingId       String?
+  sourceSpeakerProfileId String?
+  createdAt             DateTime                 @default(now())
+  sourceMeeting         Meeting?                 @relation(fields: [sourceMeetingId], references: [id], onDelete: SetNull)
+  sourceSpeakerProfile  SpeakerProfile?          @relation("VoiceProfileSampleSourceSpeaker", fields: [sourceSpeakerProfileId], references: [id], onDelete: SetNull)
+  voiceProfile          VoiceProfile             @relation(fields: [voiceProfileId], references: [id], onDelete: Cascade)
+
+  @@index([voiceProfileId, createdAt])
+  @@index([sourceMeetingId])
+  @@index([sourceSpeakerProfileId])
+}
+
+model MeetingSpeakerSample {
+  id              String           @id @default(cuid())
+  speakerProfileId String
+  embedding       Json
+  startTime       Float
+  endTime         Float
+  durationSeconds Float
+  sourceType      AudioSourceType?
+  rmsDb           Float?
+  speechRatio     Float?
+  qualityScore    Float?
+  sampleRate      Int?
+  createdAt       DateTime         @default(now())
+  speakerProfile  SpeakerProfile   @relation(fields: [speakerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([speakerProfileId, createdAt])
+}
+
 enum CaptureContext {
   GOOGLE_MEET_ROOM
   GENERIC_TAB
@@ -235,6 +354,30 @@ enum AudioSourceType {
 enum TranscriptMergeStrategy {
   PREFERRED_SELF_MIC_DUPLICATE
   AMBIGUOUS_OVERLAP
+}
+
+enum WorkerCacheSyncStatus {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+enum RecurringSpeakerProfileStatus {
+  CANDIDATE
+  STABLE
+  PROMOTED
+}
+
+enum MeetingSpeakerPostProcessStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum VoiceProfileSampleSource {
+  UPLOAD
+  MEETING_PROMOTION
 }
 
 model ActionItem {

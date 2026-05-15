@@ -4,6 +4,7 @@ import { MeetingDetailExperience } from "@/components/meeting-detail/meeting-det
 import { setStoredDashboardMode } from "@/features/dashboard/lib/dashboard-mode"
 import { useMeetingDetail } from "@/features/meetings/hooks/use-meeting-detail"
 import { useProjects } from "@/features/projects/hooks/use-projects"
+import { useVoiceProfiles } from "@/features/voice-profiles/hooks/use-voice-profiles"
 
 export default function MeetingDetailPage() {
   const { meetingId } = useParams()
@@ -22,8 +23,16 @@ export default function MeetingDetailPage() {
     connectNotion,
     applyProposal,
     dismissProposal,
+    linkSpeakerToVoiceProfile,
+    promoteSpeakerToVoiceProfile,
+    clearSpeakerVoiceProfileLink,
     deleteMeeting,
   } = useMeetingDetail(meetingId)
+  const {
+    voiceProfiles,
+    status: voiceProfilesStatus,
+    refresh: refreshVoiceProfiles,
+  } = useVoiceProfiles()
   const { projects, status: projectsStatus } = useProjects({
     includeNotionConnection: false,
   })
@@ -44,6 +53,18 @@ export default function MeetingDetailPage() {
         navigate("/dashboard")
       }}
       onDismissProposal={dismissProposal}
+      onClearSpeakerLink={async (speakerId) => {
+        await clearSpeakerVoiceProfileLink(speakerId)
+        await refreshVoiceProfiles()
+      }}
+      onLinkSpeaker={async (speakerId, voiceProfileId) => {
+        await linkSpeakerToVoiceProfile(speakerId, voiceProfileId)
+        await refreshVoiceProfiles()
+      }}
+      onPromoteSpeaker={async (speakerId, payload) => {
+        await promoteSpeakerToVoiceProfile(speakerId, payload)
+        await refreshVoiceProfiles()
+      }}
       onRefresh={refresh}
       onRetryExtraction={retryExtraction}
       onSaveMetadata={saveMetadata}
@@ -52,6 +73,8 @@ export default function MeetingDetailPage() {
       projectOptions={projects}
       projectStatus={projectsStatus}
       status={status}
+      voiceProfiles={voiceProfiles}
+      voiceProfilesStatus={voiceProfilesStatus}
     />
   )
 }

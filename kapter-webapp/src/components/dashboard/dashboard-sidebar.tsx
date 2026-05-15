@@ -7,6 +7,7 @@ import {
   Home,
   LayoutGrid,
   LogOut,
+  Mic2,
   RefreshCw,
 } from "lucide-react"
 import { Link, useLocation, useSearchParams } from "react-router"
@@ -74,10 +75,12 @@ export function DashboardSidebar() {
   )
   const isDashboardDetail =
     pathname.startsWith(`${ROUTES.DASHBOARD}/`) &&
-    pathname !== ROUTES.DASHBOARD_PRICING
+    pathname !== ROUTES.DASHBOARD_PRICING &&
+    pathname !== ROUTES.DASHBOARD_VOICE_PROFILES
   const isOverviewActive =
     (pathname === ROUTES.DASHBOARD && activeSidebarStatus === null) ||
     isDashboardDetail
+  const isVoiceProfilesActive = pathname === ROUTES.DASHBOARD_VOICE_PROFILES
 
   const statusItems: Array<{
     id: DashboardSidebarStatusId
@@ -201,6 +204,18 @@ export function DashboardSidebar() {
                 <Link to={ROUTES.DASHBOARD}>
                   <LayoutGrid />
                   <span>{t("sidebar.overview")}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem className={cn(!open && "flex justify-center")}>
+              <SidebarMenuButton
+                asChild
+                isActive={isVoiceProfilesActive}
+                tooltip={t("sidebar.voiceProfiles")}
+              >
+                <Link to={ROUTES.DASHBOARD_VOICE_PROFILES}>
+                  <Mic2 />
+                  <span>{t("sidebar.voiceProfiles")}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

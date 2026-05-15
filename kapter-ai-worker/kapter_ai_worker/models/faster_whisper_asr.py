@@ -13,7 +13,7 @@ from kapter_ai_worker.logging.logger import get_logger
 
 _logger = get_logger("FasterWhisperASR")
 
-# Patterns that Whisper hallucinates on silence/noise
+# Patterns that Whisper hallucinations on silence/noise
 _HALLUCINATION_PATTERNS = [
     re.compile(r"^[\s\.\,\!\?\;\:\-\–\—\…]+$"),              # Only punctuation
     re.compile(r"(.{3,}?)\1{2,}", re.IGNORECASE),             # Repeated phrase 3+ times
@@ -21,6 +21,14 @@ _HALLUCINATION_PATTERNS = [
     re.compile(r"^(Hẹn gặp lại|Cảm ơn đã xem|Nhớ đăng ký)", re.IGNORECASE),
     re.compile(r"^♪|🎵|🎶|♫"),                                # Music symbols
     re.compile(r"^(Tạm biệt|Bye|Goodbye|See you)[\.\!]*$", re.IGNORECASE),
+    # Vietnamese YouTube channel hallucinations
+    re.compile(r"Ghiền Mì Gõ", re.IGNORECASE),
+    re.compile(r"subscribe.*kênh", re.IGNORECASE),
+    re.compile(r"(bấm|nhấn)\s*(chuông|like|subscribe)", re.IGNORECASE),
+    re.compile(r"không\s+bỏ\s+lỡ", re.IGNORECASE),
+    re.compile(r"video\s+hấp\s+dẫn", re.IGNORECASE),
+    re.compile(r"^Hãy\s+subscribe", re.IGNORECASE),
+    re.compile(r"(Để không bỏ lỡ|Đừng quên đăng ký)", re.IGNORECASE),
 ]
 
 
@@ -35,16 +43,16 @@ class FasterWhisperASR(BaseASR):
         compute_type: str = "float16",
         beam_size: int = 5,
         language: str | None = "vi",
-        hallucination_logprob_threshold: float = -1.5,
+        hallucination_logprob_threshold: float = -1.0,
         max_segment_repeat: int = 2,
-        min_audio_rms: float = 0.005,
+        min_audio_rms: float = 0.01,
     ) -> None:
         self._beam_size = beam_size
         self._language = language
         self._hallucination_logprob_threshold = hallucination_logprob_threshold
         self._max_segment_repeat = max_segment_repeat
         self._min_audio_rms = min_audio_rms
-        self._recent_texts = deque(maxlen=20)  # Track recent outputs for repetition detection
+        self._recent_texts = deque(maxlen=20)
 
         download_root = str(Path(model_dir)) if model_dir is not None else None
         _logger.info(
@@ -60,49 +68,40 @@ class FasterWhisperASR(BaseASR):
         _logger.info("Whisper model loaded successfully.")
 
     def _is_audio_silent(self, samples: np.ndarray) -> bool:
-        """Check if the audio chunk is effectively silence or noise."""
         rms = float(np.sqrt(np.mean(samples ** 2)))
         if rms < self._min_audio_rms:
-            _logger.debug(f"Audio RMS {rms:.6f} below threshold {self._min_audio_rms}, skipping")
             return True
         return False
 
     def _is_hallucination(self, text: str, avg_logprob: float) -> bool:
-        """Detect common Whisper hallucination patterns."""
         stripped = text.strip()
         if not stripped:
             return True
-
-        # Check logprob confidence
         if avg_logprob < self._hallucination_logprob_threshold:
-            _logger.debug(
-                f"Low confidence hallucination filtered: '{stripped[:50]}' "
-                f"(logprob={avg_logprob:.3f})"
-            )
+            _logger.debug(f"Filtered by logprob ({avg_logprob:.2f} < {self._hallucination_logprob_threshold}): '{stripped[:60]}'")
             return True
-
-        # Check known hallucination patterns
         for pattern in _HALLUCINATION_PATTERNS:
             if pattern.search(stripped):
-                _logger.debug(f"Pattern hallucination filtered: '{stripped[:50]}'")
+                _logger.debug(f"Filtered by hallucination pattern: '{stripped[:60]}'")
                 return True
-
-        # Check cross-segment repetition ONLY for longer phrases.
-        # Short phrases like "Vâng", "Ok" are valid normal repetitions.
         if len(stripped) > 15 and stripped in list(self._recent_texts)[-self._max_segment_repeat:]:
-            _logger.debug(f"Repetition hallucination filtered: '{stripped[:50]}'")
+            _logger.debug(f"Filtered by repetition: '{stripped[:60]}'")
             return True
-
         return False
 
     def transcribe(self, audio_chunk: AudioChunk, initial_prompt: str | None = None) -> list[TranscriptSpan]:
         """Transcribe an audio chunk and return spans with absolute timestamps."""
         
-        # Pre-check: skip silent/noise audio entirely
         if self._is_audio_silent(audio_chunk.samples):
             return []
 
-        # Handle auto-detection
+        # CLEAN & OPTIMIZED PROMPT
+        standard_prompt = (
+            "Cuộc họp chuyên nghiệp tiếng Việt. "
+            "AI, API, Cloud, Machine Learning, LLM, bất động sản."
+        )
+        combined_prompt = f"{standard_prompt} {initial_prompt}" if initial_prompt else standard_prompt
+
         language = self._language
         if language == "auto":
             language = None
@@ -111,28 +110,18 @@ class FasterWhisperASR(BaseASR):
             audio_chunk.samples,
             beam_size=self._beam_size,
             language=language,
-            initial_prompt=initial_prompt,
-            # Pipeline VAD (Silero) already handled chunking — disable Whisper's
-            # internal VAD to avoid double-filtering and timestamp misalignment
+            initial_prompt=combined_prompt,
             vad_filter=False,
             word_timestamps=True,
-            # Anti-hallucination parameters
             condition_on_previous_text=False,
-            no_speech_threshold=0.8,
-            log_prob_threshold=-1.5,
+            no_speech_threshold=0.9,
+            log_prob_threshold=-2.5,
             repetition_penalty=1.0,
             no_repeat_ngram_size=0,
         )
 
-        if self._language is None:
-            _logger.info(
-                f"Chunk {audio_chunk.index} detection: {info.language} "
-                f"({info.language_probability:.4f})"
-            )
-
         spans: list[TranscriptSpan] = []
-        for segment in segments:
-            # Segment-level hallucination check
+        for segment_index, segment in enumerate(segments):
             segment_text = segment.text.strip()
             if self._is_hallucination(segment_text, segment.avg_logprob):
                 continue
@@ -140,13 +129,7 @@ class FasterWhisperASR(BaseASR):
             if segment.words:
                 for w in segment.words:
                     word_text = w.word.strip()
-                    if not word_text:
-                        continue
-                    if w.end <= w.start:
-                        _logger.debug(
-                            f"Skipping degenerate word span '{word_text}' "
-                            f"(start={w.start}, end={w.end})"
-                        )
+                    if not word_text or w.end <= w.start:
                         continue
                     spans.append(
                         TranscriptSpan(
@@ -154,16 +137,11 @@ class FasterWhisperASR(BaseASR):
                             start_time=audio_chunk.start_time + w.start,
                             end_time=audio_chunk.start_time + w.end,
                             confidence=w.probability,
+                            source_segment_index=segment_index,
                         )
                     )
             else:
-                if not segment_text:
-                    continue
-                if segment.end <= segment.start:
-                    _logger.debug(
-                        f"Skipping degenerate segment span '{segment_text}' "
-                        f"(start={segment.start}, end={segment.end})"
-                    )
+                if not segment_text or segment.end <= segment.start:
                     continue
                 spans.append(
                     TranscriptSpan(
@@ -171,10 +149,10 @@ class FasterWhisperASR(BaseASR):
                         start_time=audio_chunk.start_time + segment.start,
                         end_time=audio_chunk.start_time + segment.end,
                         confidence=segment.avg_logprob,
+                        source_segment_index=segment_index,
                     )
                 )
 
-            # Track for cross-chunk repetition detection
             self._recent_texts.append(segment_text)
 
         return spans

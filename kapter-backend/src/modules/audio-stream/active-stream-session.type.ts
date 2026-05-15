@@ -39,6 +39,7 @@ export interface ActiveStreamSession {
   backendMeetingId: string;
   externalMeetingId: string | null;
   captureContext: CaptureContext | null;
+  knownVoiceProfileIds: string[];
   stopRequested: boolean;
   audioSources: Partial<Record<AudioSourceType, ActiveAudioSourceState>>;
 }

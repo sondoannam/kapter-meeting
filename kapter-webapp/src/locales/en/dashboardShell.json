@@ -6,6 +6,7 @@
     "landing": "Home",
     "workspaceHeading": "Workspace",
     "overview": "Overview",
+    "voiceProfiles": "Voice profiles",
     "reviewHeading": "Review queue",
     "statuses": {
       "processing": "Processing",

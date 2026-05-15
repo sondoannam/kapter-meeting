@@ -64,6 +64,10 @@ export const createBufferedAudioBatch = (
       streamOffsetMs: sourceState.streamOffsetMs,
       durationMs,
       mimeType: sourceState.mimeType ?? firstChunk.mimeType,
+      knownVoiceProfileIds:
+        firstChunk.sequence === 1 && session.knownVoiceProfileIds.length > 0
+          ? session.knownVoiceProfileIds
+          : undefined,
       audioBase64: Buffer.concat(chunks.map((chunk) => chunk.buffer)).toString(
         "base64",
       ),

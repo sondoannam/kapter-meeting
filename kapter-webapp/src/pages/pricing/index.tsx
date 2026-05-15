@@ -5,6 +5,7 @@ import { Link } from "react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PricingSkeleton } from "@/components/pricing/pricing-skeleton"
 import { useBillingStatus } from "@/features/billing/hooks/use-billing-status"
 import { ROUTES } from "@/routes/routes.constants"
 import { cn } from "@/lib/utils"
@@ -32,6 +33,10 @@ export function PricingPage() {
         )
       )
     : 0
+
+  if (status === "loading" && plans.length === 0) {
+    return <PricingSkeleton />
+  }
 
   return (
     <div className="relative overflow-x-clip pb-16">

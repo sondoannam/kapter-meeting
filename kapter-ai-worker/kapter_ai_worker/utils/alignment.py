@@ -119,6 +119,9 @@ def consolidate_segments(
                 start_time=seg.start_time,
                 end_time=seg.end_time,
                 confidence=seg.confidence,
+                voice_profile_id=seg.voice_profile_id,
+                source_segment_index=seg.source_segment_index,
+                source_group_index=seg.source_group_index,
             )
         )
 
@@ -152,8 +155,13 @@ def consolidate_segments(
 
         is_same_speaker = next_seg.speaker_label == current.speaker_label
         gap = next_seg.start_time - current.end_time
+        respects_asr_boundary = (
+            current.source_group_index is None
+            or next_seg.source_group_index is None
+            or current.source_group_index == next_seg.source_group_index
+        )
 
-        if is_same_speaker and gap <= max_gap_seconds:
+        if is_same_speaker and gap <= max_gap_seconds and respects_asr_boundary:
             base_text = current.text.strip()
             new_text = next_seg.text.strip()
 

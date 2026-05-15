@@ -14,9 +14,11 @@ import {
   type DashboardMeetingTranscriptMergeStrategy,
   type MeetingArtifactReviewStatus,
 } from "@kapter/contracts";
+import type { Prisma } from "prisma/generated/prisma/client";
 
 import { PrismaService } from "../../database/prisma.service";
 import { LlmService } from "../llm/llm.service";
+import { VoiceProfilesService } from "../voice-profiles/voice-profiles.service";
 import { MeetingArtifactExtractionService } from "./meeting-artifact-extraction.service";
 import type { SaveMeetingReviewDto } from "./dto/save-meeting-review.dto";
 
@@ -259,10 +261,20 @@ const dashboardMeetingDetailSelect = {
       id: true,
       aiLabel: true,
       realName: true,
+      voiceProfileId: true,
+      recurringSpeakerProfileId: true,
+      recurringMatchConfidence: true,
+      recurringMatchSeenCount: true,
+      voiceProfile: {
+        select: {
+          displayName: true,
+        },
+      },
       _count: {
         select: {
           segments: true,
           actionItems: true,
+          evidenceSamples: true,
         },
       },
     },
@@ -385,9 +397,17 @@ const toDashboardMeetingDetail = (meeting: {
     id: string;
     aiLabel: string;
     realName: string | null;
+    voiceProfileId: string | null;
+    recurringSpeakerProfileId: string | null;
+    recurringMatchConfidence: number | null;
+    recurringMatchSeenCount: number | null;
+    voiceProfile: {
+      displayName: string;
+    } | null;
     _count: {
       segments: number;
       actionItems: number;
+      evidenceSamples: number;
     };
   }>;
   transcript: Array<{
@@ -459,7 +479,14 @@ const toDashboardMeetingDetail = (meeting: {
   const syncedActionItemCount = meeting.actionItems.filter(
     (actionItem) => actionItem.isSynced,
   ).length;
-  const notionConnection = meeting.user?.NotionConnection ?? null;
+const notionConnection = meeting.user?.NotionConnection ?? null;
+  const buildRecurringSuggestionLabel = (seenCount: number | null): string | null => {
+    if (!seenCount || seenCount < 2) {
+      return null;
+    }
+
+    return `Likely recurring speaker seen in ${seenCount} meetings`;
+  };
 
   return {
     ...toDashboardMeetingSummary(meeting),
@@ -469,9 +496,26 @@ const toDashboardMeetingDetail = (meeting: {
     speakers: meeting.speakers.map((speaker) => ({
       id: speaker.id,
       aiLabel: speaker.aiLabel,
-      realName: speaker.realName,
+      realName: speaker.voiceProfile?.displayName ?? speaker.realName,
       segmentCount: speaker._count.segments,
       actionItemCount: speaker._count.actionItems,
+      voiceProfileId: speaker.voiceProfileId,
+      voiceProfileName: speaker.voiceProfile?.displayName ?? null,
+      isMapped: speaker.voiceProfileId !== null,
+      promotionEligible: speaker._count.evidenceSamples > 0,
+      recurringSpeakerProfileId: speaker.recurringSpeakerProfileId,
+      recurringMatchConfidence: speaker.recurringMatchConfidence,
+      recurringMatchSeenCount: speaker.recurringMatchSeenCount,
+      recurringSuggestionLabel: buildRecurringSuggestionLabel(
+        speaker.recurringMatchSeenCount,
+      ),
+      speakerMapping: {
+        speakerId: speaker.id,
+        voiceProfileId: speaker.voiceProfileId,
+        voiceProfileName: speaker.voiceProfile?.displayName ?? null,
+        isMapped: speaker.voiceProfileId !== null,
+        promotionEligible: speaker._count.evidenceSamples > 0,
+      },
     })),
     transcriptSegments: meeting.transcript.map((segment) => ({
       id: segment.id,
@@ -554,9 +598,191 @@ const toDashboardMeetingDetail = (meeting: {
 export class MeetingsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly voiceProfilesService: VoiceProfilesService,
     private readonly llmService?: LlmService,
     private readonly meetingArtifactExtraction?: MeetingArtifactExtractionService,
   ) {}
+
+  private async getSpeakerMutationTarget(
+    clerkUserId: string,
+    meetingId: string,
+    speakerId: string,
+  ) {
+    const speaker = await this.prisma.speakerProfile.findFirst({
+      where: {
+        id: speakerId,
+        meetingId,
+        meeting: {
+          user: {
+            is: {
+              clerkId: clerkUserId,
+              deletedAt: null,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        meetingId: true,
+        voiceProfileId: true,
+        recurringSpeakerProfileId: true,
+        meeting: {
+          select: {
+            status: true,
+            artifactReviewStatus: true,
+          },
+        },
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException("Meeting speaker not found.");
+    }
+
+    if (speaker.meeting.artifactReviewStatus === "APPROVED") {
+      throw new BadRequestException(
+        "Approved meetings cannot be rewritten in this MVP.",
+      );
+    }
+
+    if (speaker.meeting.status !== "COMPLETED") {
+      throw new BadRequestException(
+        "Speaker mapping is available after meeting processing completes.",
+      );
+    }
+
+    return speaker;
+  }
+
+  private async applyVoiceProfileMapping(
+    tx: Prisma.TransactionClient,
+    meetingId: string,
+    speakerId: string,
+    voiceProfile: {
+      id: string;
+      displayName: string;
+    },
+  ): Promise<void> {
+    await tx.speakerProfile.update({
+      where: {
+        id: speakerId,
+      },
+      data: {
+        voiceProfileId: voiceProfile.id,
+        realName: voiceProfile.displayName,
+      },
+    });
+
+    await this.mergeMappedSpeakerDuplicates(tx, {
+      meetingId,
+      primarySpeakerId: speakerId,
+      voiceProfileId: voiceProfile.id,
+      realName: voiceProfile.displayName,
+    });
+  }
+
+  private async mergeMappedSpeakerDuplicates(
+    tx: Prisma.TransactionClient,
+    options: {
+      meetingId: string;
+      primarySpeakerId: string;
+      voiceProfileId: string;
+      realName: string;
+    },
+  ): Promise<void> {
+    const duplicateSpeakers = await tx.speakerProfile.findMany({
+      where: {
+        meetingId: options.meetingId,
+        voiceProfileId: options.voiceProfileId,
+        id: {
+          not: options.primarySpeakerId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (duplicateSpeakers.length === 0) {
+      return;
+    }
+
+    const duplicateSpeakerIds = duplicateSpeakers.map((speaker) => speaker.id);
+
+    await tx.transcriptSegment.updateMany({
+      where: {
+        speakerId: {
+          in: duplicateSpeakerIds,
+        },
+      },
+      data: {
+        speakerId: options.primarySpeakerId,
+      },
+    });
+
+    await tx.actionItem.updateMany({
+      where: {
+        meetingId: options.meetingId,
+        assigneeId: {
+          in: duplicateSpeakerIds,
+        },
+      },
+      data: {
+        assigneeId: options.primarySpeakerId,
+      },
+    });
+
+    await tx.meetingSpeakerSample.updateMany({
+      where: {
+        speakerProfileId: {
+          in: duplicateSpeakerIds,
+        },
+      },
+      data: {
+        speakerProfileId: options.primarySpeakerId,
+      },
+    });
+
+    await tx.voiceProfileSample.updateMany({
+      where: {
+        sourceSpeakerProfileId: {
+          in: duplicateSpeakerIds,
+        },
+      },
+      data: {
+        sourceSpeakerProfileId: options.primarySpeakerId,
+      },
+    });
+
+    await tx.speakerProfile.deleteMany({
+      where: {
+        id: {
+          in: duplicateSpeakerIds,
+        },
+      },
+    });
+
+    await tx.speakerProfile.update({
+      where: {
+        id: options.primarySpeakerId,
+      },
+      data: {
+        voiceProfileId: options.voiceProfileId,
+        realName: options.realName,
+      },
+    });
+  }
+
+  private async refreshArtifactsAfterSpeakerMutation(
+    meetingId: string,
+  ): Promise<void> {
+    if (!this.meetingArtifactExtraction) {
+      throw new BadRequestException("Meeting extraction is not available.");
+    }
+
+    await this.meetingArtifactExtraction.resetMeetingArtifacts(meetingId);
+    this.meetingArtifactExtraction.scheduleMeetingArtifactProcessing(meetingId);
+  }
 
   private async resolveProjectId(
     userId: string,
@@ -783,6 +1009,129 @@ export class MeetingsService {
     }
 
     return toDashboardMeetingDetail(meeting);
+  }
+
+  async linkMeetingSpeakerToVoiceProfile(
+    clerkUserId: string,
+    meetingId: string,
+    speakerId: string,
+    voiceProfileId: string,
+  ): Promise<DashboardMeetingDetail> {
+    const speaker = await this.getSpeakerMutationTarget(
+      clerkUserId,
+      meetingId,
+      speakerId,
+    );
+    const voiceProfile =
+      await this.voiceProfilesService.getOwnedVoiceProfileSummary(
+        clerkUserId,
+        voiceProfileId,
+      );
+
+    if (speaker.voiceProfileId === voiceProfile.id) {
+      return this.getMeetingDetail(clerkUserId, meetingId, false);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.applyVoiceProfileMapping(tx, meetingId, speaker.id, {
+        id: voiceProfile.id,
+        displayName: voiceProfile.displayName,
+      });
+
+      if (speaker.recurringSpeakerProfileId) {
+        await tx.recurringSpeakerProfile.update({
+          where: {
+            id: speaker.recurringSpeakerProfileId,
+          },
+          data: {
+            status: "PROMOTED",
+            promotedVoiceProfileId: voiceProfile.id,
+          },
+        });
+      }
+    });
+
+    await this.refreshArtifactsAfterSpeakerMutation(meetingId);
+
+    return this.getMeetingDetail(clerkUserId, meetingId, false);
+  }
+
+  async promoteMeetingSpeakerToVoiceProfile(
+    clerkUserId: string,
+    meetingId: string,
+    speakerId: string,
+    input: {
+      displayName: string;
+      position?: string;
+      department?: string;
+      isActive?: boolean;
+    },
+  ): Promise<DashboardMeetingDetail> {
+    const speaker = await this.getSpeakerMutationTarget(
+      clerkUserId,
+      meetingId,
+      speakerId,
+    );
+    const voiceProfile =
+      await this.voiceProfilesService.promoteMeetingSpeakerToVoiceProfile(
+        clerkUserId,
+        meetingId,
+        speaker.id,
+        input,
+      );
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.applyVoiceProfileMapping(tx, meetingId, speaker.id, {
+        id: voiceProfile.id,
+        displayName: voiceProfile.displayName,
+      });
+
+      if (speaker.recurringSpeakerProfileId) {
+        await tx.recurringSpeakerProfile.update({
+          where: {
+            id: speaker.recurringSpeakerProfileId,
+          },
+          data: {
+            status: "PROMOTED",
+            promotedVoiceProfileId: voiceProfile.id,
+          },
+        });
+      }
+    });
+
+    await this.refreshArtifactsAfterSpeakerMutation(meetingId);
+
+    return this.getMeetingDetail(clerkUserId, meetingId, false);
+  }
+
+  async clearMeetingSpeakerVoiceProfileLink(
+    clerkUserId: string,
+    meetingId: string,
+    speakerId: string,
+  ): Promise<DashboardMeetingDetail> {
+    const speaker = await this.getSpeakerMutationTarget(
+      clerkUserId,
+      meetingId,
+      speakerId,
+    );
+
+    if (!speaker.voiceProfileId) {
+      return this.getMeetingDetail(clerkUserId, meetingId, false);
+    }
+
+    await this.prisma.speakerProfile.update({
+      where: {
+        id: speaker.id,
+      },
+      data: {
+        voiceProfileId: null,
+        realName: null,
+      },
+    });
+
+    await this.refreshArtifactsAfterSpeakerMutation(meetingId);
+
+    return this.getMeetingDetail(clerkUserId, meetingId, false);
   }
 
   async deleteMeeting(clerkUserId: string, meetingId: string): Promise<void> {

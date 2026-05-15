@@ -194,8 +194,12 @@ export class TranscriptPersistenceService {
 
   async persistWorkerBatch(processedBatch: ProcessedAudioBatch): Promise<void> {
     const { batchId, request, response } = processedBatch;
+    const speakerEvidence = response.speakerEvidence ?? [];
     const uniqueLabels = [
-      ...new Set(response.segments.map((segment) => segment.aiLabel)),
+      ...new Set([
+        ...response.segments.map((segment) => segment.aiLabel),
+        ...speakerEvidence.map((evidence) => evidence.aiLabel),
+      ]),
     ];
     const mergeMetrics = {
       duplicateSuppressionCount: 0,
@@ -217,8 +221,48 @@ export class TranscriptPersistenceService {
 
       const speakerIdByLabel = new Map<string, string>();
       const suppressedTranscriptSegmentIds = new Set<string>();
+      const voiceProfileIdByLabel = new Map<string, string>();
+      const voiceProfileIds = [
+        ...new Set(
+          [
+            ...response.segments.map((segment) => segment.voiceProfileId),
+            ...speakerEvidence.map((evidence) => evidence.voiceProfileId),
+          ].filter((voiceProfileId): voiceProfileId is string => !!voiceProfileId),
+        ),
+      ];
+      const voiceProfileNameById =
+        voiceProfileIds.length > 0
+          ? new Map(
+              (
+                await tx.voiceProfile.findMany({
+                  where: {
+                    id: {
+                      in: voiceProfileIds,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    displayName: true,
+                  },
+                })
+              ).map((voiceProfile) => [voiceProfile.id, voiceProfile.displayName]),
+            )
+          : new Map<string, string>();
+
+      for (const segment of response.segments) {
+        if (segment.voiceProfileId) {
+          voiceProfileIdByLabel.set(segment.aiLabel, segment.voiceProfileId);
+        }
+      }
+
+      for (const evidence of speakerEvidence) {
+        if (evidence.voiceProfileId) {
+          voiceProfileIdByLabel.set(evidence.aiLabel, evidence.voiceProfileId);
+        }
+      }
 
       for (const aiLabel of uniqueLabels) {
+        const voiceProfileId = voiceProfileIdByLabel.get(aiLabel) ?? null;
         const speakerProfile = await tx.speakerProfile.upsert({
           where: {
             meetingId_aiLabel: {
@@ -226,10 +270,19 @@ export class TranscriptPersistenceService {
               aiLabel,
             },
           },
-          update: {},
+          update: voiceProfileId
+            ? {
+                voiceProfileId,
+                realName: voiceProfileNameById.get(voiceProfileId) ?? aiLabel,
+              }
+            : {},
           create: {
             meetingId: request.backendMeetingId,
             aiLabel,
+            voiceProfileId,
+            realName: voiceProfileId
+              ? (voiceProfileNameById.get(voiceProfileId) ?? aiLabel)
+              : null,
           },
         });
 
@@ -351,6 +404,37 @@ export class TranscriptPersistenceService {
 
         await tx.transcriptSegment.createMany({
           data: transcriptRows,
+        });
+      }
+
+      if (speakerEvidence.length > 0) {
+        await tx.meetingSpeakerSample.createMany({
+          data: speakerEvidence
+            .map((evidence) => {
+              const speakerId = speakerIdByLabel.get(evidence.aiLabel);
+
+              if (!speakerId) {
+                return null;
+              }
+
+              return {
+                speakerProfileId: speakerId,
+                embedding: evidence.embedding,
+                startTime: response.streamOffsetMs / 1000 + evidence.startTime,
+                endTime: response.streamOffsetMs / 1000 + evidence.endTime,
+                durationSeconds: evidence.durationSeconds,
+                sourceType: toPrismaAudioSourceType(
+                  evidence.sourceType ??
+                    response.sourceType ??
+                    request.sourceType,
+                ),
+                rmsDb: evidence.rmsDb ?? null,
+                speechRatio: evidence.speechRatio ?? null,
+                qualityScore: evidence.qualityScore ?? null,
+                sampleRate: evidence.sampleRate ?? null,
+              };
+            })
+            .filter((sample): sample is NonNullable<typeof sample> => sample !== null),
         });
       }
 

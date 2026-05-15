@@ -13,6 +13,8 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { ClerkSessionAuth } from "../clerk/clerk-auth.service";
 import { CurrentUser } from "../clerk/current-user.decorator";
 import { NotionService } from "../notion/notion.service";
+import { LinkMeetingSpeakerDto } from "./dto/link-meeting-speaker.dto";
+import { PromoteMeetingSpeakerDto } from "./dto/promote-meeting-speaker.dto";
 import { SaveMeetingReviewDto } from "./dto/save-meeting-review.dto";
 import { UpdateMeetingMetadataDto } from "./dto/update-meeting-metadata.dto";
 import { MeetingsService } from "./meetings.service";
@@ -94,6 +96,64 @@ export class MeetingsController {
         currentUser.userId,
         meetingId,
         body,
+      ),
+    };
+  }
+
+  @Post(":meetingId/speakers/:speakerId/link")
+  @ApiOperation({
+    summary: "Link one meeting speaker to an existing voice profile",
+  })
+  async linkMeetingSpeakerForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("meetingId") meetingId: string,
+    @Param("speakerId") speakerId: string,
+    @Body() body: LinkMeetingSpeakerDto,
+  ) {
+    return {
+      meeting: await this.meetingsService.linkMeetingSpeakerToVoiceProfile(
+        currentUser.userId,
+        meetingId,
+        speakerId,
+        body.voiceProfileId,
+      ),
+    };
+  }
+
+  @Post(":meetingId/speakers/:speakerId/promote")
+  @ApiOperation({
+    summary: "Promote one meeting speaker into a new voice profile",
+  })
+  async promoteMeetingSpeakerForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("meetingId") meetingId: string,
+    @Param("speakerId") speakerId: string,
+    @Body() body: PromoteMeetingSpeakerDto,
+  ) {
+    return {
+      meeting: await this.meetingsService.promoteMeetingSpeakerToVoiceProfile(
+        currentUser.userId,
+        meetingId,
+        speakerId,
+        body,
+      ),
+    };
+  }
+
+  @Post(":meetingId/speakers/:speakerId/clear-link")
+  @ApiOperation({
+    summary: "Clear the voice profile mapping for one meeting speaker",
+  })
+  async clearMeetingSpeakerLinkForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Param("meetingId") meetingId: string,
+    @Param("speakerId") speakerId: string,
+  ) {
+    return {
+      meeting: await this.meetingsService.clearMeetingSpeakerVoiceProfileLink(
+        currentUser.userId,
+        meetingId,
+        speakerId,
       ),
     };
   }

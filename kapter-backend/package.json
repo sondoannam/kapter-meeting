@@ -17,7 +17,8 @@
     "start:prod": "node dist/src/main",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "db:empty:keep-user": "tsx scripts/empty-db-keep-user.ts"
+    "db:empty:keep-user": "tsx scripts/empty-db-keep-user.ts",
+    "voice-profiles:rebuild-worker-cache": "tsx scripts/rebuild-voice-profile-cache.ts"
   },
   "dependencies": {
     "@clerk/backend": "^3.2.9",

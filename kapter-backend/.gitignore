@@ -6,5 +6,3 @@ logs/
 .env.compose
 
 /prisma/generated/prisma
-
-certs/

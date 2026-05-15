@@ -4,6 +4,7 @@ import base64
 import io
 import os
 import wave
+from pathlib import Path
 
 os.environ["KAPTER_AI_USE_REAL_MODELS"] = "false"
 os.environ["KAPTER_AI_DEVICE"] = "cpu"
@@ -32,15 +33,20 @@ def build_pcm_s16le_bytes(sample_rate: int = 16000, seconds: int = 1) -> bytes:
     return b"\x00\x00" * frame_count
 
 
-def create_client() -> TestClient:
+def create_client(cache_path: Path | None = None) -> TestClient:
+    if cache_path is not None:
+        os.environ["KAPTER_AI_VOICE_PROFILE_CACHE_PATH"] = str(cache_path)
     get_settings.cache_clear()
     return TestClient(app)
 
 
-def test_process_audio_endpoint_returns_worker_contract_shape(monkeypatch) -> None:
+def test_process_audio_endpoint_returns_worker_contract_shape(
+    monkeypatch,
+    tmp_path,
+) -> None:
     monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
 
-    with create_client() as client:
+    with create_client(tmp_path / "voice_profile_cache.json") as client:
         response = client.post(
             "/api/v1/process-audio",
             json={
@@ -65,12 +71,13 @@ def test_process_audio_endpoint_returns_worker_contract_shape(monkeypatch) -> No
     assert payload["sequenceEnd"] == 5
     assert payload["streamOffsetMs"] == 0
     assert isinstance(payload["segments"], list)
+    assert isinstance(payload["speakerEvidence"], list)
 
 
-def test_process_audio_endpoint_accepts_raw_pcm_batches(monkeypatch) -> None:
+def test_process_audio_endpoint_accepts_raw_pcm_batches(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
 
-    with create_client() as client:
+    with create_client(tmp_path / "voice_profile_cache.json") as client:
         response = client.post(
             "/api/v1/process-audio",
             json={
@@ -101,10 +108,11 @@ def test_process_audio_endpoint_accepts_raw_pcm_batches(monkeypatch) -> None:
 
 def test_process_audio_endpoint_requires_bearer_token_when_configured(
     monkeypatch,
+    tmp_path,
 ) -> None:
     monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "test-shared-secret")
 
-    with create_client() as client:
+    with create_client(tmp_path / "voice_profile_cache.json") as client:
         unauthorized = client.post(
             "/api/v1/process-audio",
             json={
@@ -136,3 +144,46 @@ def test_process_audio_endpoint_requires_bearer_token_when_configured(
 
     assert unauthorized.status_code == 401
     assert authorized.status_code == 200
+
+
+def test_voice_profile_cache_admin_endpoints_persist_profiles(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
+    cache_path = tmp_path / "voice_profile_cache.json"
+
+    with create_client(cache_path) as client:
+        upsert_response = client.put(
+            "/api/v1/voice-profiles/cache/vp_1",
+            json={
+                "voiceProfileId": "vp_1",
+                "displayName": "Alice Nguyen",
+                "isActive": True,
+                "embeddings": [[1, 0, 0]],
+            },
+        )
+        delete_response = client.delete("/api/v1/voice-profiles/cache/vp_1")
+
+    assert upsert_response.status_code == 200
+    assert delete_response.status_code == 200
+    assert cache_path.exists()
+    assert '"profiles": []' in cache_path.read_text(encoding="utf-8")
+
+
+def test_voice_profile_enrollment_endpoint_rejects_silent_audio(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
+
+    with create_client(tmp_path / "voice_profile_cache.json") as client:
+        response = client.post(
+            "/api/v1/voice-profiles/enrollment-extract",
+            json={
+                "mimeType": "audio/wav",
+                "audioBase64": base64.b64encode(build_wav_bytes()).decode("ascii"),
+            },
+        )
+
+    assert response.status_code == 400

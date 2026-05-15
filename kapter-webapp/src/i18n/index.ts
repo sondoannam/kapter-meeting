@@ -7,12 +7,14 @@ import dashboardShellEn from "@/locales/en/dashboardShell.json"
 import extensionBridgeEn from "@/locales/en/extensionBridge.json"
 import landingEn from "@/locales/en/landing.json"
 import meetingEn from "@/locales/en/meeting.json"
+import voiceProfilesEn from "@/locales/en/voiceProfiles.json"
 import commonVi from "@/locales/vi/common.json"
 import dashboardVi from "@/locales/vi/dashboard.json"
 import dashboardShellVi from "@/locales/vi/dashboardShell.json"
 import extensionBridgeVi from "@/locales/vi/extensionBridge.json"
 import landingVi from "@/locales/vi/landing.json"
 import meetingVi from "@/locales/vi/meeting.json"
+import voiceProfilesVi from "@/locales/vi/voiceProfiles.json"
 
 const LOCALE_STORAGE_KEY = "kapter.locale"
 
@@ -81,6 +83,7 @@ const resources = {
     extensionBridge: extensionBridgeVi,
     landing: landingVi,
     meeting: meetingVi,
+    voiceProfiles: voiceProfilesVi,
   },
   en: {
     common: commonEn,
@@ -89,6 +92,7 @@ const resources = {
     extensionBridge: extensionBridgeEn,
     landing: landingEn,
     meeting: meetingEn,
+    voiceProfiles: voiceProfilesEn,
   },
 } as const
 
@@ -106,6 +110,7 @@ if (!i18n.isInitialized) {
       "dashboard",
       "meeting",
       "extensionBridge",
+      "voiceProfiles",
     ],
     defaultNS: "common",
     interpolation: {

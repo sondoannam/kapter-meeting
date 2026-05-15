@@ -57,6 +57,7 @@ export const envValidationSchema = Joi.object({
   MEETING_EXTRACTION_ENABLE_TRACE_DUMP: Joi.boolean().default(false),
   MEETING_EXTRACTION_TRACE_DIR: Joi.string().trim().allow("").optional(),
   DATABASE_URL: Joi.string().uri().required(),
+  DIRECT_URL: Joi.string().uri().allow("").optional(),
   AI_WORKER_BASE_URL: Joi.string().uri().default("http://127.0.0.1:8000"),
   AI_WORKER_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
   AI_WORKER_SHARED_SECRET: Joi.string().trim().allow("").optional(),

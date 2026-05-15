@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import { AppShellContainer } from "@/components/app-shell-container"
-import { AppLoadingScreen } from "@/components/app-loading-screen"
+import { MeetingDetailSkeleton } from "./meeting-detail-skeleton"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -37,6 +37,7 @@ import { MeetingDetailTranscriptPanel } from "./meeting-detail-transcript-panel"
 
 import type {
   DashboardMeetingDetail,
+  MeetingSpeakerPromotionRequest,
   MeetingNotionSyncResult,
   MeetingsRequestStatus,
   SaveMeetingReviewRequest,
@@ -46,6 +47,10 @@ import type {
   ProjectsRequestStatus,
 } from "@/features/projects/types"
 import type { UpdateMeetingMetadataRequest } from "@/features/meetings/types"
+import type {
+  VoiceProfile,
+  VoiceProfilesRequestStatus,
+} from "@/features/voice-profiles/types"
 
 interface MeetingDetailExperienceProps {
   lastSyncResult: MeetingNotionSyncResult | null
@@ -63,7 +68,15 @@ interface MeetingDetailExperienceProps {
   onConnectNotion: () => Promise<void>
   onApplyProposal: (proposalId: string) => Promise<void>
   onDismissProposal: (proposalId: string) => Promise<void>
+  onLinkSpeaker: (speakerId: string, voiceProfileId: string) => Promise<void>
+  onPromoteSpeaker: (
+    speakerId: string,
+    payload: MeetingSpeakerPromotionRequest
+  ) => Promise<void>
+  onClearSpeakerLink: (speakerId: string) => Promise<void>
   onDeleteMeeting: () => Promise<void>
+  voiceProfiles: VoiceProfile[]
+  voiceProfilesStatus: VoiceProfilesRequestStatus
 }
 
 export function MeetingDetailExperience({
@@ -82,7 +95,12 @@ export function MeetingDetailExperience({
   onConnectNotion,
   onApplyProposal,
   onDismissProposal,
+  onLinkSpeaker,
+  onPromoteSpeaker,
+  onClearSpeakerLink,
   onDeleteMeeting,
+  voiceProfiles,
+  voiceProfilesStatus,
 }: MeetingDetailExperienceProps) {
   const { t } = useTranslation(["meeting", "common"])
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -179,7 +197,12 @@ export function MeetingDetailExperience({
         <ProjectMemoryCard
           meeting={meeting}
           onApplyProposal={onApplyProposal}
+          onClearSpeakerLink={onClearSpeakerLink}
           onDismissProposal={onDismissProposal}
+          onLinkSpeaker={onLinkSpeaker}
+          onPromoteSpeaker={onPromoteSpeaker}
+          voiceProfiles={voiceProfiles}
+          voiceProfilesStatus={voiceProfilesStatus}
         />
         <MeetingNotionSyncCard
           lastSyncResult={lastSyncResult}
@@ -302,20 +325,7 @@ export function MeetingDetailExperience({
 }
 
 function MeetingDetailLoadingState() {
-  const { t } = useTranslation("meeting")
-
-  return (
-    <AppLoadingScreen
-      className="min-h-[calc(100svh-8.5rem)]"
-      description={t("detailExperience.loadingDescription")}
-      title={t("detailExperience.loadingTitle")}
-      steps={
-        t("detailExperience.loadingSteps", {
-          returnObjects: true,
-        }) as string[]
-      }
-    />
-  )
+  return <MeetingDetailSkeleton />
 }
 
 function MeetingDetailUnavailableState({
