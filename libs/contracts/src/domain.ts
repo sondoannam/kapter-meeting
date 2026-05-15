@@ -98,6 +98,7 @@ export interface SpeakerProfile {
   aiLabel: string;
   realName: string | null;
   meetingId: string;
+  voiceProfileId: string | null;
 }
 
 export interface TranscriptSegment {

@@ -21,6 +21,74 @@ from kapter_ai_worker.logging.logger import get_logger
 from kapter_ai_worker.utils.alignment import strip_overlap
 
 _logger = get_logger("StreamingInferencePipeline")
+PHRASE_WORD_GAP_SECONDS = 0.35
+PHRASE_MAX_DURATION_SECONDS = 20.0
+UNKNOWN_OVERLAP_RATIO_FOR_ABSTAIN = 0.25
+AMBIGUOUS_SPEAKER_MARGIN = 0.35
+AMBIGUOUS_SPEAKER_RATIO = 1.12
+MAX_BOUNDARY_WORD_REPAIR = 1
+DANGLING_BOUNDARY_WORDS = {
+    "a",
+    "an",
+    "and",
+    "but",
+    "for",
+    "from",
+    "in",
+    "of",
+    "on",
+    "or",
+    "so",
+    "that",
+    "the",
+    "this",
+    "to",
+    "with",
+    # Vietnamese function words / boundary-dependent tokens
+    "cac",
+    "cũng",
+    "cho",
+    "cua",
+    "của",
+    "de",
+    "doi",
+    "do",
+    "để",
+    "đó",
+    "đoi",
+    "đội",
+    "hay",
+    "hoac",
+    "hoặc",
+    "la",
+    "là",
+    "ma",
+    "mà",
+    "mot",
+    "một",
+    "nay",
+    "này",
+    "nen",
+    "nên",
+    "nhung",
+    "nhưng",
+    "o",
+    "ở",
+    "pham",
+    "phần",
+    "phan",
+    "se",
+    "sẽ",
+    "thì",
+    "thi",
+    "tren",
+    "trên",
+    "trong",
+    "va",
+    "và",
+    "voi",
+    "với",
+}
 
 
 class StreamingInferencePipeline:
@@ -79,8 +147,14 @@ class StreamingInferencePipeline:
                 skipped=True,
                 skip_reason="no_transcript_emitted",
             )
+        grouped_transcript_spans = self._group_transcript_spans(transcript_spans)
 
         if authoritative_speaker_label:
+            voice_profile_id = (
+                active_registry.get_voice_profile_id(authoritative_speaker_label)
+                if active_registry
+                else None
+            )
             speaker_spans = []
             aligned_segments = [
                 DiarizedTranscriptSegment(
@@ -89,8 +163,11 @@ class StreamingInferencePipeline:
                     start_time=span.start_time,
                     end_time=span.end_time,
                     confidence=span.confidence,
+                    voice_profile_id=voice_profile_id,
+                    source_segment_index=span.source_segment_index,
+                    source_group_index=span.group_index,
                 )
-                for span in transcript_spans
+                for span in grouped_transcript_spans
             ]
         else:
             # Diarization with Window: We process most of the buffer
@@ -106,24 +183,10 @@ class StreamingInferencePipeline:
                 audio_chunk, registry=active_registry, process_duration=process_duration
             )
 
-            # Periodic speaker consolidation (merging duplicates)
-            if active_registry:
-                active_registry.consolidate_speakers()
-
             aligned_segments = self._align_segments(
-                transcript_spans, speaker_spans, registry=active_registry
+                grouped_transcript_spans, speaker_spans, registry=active_registry
             )
 
-        # Stability Filter: Ignore extremely short segments with low confidence
-        # to reduce flickering noise in the final transcript.
-        aligned_segments = [
-            s
-            for s in aligned_segments
-            if (s.end_time - s.start_time) > 0.4
-            or (s.confidence is not None and s.confidence > 0.8)
-        ]
-
-        # Transcript Stitching: Filter out segments that were already emitted
         last_emitted_time = (
             self._last_emitted_by_stream.get(stream_id, 0.0)
             if stream_id
@@ -171,13 +234,13 @@ class StreamingInferencePipeline:
 
                 for sentence in sentences:
                     s_words = re.sub(r"[^\w\s]", "", sentence.lower()).split()
-                    if len(s_words) > 4:
+                    if len(s_words) > 6:
                         # Fast overlap check using set intersection
                         matches = sum(1 for w in s_words if w in h_words_set)
                         overlap_ratio = matches / len(s_words)
 
-                        # If > 80% of words exist in history, it's likely a repetition
-                        if overlap_ratio > 0.8:
+                        # If > 95% of words exist in history, it's likely a repetition
+                        if overlap_ratio > 0.95:
                             _logger.debug(
                                 f"Global repetition filtered (ratio={overlap_ratio:.2f}): '{sentence[:50]}...'"
                             )
@@ -189,6 +252,15 @@ class StreamingInferencePipeline:
 
             if not segment.text:
                 continue
+
+            if new_segments:
+                self._repair_cross_speaker_sentence_boundary(
+                    new_segments[-1],
+                    segment,
+                )
+                if not segment.text:
+                    last_emitted_time = max(last_emitted_time, segment.end_time)
+                    continue
 
             new_segments.append(segment)
             last_emitted_time = max(last_emitted_time, segment.end_time)
@@ -242,6 +314,49 @@ class StreamingInferencePipeline:
             emitted_segments=new_segments,
         )
 
+    @staticmethod
+    def _repair_cross_speaker_sentence_boundary(
+        previous_segment: DiarizedTranscriptSegment,
+        current_segment: DiarizedTranscriptSegment,
+    ) -> None:
+        if previous_segment.speaker_label == current_segment.speaker_label:
+            return
+
+        if re.search(r"[.!?]+$", previous_segment.text.rstrip()):
+            return
+
+        if current_segment.start_time - previous_segment.end_time > 2.0:
+            return
+
+        previous_words = previous_segment.text.strip().split()
+        current_words = current_segment.text.strip().split()
+        if not previous_words or len(current_words) < 2:
+            return
+
+        last_word = re.sub(r"[^\w]", "", previous_words[-1].lower())
+        if last_word not in DANGLING_BOUNDARY_WORDS:
+            return
+
+        words_to_move = min(MAX_BOUNDARY_WORD_REPAIR, len(current_words) - 1)
+        moved_words = current_words[:words_to_move]
+        remaining_words = current_words[words_to_move:]
+
+        segment_duration = max(0.0, current_segment.end_time - current_segment.start_time)
+        if segment_duration <= 0.0:
+            return
+
+        moved_duration = segment_duration * (words_to_move / len(current_words))
+        previous_segment.text = f"{previous_segment.text.rstrip()} {' '.join(moved_words)}".strip()
+        previous_segment.end_time = min(
+            current_segment.end_time,
+            current_segment.start_time + moved_duration,
+        )
+        current_segment.start_time = min(
+            current_segment.end_time,
+            current_segment.start_time + moved_duration,
+        )
+        current_segment.text = " ".join(remaining_words).strip()
+
     def clear(self, stream_id: str | None = None):
         """Reset the pipeline state for a new session."""
         if stream_id:
@@ -291,6 +406,8 @@ class StreamingInferencePipeline:
         if not transcript_spans:
             return []
 
+        active_registry = registry or self._registry
+
         # 1. Individual word-to-speaker assignment
         aligned_words: list[DiarizedTranscriptSegment] = []
         for span in transcript_spans:
@@ -304,6 +421,13 @@ class StreamingInferencePipeline:
                     start_time=span.start_time,
                     end_time=span.end_time,
                     confidence=span.confidence,
+                    voice_profile_id=(
+                        active_registry.get_voice_profile_id(speaker_label)
+                        if active_registry
+                        else None
+                    ),
+                    source_segment_index=span.source_segment_index,
+                    source_group_index=span.group_index,
                 )
             )
 
@@ -315,7 +439,15 @@ class StreamingInferencePipeline:
             # If same speaker and gap is reasonably small (< 1.0s), merge them
             # 1.0s is a safe default for natural conversation flow.
             gap = word.start_time - current.end_time
-            if word.speaker_label == current.speaker_label and gap < 1.0:
+            if (
+                word.speaker_label == current.speaker_label
+                and gap < 0.75
+                and (
+                    current.source_group_index is None
+                    or word.source_group_index is None
+                    or word.source_group_index == current.source_group_index
+                )
+            ):
                 current.text = f"{current.text} {word.text}"
                 current.end_time = word.end_time
                 current.confidence = (
@@ -337,6 +469,76 @@ class StreamingInferencePipeline:
 
         return valid_segments
 
+    def _group_transcript_spans(
+        self,
+        transcript_spans: list[TranscriptSpan],
+    ) -> list[TranscriptSpan]:
+        if not transcript_spans:
+            return []
+
+        grouped: list[TranscriptSpan] = []
+        current = transcript_spans[0]
+        group_index = 0
+
+        for span in transcript_spans[1:]:
+            gap = span.start_time - current.end_time
+            current_duration = current.end_time - current.start_time
+            current_ends_sentence = bool(re.search(r"[.!?]+$", current.text.rstrip()))
+            next_is_punctuation = bool(re.fullmatch(r"[.,!?;:]+", span.text.strip()))
+            same_asr_segment = (
+                current.source_segment_index is None
+                or span.source_segment_index is None
+                or current.source_segment_index == span.source_segment_index
+            )
+
+            if (
+                same_asr_segment
+                and gap <= PHRASE_WORD_GAP_SECONDS
+                and (
+                    current.source_segment_index is not None
+                    or current_duration < PHRASE_MAX_DURATION_SECONDS
+                )
+                and not current_ends_sentence
+            ):
+                separator = "" if next_is_punctuation else " "
+                current = TranscriptSpan(
+                    text=f"{current.text}{separator}{span.text}",
+                    start_time=current.start_time,
+                    end_time=span.end_time,
+                    confidence=(
+                        min(current.confidence, span.confidence)
+                        if current.confidence is not None and span.confidence is not None
+                        else current.confidence or span.confidence
+                    ),
+                    source_segment_index=current.source_segment_index,
+                )
+                continue
+
+            grouped.append(
+                TranscriptSpan(
+                    text=current.text,
+                    start_time=current.start_time,
+                    end_time=current.end_time,
+                    confidence=current.confidence,
+                    source_segment_index=current.source_segment_index,
+                    group_index=group_index,
+                )
+            )
+            group_index += 1
+            current = span
+
+        grouped.append(
+            TranscriptSpan(
+                text=current.text,
+                start_time=current.start_time,
+                end_time=current.end_time,
+                confidence=current.confidence,
+                source_segment_index=current.source_segment_index,
+                group_index=group_index,
+            )
+        )
+        return grouped
+
     def _resolve_speaker_label(
         self,
         transcript_span: TranscriptSpan,
@@ -345,15 +547,29 @@ class StreamingInferencePipeline:
     ) -> str:
         # Filter out literal "UNKNOWN" strings coming from Pyannote/Registry
         valid_spans = [s for s in speaker_spans if s.speaker_label != "UNKNOWN"]
+        unknown_spans = [s for s in speaker_spans if s.speaker_label == "UNKNOWN"]
 
         active_registry = registry or self._registry
 
         if not valid_spans:
-            if active_registry:
-                last_speaker = active_registry.get_last_active_speaker()
-                if last_speaker and last_speaker.last_active_time >= 0:
-                    return active_registry.get_canonical_id(last_speaker.speaker_id)
+            _logger.debug(
+                "No valid speaker spans for transcript span {:.2f}-{:.2f}; leaving as UNKNOWN",
+                transcript_span.start_time,
+                transcript_span.end_time,
+            )
             return "UNKNOWN"
+
+        phrase_duration = transcript_span.end_time - transcript_span.start_time
+        mid_time = (transcript_span.start_time + transcript_span.end_time) / 2.0
+        unknown_overlap = sum(
+            self._calculate_overlap(transcript_span, span) for span in unknown_spans
+        )
+        unknown_overlap_ratio = (
+            unknown_overlap / phrase_duration if phrase_duration > 0 else 0.0
+        )
+        unknown_covers_mid = any(
+            span.start_time <= mid_time <= span.end_time for span in unknown_spans
+        )
 
         # Multi-label Alignment: Find all speakers who overlap OR are very close to the boundaries
         # This 'fuzzy overlap' helps fix 'bleeding' at speaker transitions.
@@ -381,9 +597,6 @@ class StreamingInferencePipeline:
                 overlaps.append((speaker_span, duration, is_very_close))
 
         if overlaps:
-            # Priority Alignment: Find the speaker who covers the MIDPOINT of the word.
-            mid_time = (transcript_span.start_time + transcript_span.end_time) / 2.0
-
             def alignment_score(item):
                 s_span, overlap_duration, is_very_close = item
 
@@ -410,10 +623,39 @@ class StreamingInferencePipeline:
                 )
                 return score
 
-            overlaps.sort(key=alignment_score, reverse=True)
-            label = overlaps[0][0].speaker_label
+            scored_overlaps = sorted(
+                ((item[0], alignment_score(item)) for item in overlaps),
+                key=lambda pair: pair[1],
+                reverse=True,
+            )
+            winning_span, winning_score = scored_overlaps[0]
+
+            if unknown_covers_mid and winning_score < 1.9:
+                return "UNKNOWN"
+
+            if unknown_overlap_ratio >= UNKNOWN_OVERLAP_RATIO_FOR_ABSTAIN and winning_score < 1.5:
+                return "UNKNOWN"
+
+            if len(scored_overlaps) > 1:
+                runner_up_span, runner_up_score = scored_overlaps[1]
+                if (
+                    winning_span.speaker_label != runner_up_span.speaker_label
+                    and winning_score - runner_up_score < AMBIGUOUS_SPEAKER_MARGIN
+                    and winning_score < runner_up_score * AMBIGUOUS_SPEAKER_RATIO
+                ):
+                    return "UNKNOWN"
+
+            label = winning_span.speaker_label
         else:
-            # Word falls into a significant gap. Fallback: Find the nearest speaker in time.
+            if (
+                unknown_covers_mid
+                or unknown_overlap_ratio >= 0.35
+            ):
+                return "UNKNOWN"
+
+            # Phrase falls into a gap without reliable speaker evidence.
+            # Keep it unknown if adjacent speakers disagree instead of
+            # splitting one spoken sentence across multiple labels.
             mid_time = (transcript_span.start_time + transcript_span.end_time) / 2.0
 
             def distance(span: SpeakerSpan) -> float:
@@ -423,7 +665,25 @@ class StreamingInferencePipeline:
                     return mid_time - span.end_time
                 return 0.0
 
+            previous_span = None
+            next_span = None
+            for span in valid_spans:
+                if span.end_time <= transcript_span.start_time:
+                    previous_span = span
+                elif next_span is None and span.start_time >= transcript_span.end_time:
+                    next_span = span
+                    break
+
+            if (
+                previous_span
+                and next_span
+                and previous_span.speaker_label != next_span.speaker_label
+            ):
+                return "UNKNOWN"
+
             nearest_speaker = min(valid_spans, key=distance)
+            if distance(nearest_speaker) > 0.75:
+                return "UNKNOWN"
             label = nearest_speaker.speaker_label
 
         if active_registry:

@@ -1,0 +1,50 @@
+{
+  "loading": {
+    "title": "Loading voice profiles",
+    "description": "Kapter is loading saved voice identities and their worker sync status."
+  },
+  "header": {
+    "eyebrow": "Voice identity",
+    "title": "Voice profiles",
+    "description": "Enroll people once, keep the embeddings in your workspace, and reuse them when new meetings are diarized."
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "create": "Create profile",
+    "edit": "Edit",
+    "delete": "Delete",
+    "upload": "Upload enrollment audio",
+    "cancel": "Cancel",
+    "save": "Save changes"
+  },
+  "empty": {
+    "title": "No voice profiles yet",
+    "description": "Create a profile and upload one clean sample so future meetings can match speakers against it."
+  },
+  "card": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "samples": "Samples",
+    "lastSyncedAt": "Last synced",
+    "latestSample": "Latest sample",
+    "notSynced": "Not synced",
+    "noSamples": "No samples",
+    "noMetadata": "No role or department yet"
+  },
+  "syncStatus": {
+    "PENDING": "Pending worker sync",
+    "SYNCED": "Synced",
+    "FAILED": "Sync failed"
+  },
+  "editor": {
+    "createTitle": "Create voice profile",
+    "editTitle": "Edit voice profile",
+    "description": "Keep the profile metadata lightweight. Enrollment audio is uploaded separately.",
+    "displayName": "Display name",
+    "position": "Position",
+    "department": "Department",
+    "active": "Profile is active for future matching",
+    "displayNameRequired": "Display name is required.",
+    "saveError": "Unable to save the voice profile."
+  }
+}

@@ -5,6 +5,7 @@ import type {
   MeetingArtifactReviewStatus,
   MeetingStatus,
 } from "./domain";
+import type { MeetingSpeakerMapping } from "./voice-profiles";
 
 export type NotionProjectDestinationMode = "PROJECT_PAGE" | "EXISTING_PAGE";
 
@@ -34,6 +35,15 @@ export interface DashboardMeetingSpeaker {
   realName: string | null;
   segmentCount: number;
   actionItemCount: number;
+  voiceProfileId: string | null;
+  voiceProfileName: string | null;
+  isMapped: boolean;
+  promotionEligible: boolean;
+  recurringSpeakerProfileId: string | null;
+  recurringMatchConfidence: number | null;
+  recurringMatchSeenCount: number | null;
+  recurringSuggestionLabel: string | null;
+  speakerMapping: MeetingSpeakerMapping;
 }
 
 export interface DashboardMeetingTranscriptSegment {

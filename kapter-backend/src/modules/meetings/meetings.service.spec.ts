@@ -28,8 +28,12 @@ const createService = () => {
       create: projectCreate,
     },
   };
+  const voiceProfilesService = {
+    getOwnedVoiceProfileSummary: mock.fn(),
+    promoteMeetingSpeakerToVoiceProfile: mock.fn(),
+  };
 
-  const service = new MeetingsService(prisma as never);
+  const service = new MeetingsService(prisma as never, voiceProfilesService as never);
 
   return {
     service,
@@ -417,9 +421,15 @@ void describe("MeetingsService", () => {
           id: "speaker_1",
           aiLabel: "Speaker 0",
           realName: null,
+          voiceProfileId: null,
+          recurringSpeakerProfileId: null,
+          recurringMatchConfidence: null,
+          recurringMatchSeenCount: null,
+          voiceProfile: null,
           _count: {
             segments: 2,
             actionItems: 0,
+            evidenceSamples: 0,
           },
         },
       ],
@@ -517,6 +527,21 @@ void describe("MeetingsService", () => {
           realName: null,
           segmentCount: 2,
           actionItemCount: 0,
+          voiceProfileId: null,
+          voiceProfileName: null,
+          isMapped: false,
+          promotionEligible: false,
+          recurringSpeakerProfileId: null,
+          recurringMatchConfidence: null,
+          recurringMatchSeenCount: null,
+          recurringSuggestionLabel: null,
+          speakerMapping: {
+            speakerId: "speaker_1",
+            voiceProfileId: null,
+            voiceProfileName: null,
+            isMapped: false,
+            promotionEligible: false,
+          },
         },
       ],
       transcriptSegments: [
@@ -729,6 +754,10 @@ void describe("MeetingsService", () => {
         meeting: {
           findFirst,
         },
+      } as never,
+      {
+        getOwnedVoiceProfileSummary: mock.fn(),
+        promoteMeetingSpeakerToVoiceProfile: mock.fn(),
       } as never,
       undefined,
       {

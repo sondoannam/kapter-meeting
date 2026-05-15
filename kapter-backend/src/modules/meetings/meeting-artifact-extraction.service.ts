@@ -20,6 +20,7 @@ import {
 } from "./meeting-artifact-extraction.constants";
 import { planMeetingExtractionChunks } from "./meeting-extraction-chunk-planner";
 import { MeetingArtifactExtractionTraceWriter } from "./meeting-artifact-extraction-trace.writer";
+import { MeetingSpeakerPostProcessingService } from "./meeting-speaker-post-processing.service";
 
 @Injectable()
 export class MeetingArtifactExtractionService {
@@ -32,6 +33,7 @@ export class MeetingArtifactExtractionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly llmService: LlmService,
+    private readonly meetingSpeakerPostProcessing: MeetingSpeakerPostProcessingService,
     @Inject(appConfig.KEY)
     private readonly config: ConfigType<typeof appConfig>,
     @Inject(WINSTON_MODULE_PROVIDER)
@@ -147,6 +149,7 @@ export class MeetingArtifactExtractionService {
         createdAt: true,
         status: true,
         artifactReviewStatus: true,
+        speakerPostProcessStatus: true,
       },
     });
 
@@ -155,9 +158,37 @@ export class MeetingArtifactExtractionService {
       return false;
     }
 
+    if (meeting.status === "FAILED" || meeting.artifactReviewStatus === "APPROVED") {
+      return false;
+    }
+
     if (
-      meeting.status === "FAILED" ||
-      meeting.artifactReviewStatus === "APPROVED" ||
+      meeting.status === "COMPLETED" &&
+      meeting.speakerPostProcessStatus !== "COMPLETED"
+    ) {
+      let postProcessingResult = null;
+
+      try {
+        postProcessingResult =
+          await this.meetingSpeakerPostProcessing.runForCompletedMeeting(
+            meeting.id,
+          );
+      } catch (error) {
+        this.logger.error("Meeting speaker post-processing failed", {
+          meetingId: meeting.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        return false;
+      }
+
+      if (postProcessingResult?.materialChanges) {
+        await this.resetMeetingArtifacts(meeting.id);
+        return true;
+      }
+    }
+
+    if (
       meeting.artifactReviewStatus === "READY" ||
       meeting.artifactReviewStatus === "FAILED"
     ) {

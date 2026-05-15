@@ -1,6 +1,6 @@
 # Kapter AI Worker Checkpoint
 
-Last updated: 2026-04-21
+Last updated: 2026-05-12
 
 This file is the AI worker module state tracker and todo list for `kapter-ai-worker/`.
 
@@ -68,7 +68,7 @@ Status: in progress.
 - [x] Pyannote diarizer exists.
 - [x] Pyannote output attribute handling supports both `.speaker_diarization` and direct annotation return. (2026-04-23)
 - [x] speaker embedding wrapper exists with configurable `min_embedding_duration` filter (default 1.5s). (2026-04-23)
-- [x] Pyannote clustering is explicitly tuned with centroid clustering and `min_cluster_size=2`.
+- [x] Pyannote clustering is explicitly tuned with centroid clustering and configurable `min_cluster_size`. (2026-05-15)
 - [x] Real-model tuning defaults unified: `settings.py`, `.env`, `.env.example` all carry `speaker_glue_threshold`, `speaker_merge_threshold`, `min_embedding_duration`, and anti-hallucination knobs. (2026-04-23)
 
 ## Phase 5: Speaker Identity And Alignment
@@ -78,7 +78,7 @@ Status: completed.
 - [x] `SpeakerRegistry` tracks speaker profiles across chunks.
 - [x] cosine-similarity match, glue, and merge logic exists.
 - [x] canonical speaker ID remapping exists.
-- [x] duplicate speaker consolidation exists.
+- [x] duplicate speaker consolidation exists, but live mid-meeting consolidation is currently disabled to avoid false merges during anonymous meetings. (2026-05-15)
 - [x] same-chunk speaker collision avoidance exists in the diarization flow.
 - [x] transcript-to-speaker alignment uses max-overlap matching.
 - [x] word-level spans are grouped into phrase-level spans before alignment for better overlap matching accuracy. (2026-04-23)
@@ -122,9 +122,11 @@ Status: in progress.
 
 - VAD is handled during chunk generation in `generate_vad_audio_chunks()`, not inside `StreamingInferencePipeline`.
 - Whisper internal `vad_filter` is disabled to avoid double-filtering; pipeline Silero VAD is the single source of truth.
-- `SpeakerRegistry` uses configurable thresholds: `match_threshold=0.55`, `glue_threshold=0.45`, `merge_threshold=0.62`.
-- Pyannote diarization is instantiated with centroid clustering and `min_cluster_size=2`.
-- Speaker embeddings require `min_embedding_duration=1.5s` to avoid noisy vectors from short segments.
+- `SpeakerRegistry` uses normalized embeddings plus configurable thresholds, with stricter cold-start matching to avoid early-meeting `P1` collapse.
+- Pyannote diarization is instantiated with centroid clustering and configurable `min_cluster_size` (currently `1` in the local env).
+- Speaker embeddings require `min_embedding_duration=1.0s` in the current local env to avoid noisy vectors from short segments.
+- Anonymous speaker identity now uses a three-stage lifecycle: `UNKNOWN` -> internal candidate (`C*`) -> confirmed meeting speaker (`P*`) after multiple clean sightings.
+- Speaker embeddings now require `min_embedding_duration=1.25s` in the current local env to avoid noisy vectors from short segments.
 - Word-level ASR spans are grouped into phrase-level spans before speaker alignment.
 - Collision handling in `PyannoteDiarizer` prevents two distinct local speakers inside one chunk from sharing the same global ID.
 - Anti-hallucination: RMS pre-check, logprob < -1.0 filter, repetition detection, pattern matching for known Whisper hallucination strings.
@@ -148,7 +150,7 @@ Status: in progress.
 ## Known Gaps
 
 - [ ] `WorkerSettings` defaults and `.env.example` still differ for important runtime knobs such as `use_real_models`, `language`, `silero_vad_threshold`, and `real_model_chunk_duration_seconds`.
-- [ ] no automated regression tests exist yet around chunking, registry consolidation, or alignment.
+- [x] targeted regression tests now exist for registry normalization/cold-start behavior and UNKNOWN preservation when diarization yields no valid speaker spans. (2026-05-15)
 - [ ] the FastAPI wrapper is intentionally thin and does not yet provide queueing, authentication, or deployment packaging.
 
 ## Suggested Next AI Worker Priorities
@@ -196,3 +198,23 @@ Status: in progress.
 - [x] 2026-05-05 19:11 +07:00 Added deployment-ready worker bearer auth, Cloud Run `PORT` support, a CPU-oriented Cloud Run container (`Dockerfile`, `requirements-cloud.txt`, `.env.cloudrun.example`), and passing endpoint coverage for the secured process-audio route.
 - [x] 2026-05-05 23:58 +07:00 Added local-worker deployment guidance for the final hosting plan by extending `.env.example` with shared-secret notes and committing `cloudflared.example.yml` for `kapter-worker.sondndev.id.vn`.
 - [x] 2026-05-09 Clamped near-zero negative transcript timestamps during worker response serialization so `process-audio` no longer fails on floating-point jitter when a segment start lands slightly below zero.
+- [x] 2026-05-11 22:45 +07:00 Designed and implemented the Voice Embedding Registration system (`register_voice_local.py`): Optimized model loading to extract standalone embeddings without initializing the full pipeline, and integrated Audio Health Check (RMS volume and Silero VAD speech density) to ensure high-quality reference anchors.
+- [x] 2026-05-11 22:45 +07:00 Replaced JSON registry with SQLite DB for persistent speaker management, optimized registration model loading, and implemented dynamic voice identity matching for the `self_mic` stream.
+- [x] 2026-05-11 22:45 +07:00 Improved ASR accuracy and stability by implementing Auto-Gain Normalization, enabling `vad_filter` in FasterWhisper, and optimizing the Vietnamese initial prompt to prevent single-word noise hallucinations.
+- [x] 2026-05-12 09:39 +07:00 Fixed missing text in transcription by addressing 5 compounding filter layers: disabled Whisper internal VAD (double-VAD with Silero), relaxed logprob threshold for PhoWhisper (-2.0), increased beam_size to 5, tightened Global Repetition Filter precision (95% threshold, 6+ words), reduced Auto-Gain TARGET_RMS to 0.04, and added debug logging across all filter stages.
+- [x] 2026-05-13 08:42 +07:00 Switched back to `large-v3-turbo` and reset `hallucination_logprob_threshold` to -1.5 and `beam_size` to 5 for standard Whisper performance.
+- [x] 2026-05-13 17:49 +07:00 Fixed mixed-language ASR (LANGUAGE=vi→auto-detect so English words like "benchmark" are decoded correctly), changed unknown speaker labels from PERSON_N to P1/P2 format (known speakers from DB keep real names), added Vietnamese YouTube hallucination patterns (Ghiền Mì Gõ, subscribe kênh, etc.), and synced .env thresholds with code defaults.
+- [x] 2026-05-14 Implemented the worker-side voice profile MVP runtime by replacing live SQLite meeting seeding with a local cache service, adding enrollment extraction plus cache upsert/delete admin endpoints, emitting enrollment-quality `speakerEvidence`, and validating the path with passing targeted pytest coverage.
+- [x] 2026-05-14 Added worker cache recovery support for the managed-Postgres rollout by exposing a protected cache-clear endpoint, documenting the cache file path/shared-secret env knobs, and keeping the worker DB-blind while backend maintenance repopulates the local cache.
+- [x] 2026-05-15 Fixed the live anonymous-speaker collapse where whole meetings were labeled `P1` by normalizing runtime embeddings, removing the no-span-to-last-speaker fallback, tightening short-turn/global fallback rules, lowering pyannote `min_cluster_size` to 1, disabling live speaker consolidation, and validating the worker against `test-medias/demo-meeting/demo_meeting.mp3` plus focused pytest coverage.
+- [x] 2026-05-15 Fixed overlap-window speaker fragmentation by removing historical active-span rejection from `SpeakerRegistry` matching, adding a regression for overlapping-window reuse, and validating improved label reuse against the demo meeting processor path.
+- [x] 2026-05-15 Tuned the worker runtime against the first 3 minutes of `test-medias/demo-meeting/demo_meeting.mp3`; the best current candidate is `min_cluster_size=2`, `speaker_match_threshold=0.50`, `speaker_glue_threshold=0.43`, which reduced the demo path to 4 anonymous speakers in 3 minutes.
+- [x] 2026-05-15 Removed per-request `tab_mix` auto-gain normalization seams by normalizing only assembled worker windows, then made cold-start matching overlap-aware for the single-speaker replay case; direct demo replay now keeps the first minute on one speaker label and reduces the first 165 seconds to 6 labels.
+- [x] 2026-05-15 Reduced live anonymous-speaker fragmentation further by locally merging highly similar pyannote chunk speakers, requiring longer evidence before spawning new `P*` identities, and relaxing cold-start penalties once a speaker has accumulated enough clean speech; the first 165 seconds of the demo replay now collapse to 3 labels and the full first 180 seconds to 4.
+- [x] 2026-05-15 Shifted alignment toward conservative phrase boundaries by preserving Whisper segment IDs, keeping `UNKNOWN` across ambiguous diarization gaps, and blocking downstream same-speaker re-merges across grouped phrase boundaries; targeted pipeline/alignment tests now pass and the demo replay no longer splits one sentence across `P1`/`P2` labels.
+- [x] 2026-05-15 Added ambiguity-first speaker abstention in alignment: phrases with mixed speaker overlap plus meaningful `UNKNOWN` coverage now stay `UNKNOWN` instead of being force-labeled, improving LLM-facing transcript safety on transition-heavy turns in the demo replay.
+- [x] 2026-05-15 Relaxed the phrase-duration cap so Whisper-segment grouping no longer splits coherent long ASR segments under normal conditions; targeted replay shows better context preservation, but ambiguous 61s-71s demo speech still requires stronger abstention heuristics rather than a hard duration cutoff.
+- [x] 2026-05-15 Tightened anonymous speaker reuse with a second-best ambiguity margin in `SpeakerRegistry` and repaired dangling cross-speaker sentence boundaries in `StreamingInferencePipeline`; targeted regressions pass and the demo replay now keeps `"...stick with the proposal"` with the preceding speaker instead of attaching `proposal` to the following response.
+- [x] 2026-05-15 Extended cross-speaker boundary repair to both English and Vietnamese by adding Vietnamese function-word support (for example `cho`, `và`, `của`, `để`) plus a focused regression, so mixed-language meeting transcripts do not rely on English-only dangling-word heuristics.
+- [x] 2026-05-15 Tightened upstream anonymous-speaker caution in `PyannoteDiarizer` by requiring stronger local merge evidence, blocking anonymous short-turn fallback reuse, and abstaining more often on mixed or too-short anonymous assignments; focused diarizer/registry/pipeline regressions pass and demo replay now prefers `UNKNOWN` over unsafe `P*` reuse in later transition-heavy turns.
+- [x] 2026-05-15 Replaced immediate anonymous `P*` creation with a candidate-based lifecycle in `SpeakerRegistry`, added weighted confirmed/candidate scoring plus explicit `SpeakerMatchResult` statuses, raised live embedding duration to `1.25s`, and validated the worker with passing registry/diarizer/pipeline tests plus demo-meeting replay showing only three public anonymous labels in the first three minutes.

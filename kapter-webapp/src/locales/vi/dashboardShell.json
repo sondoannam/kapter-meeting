@@ -1,18 +1,22 @@
 {
   "brandTagline": "Dashboard điều phối cuộc họp",
   "reviewBadge": "Workspace review",
+  "workspaceSummary": "Theo dõi phiên ghi đang chạy, xử lý hàng chờ duyệt và giữ luồng đồng bộ Notion trong cùng một shell.",
   "sidebar": {
-    "navigationHeading": "Điều hướng",
+    "landing": "Trang chủ",
+    "workspaceHeading": "Không gian làm việc",
     "overview": "Tổng quan",
-    "statusHeading": "Trạng thái",
+    "voiceProfiles": "Voice profiles",
+    "reviewHeading": "Hàng chờ duyệt",
     "statuses": {
       "processing": "Đang xử lý",
       "review": "Chờ duyệt",
       "approved": "Đã duyệt"
     },
-    "accountHeading": "Tài khoản",
+    "resourceHeading": "Tài nguyên",
+    "pricing": "Gói dịch vụ",
     "installExtension": "Cài extension",
-    "installExtensionTitle": "Hướng dẫn",
-    "signOut": "Đăng xuất"
+    "signOut": "Đăng xuất",
+    "shortcutHint": "Mẹo: nhấn Ctrl/Command + B để thu gọn sidebar."
   }
 }

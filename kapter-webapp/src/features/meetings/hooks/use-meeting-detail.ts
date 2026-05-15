@@ -9,8 +9,11 @@ import {
   deleteMeeting,
   applyContextProposal,
   approveMeetingReview,
+  clearMeetingSpeakerLink,
   dismissContextProposal,
   fetchMeetingDetail,
+  linkMeetingSpeaker,
+  promoteMeetingSpeaker,
   retryMeetingExtraction,
   saveMeetingReview,
   syncMeetingToNotion,
@@ -18,6 +21,7 @@ import {
 } from "../api/meetings-api"
 import type {
   DashboardMeetingDetail,
+  MeetingSpeakerPromotionRequest,
   MeetingNotionSyncResult,
   MeetingsRequestStatus,
   SaveMeetingReviewRequest,
@@ -187,6 +191,32 @@ export function useMeetingDetail(
     [runMeetingMutation]
   )
 
+  const linkSpeakerToVoiceProfile = React.useCallback(
+    async (speakerId: string, voiceProfileId: string) =>
+      runMeetingMutation((sessionToken, currentMeetingId) =>
+        linkMeetingSpeaker(sessionToken, currentMeetingId, speakerId, {
+          voiceProfileId,
+        })
+      ),
+    [runMeetingMutation]
+  )
+
+  const promoteSpeakerToVoiceProfile = React.useCallback(
+    async (speakerId: string, payload: MeetingSpeakerPromotionRequest) =>
+      runMeetingMutation((sessionToken, currentMeetingId) =>
+        promoteMeetingSpeaker(sessionToken, currentMeetingId, speakerId, payload)
+      ),
+    [runMeetingMutation]
+  )
+
+  const clearSpeakerVoiceProfileLink = React.useCallback(
+    async (speakerId: string) =>
+      runMeetingMutation((sessionToken, currentMeetingId) =>
+        clearMeetingSpeakerLink(sessionToken, currentMeetingId, speakerId)
+      ),
+    [runMeetingMutation]
+  )
+
   const syncToNotion = React.useCallback(async () => {
     if (!meetingId || !isLoaded || !isSignedIn) {
       return
@@ -329,6 +359,9 @@ export function useMeetingDetail(
     connectNotion,
     applyProposal,
     dismissProposal,
+    linkSpeakerToVoiceProfile,
+    promoteSpeakerToVoiceProfile,
+    clearSpeakerVoiceProfileLink,
     deleteMeeting: removeMeeting,
   }
 }

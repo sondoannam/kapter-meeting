@@ -7,6 +7,7 @@ import { Landing } from "@/pages/landing"
 import { PricingPage } from "@/pages/pricing"
 import Dashboard from "@/pages/dashboard"
 import MeetingDetailPage from "@/pages/meeting-detail"
+import VoiceProfilesPage from "@/pages/voice-profiles"
 import ExtensionBridgePage from "@/pages/extension-bridge"
 
 import { ROUTES } from "./routes.constants"
@@ -28,6 +29,14 @@ export const router = createBrowserRouter([
           {
             path: ROUTES.DASHBOARD,
             element: <Dashboard />,
+          },
+          {
+            path: ROUTES.DASHBOARD_PRICING,
+            element: <PricingPage />,
+          },
+          {
+            path: ROUTES.DASHBOARD_VOICE_PROFILES,
+            element: <VoiceProfilesPage />,
           },
           {
             path: ROUTES.DASHBOARD_MEETING_DETAIL,

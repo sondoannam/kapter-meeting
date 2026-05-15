@@ -3,4 +3,5 @@ export * from "./billing";
 export * from "./capture";
 export * from "./dashboard";
 export * from "./domain";
+export * from "./voice-profiles";
 export * from "./worker";

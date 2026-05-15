@@ -29,6 +29,8 @@ class TranscriptSpan:
     start_time: float
     end_time: float
     confidence: float | None = None
+    source_segment_index: int | None = None
+    group_index: int | None = None
 
 
 @dataclass(slots=True)
@@ -50,6 +52,26 @@ class DiarizedTranscriptSegment:
     start_time: float
     end_time: float
     confidence: float | None = None
+    voice_profile_id: str | None = None
+    source_segment_index: int | None = None
+    source_group_index: int | None = None
+
+
+@dataclass(slots=True)
+class SpeakerEvidence:
+    """Enrollment-quality speaker sample extracted during diarization."""
+
+    speaker_label: str
+    start_time: float
+    end_time: float
+    duration_seconds: float
+    embedding: np.ndarray
+    source_type: str | None = None
+    rms_db: float | None = None
+    speech_ratio: float | None = None
+    quality_score: float | None = None
+    sample_rate: int | None = None
+    voice_profile_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -60,5 +82,6 @@ class PipelineChunkResult:
     transcript_spans: list[TranscriptSpan] = field(default_factory=list)
     speaker_spans: list[SpeakerSpan] = field(default_factory=list)
     emitted_segments: list[DiarizedTranscriptSegment] = field(default_factory=list)
+    speaker_evidence: list[SpeakerEvidence] = field(default_factory=list)
     skipped: bool = False
     skip_reason: str | None = None

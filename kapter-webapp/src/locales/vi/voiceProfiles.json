@@ -1,0 +1,50 @@
+{
+  "loading": {
+    "title": "Đang tải voice profiles",
+    "description": "Kapter đang tải các hồ sơ giọng nói đã lưu và trạng thái đồng bộ với worker."
+  },
+  "header": {
+    "eyebrow": "Nhận diện giọng nói",
+    "title": "Voice profiles",
+    "description": "Đăng ký giọng nói một lần, lưu embedding trong workspace và tái sử dụng khi diarization cho các cuộc họp mới."
+  },
+  "actions": {
+    "refresh": "Làm mới",
+    "create": "Tạo profile",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "upload": "Tải audio enrollment",
+    "cancel": "Hủy",
+    "save": "Lưu thay đổi"
+  },
+  "empty": {
+    "title": "Chưa có voice profile nào",
+    "description": "Tạo một profile và tải lên ít nhất một mẫu sạch để các cuộc họp sau có thể khớp người nói với profile này."
+  },
+  "card": {
+    "active": "Đang hoạt động",
+    "inactive": "Tạm tắt",
+    "samples": "Mẫu",
+    "lastSyncedAt": "Lần đồng bộ gần nhất",
+    "latestSample": "Mẫu mới nhất",
+    "notSynced": "Chưa đồng bộ",
+    "noSamples": "Chưa có mẫu",
+    "noMetadata": "Chưa có chức vụ hoặc phòng ban"
+  },
+  "syncStatus": {
+    "PENDING": "Chờ đồng bộ worker",
+    "SYNCED": "Đã đồng bộ",
+    "FAILED": "Đồng bộ lỗi"
+  },
+  "editor": {
+    "createTitle": "Tạo voice profile",
+    "editTitle": "Chỉnh voice profile",
+    "description": "Giữ metadata của profile ở mức gọn nhẹ. Audio enrollment được tải lên riêng.",
+    "displayName": "Tên hiển thị",
+    "position": "Chức vụ",
+    "department": "Phòng ban",
+    "active": "Kích hoạt profile cho các lần nhận diện sau",
+    "displayNameRequired": "Tên hiển thị là bắt buộc.",
+    "saveError": "Không thể lưu voice profile."
+  }
+}

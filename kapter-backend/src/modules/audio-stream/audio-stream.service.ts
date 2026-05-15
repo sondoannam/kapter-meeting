@@ -14,6 +14,7 @@ import { AiWorkerClient } from "../ai-worker/ai-worker.client";
 import { BillingService } from "../billing/billing.service";
 import { MeetingsService } from "../meetings/meetings.service";
 import { TranscriptPersistenceService } from "../meetings/transcript-persistence.service";
+import { VoiceProfilesService } from "../voice-profiles/voice-profiles.service";
 import {
   createBufferedAudioBatch,
   decodeAudioChunkPayload,
@@ -51,6 +52,7 @@ export class AudioStreamService {
 
   constructor(
     private readonly meetingsService: MeetingsService,
+    private readonly voiceProfilesService: VoiceProfilesService,
     @Inject(STREAM_SESSION_STORE)
     private readonly sessionStore: StreamSessionStore,
     private readonly aiWorkerClient: AiWorkerClient,
@@ -84,6 +86,10 @@ export class AudioStreamService {
       projectId: payload.projectId,
       captureContext: payload.captureContext,
     });
+    const knownVoiceProfileIds =
+      await this.voiceProfilesService.listActiveVoiceProfileIdsForUser(
+        actor.localUserId,
+      );
 
     this.clearDisconnectTimeout(payload.streamId);
 
@@ -95,6 +101,7 @@ export class AudioStreamService {
       backendMeetingId: meeting.id,
       externalMeetingId: meeting.externalMeetingId,
       captureContext: payload.captureContext ?? null,
+      knownVoiceProfileIds,
       stopRequested: false,
       audioSources: {
         [DEFAULT_AUDIO_SOURCE_TYPE]: createActiveAudioSourceState(

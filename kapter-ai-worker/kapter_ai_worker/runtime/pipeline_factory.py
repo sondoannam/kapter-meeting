@@ -154,6 +154,7 @@ def build_real_pipeline(
         hf_token=settings.hf_token,
         device=settings.device,
         threshold=settings.diarization_threshold,
+        min_cluster_size=settings.diarization_min_cluster_size,
         embedding_model=embedding_model,
     )
 
