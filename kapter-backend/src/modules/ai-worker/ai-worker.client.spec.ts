@@ -29,6 +29,7 @@ const createClient = (sharedSecret?: string) => {
     aiWorker: {
       baseUrl: "http://127.0.0.1:8000",
       timeoutMs: 5_000,
+      fileTimeoutMs: 60_000,
       sharedSecret,
     },
   };
@@ -197,5 +198,39 @@ void describe("AiWorkerClient", () => {
       prisma.meetingAudioBatch.update.mock.calls[1]?.arguments[0].data.status,
       "FAILED",
     );
+  });
+
+  void it("uses the file-specific timeout for uploaded meeting processing", async () => {
+    const { client } = createClient();
+
+    const fetchMock = mock.method(globalThis, "fetch", async () => {
+      return new Response(
+        JSON.stringify({
+          streamId: "upload:meeting_1",
+          backendMeetingId: "meeting_1",
+          sourceType: "tab_mix",
+          batches: [],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+    });
+
+    await client.processAudioFile({
+      backendMeetingId: "meeting_1",
+      streamId: "upload:meeting_1",
+      sourceType: "tab_mix",
+      knownVoiceProfileIds: [],
+      fileBuffer: Buffer.from("mp3"),
+      fileName: "meeting.mp3",
+      mimeType: "audio/mpeg",
+    });
+
+    const fetchOptions = fetchMock.mock.calls[0]?.arguments[1];
+    assert.equal(fetchOptions?.method, "POST");
   });
 });

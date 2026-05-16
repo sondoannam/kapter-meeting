@@ -1,8 +1,23 @@
 import * as React from "react"
 import { useAuth } from "@clerk/react-router"
 
-import { deleteMeeting, fetchMeetingHistory } from "../api/meetings-api"
+import {
+  deleteMeeting,
+  fetchMeetingHistory,
+  uploadMeetingAudio,
+} from "../api/meetings-api"
 import type { DashboardMeetingSummary, MeetingsRequestStatus } from "../types"
+
+function upsertMeeting(
+  currentMeetings: DashboardMeetingSummary[],
+  nextMeeting: DashboardMeetingSummary
+) {
+  const remainingMeetings = currentMeetings.filter(
+    (meeting) => meeting.id !== nextMeeting.id
+  )
+
+  return [nextMeeting, ...remainingMeetings]
+}
 
 export function useMeetingHistory(pollingMs = 20000) {
   const { getToken, isLoaded, isSignedIn } = useAuth()
@@ -11,6 +26,7 @@ export function useMeetingHistory(pollingMs = 20000) {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [activeMeetingDeleteId, setActiveMeetingDeleteId] =
     React.useState<string | null>(null)
+  const [isUploadingMeeting, setIsUploadingMeeting] = React.useState(false)
   const authErrorMessage =
     isLoaded && !isSignedIn
       ? "Clerk session is not available for meeting history."
@@ -120,12 +136,60 @@ export function useMeetingHistory(pollingMs = 20000) {
     [getToken, isLoaded, isSignedIn]
   )
 
+  const submitMeetingUpload = React.useCallback(
+    async (input: {
+      file: File
+      title?: string
+      projectId?: string
+    }) => {
+      if (!isLoaded || !isSignedIn) {
+        throw new Error("Clerk session is not available for meeting uploads.")
+      }
+
+      setIsUploadingMeeting(true)
+      setErrorMessage(null)
+
+      try {
+        const sessionToken = await getToken()
+
+        if (!sessionToken) {
+          throw new Error(
+            "Unable to mint a Clerk session token for meeting uploads."
+          )
+        }
+
+        const response = await uploadMeetingAudio(sessionToken, input)
+
+        setMeetings((currentMeetings) =>
+          upsertMeeting(currentMeetings, response.meeting)
+        )
+        setStatus("ready")
+
+        return response.meeting
+      } catch (error) {
+        const nextError =
+          error instanceof Error
+            ? error.message
+            : "Unable to upload the requested meeting audio."
+
+        setStatus("error")
+        setErrorMessage(nextError)
+        throw new Error(nextError)
+      } finally {
+        setIsUploadingMeeting(false)
+      }
+    },
+    [getToken, isLoaded, isSignedIn]
+  )
+
   return {
     meetings,
     status: authErrorMessage ? "error" : status,
     errorMessage: authErrorMessage || errorMessage,
     activeMeetingDeleteId,
+    isUploadingMeeting,
     deleteMeeting: removeMeeting,
+    uploadMeetingAudio: submitMeetingUpload,
     refresh,
   }
 }

@@ -1,0 +1,66 @@
+{
+  "hero": {
+    "badge": "Subscription",
+    "title": "Choose the recording plan that matches your team's meeting rhythm.",
+    "description": "Kapter measures quota by completed recording minutes each month. When quota runs out, the Extension blocks new sessions before opening the recorder."
+  },
+  "quota": {
+    "title": "This month's quota",
+    "usedLabel": "Used",
+    "minutesUnit": "minutes",
+    "canRecord": "Quota available",
+    "exhausted": "Quota exhausted",
+    "remainingHint": "{{minutes}} minutes left before {{date}}.",
+    "signedOut": "Sign in to view remaining quota and your current plan status."
+  },
+  "plans": {
+    "FREE": {
+      "name": "Free",
+      "description": "For testing the recording and internal review flow.",
+      "features": [
+        "Basic monthly quota",
+        "Google Meet recording",
+        "Transcript and action-item review"
+      ]
+    },
+    "PRO": {
+      "name": "Pro",
+      "description": "For regular recordings and post-meeting task review.",
+      "features": [
+        "Expanded quota for busier meeting schedules",
+        "Notion sync after approval",
+        "Project-specific review workspace"
+      ]
+    },
+    "TEAM": {
+      "name": "Team",
+      "description": "For small teams standardizing meeting knowledge and handoffs.",
+      "features": [
+        "Higher team quota",
+        "Project-level Notion setup",
+        "Foundation for multi-member review workflows"
+      ]
+    }
+  },
+  "planCard": {
+    "currentPlan": "Current plan",
+    "priceSuffix": "/ month",
+    "quotaLine": "{{minutes}} recording minutes each month",
+    "activeButton": "In use",
+    "freeButton": "Default plan",
+    "billingButton": "Upgrades will be available soon",
+    "signInButton": "Sign in to start"
+  },
+  "quotaProtection": {
+    "title": "Kapter checks quota before recording",
+    "description": "Before each recording starts, Kapter checks your remaining minutes so you do not accidentally start a new session after your plan runs out.",
+    "dashboardLink": "Back to Dashboard"
+  },
+  "errors": {
+    "sessionToken": "Your sign-in session is not ready. Please sign in again and retry.",
+    "loadPlans": "Unable to load subscription plans.",
+    "loadStatus": "Unable to load the subscription status.",
+    "loadBilling": "Unable to load plan information.",
+    "network": "Could not connect to the plan service. Please check your connection or try again later."
+  }
+}

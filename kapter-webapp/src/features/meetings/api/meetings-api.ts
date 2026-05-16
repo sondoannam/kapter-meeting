@@ -6,12 +6,14 @@ import {
 
 import type {
   ActiveMeetingResponse,
+  CreateMeetingUploadRequest,
   DeleteMeetingResponse,
   LinkMeetingSpeakerRequest,
   MeetingDetailResponse,
   MeetingHistoryResponse,
   MeetingSpeakerPromotionRequest,
   MeetingNotionSyncResponse,
+  MeetingUploadAcceptedResponse,
   SaveMeetingReviewRequest,
   UpdateMeetingMetadataRequest,
 } from "../types"
@@ -75,6 +77,41 @@ export async function fetchMeetingDetail(
         error,
         "Unable to load the requested meeting detail from the backend."
       )
+    )
+  }
+}
+
+export async function uploadMeetingAudio(
+  sessionToken: string,
+  payload: CreateMeetingUploadRequest & {
+    file: File
+  }
+) {
+  try {
+    const formData = new FormData()
+
+    formData.set("file", payload.file)
+
+    if (payload.title?.trim()) {
+      formData.set("title", payload.title.trim())
+    }
+
+    if (payload.projectId?.trim()) {
+      formData.set("projectId", payload.projectId.trim())
+    }
+
+    const response = await apiClient.post<MeetingUploadAcceptedResponse>(
+      "/api/meetings/uploads",
+      formData,
+      {
+        headers: createAuthHeaders(sessionToken),
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      toApiErrorMessage(error, "Unable to upload the meeting audio file.")
     )
   }
 }

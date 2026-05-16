@@ -53,6 +53,11 @@ export interface OffscreenStartPayload {
 
 export type MeetLocalMicState = "muted" | "unmuted" | "unknown";
 
+export interface MeetLocalMicSnapshot {
+  state: MeetLocalMicState;
+  controlLabel?: string;
+}
+
 // Single source of truth for popup, background, content, and offscreen messages.
 
 export type ExtensionMessage =
@@ -85,6 +90,7 @@ export type ExtensionMessage =
         captureContext?: CaptureContext;
       };
     }
+  | { type: "GET_MEET_LOCAL_MIC_STATE" }
   | { type: "STOP_CAPTURE" }
   | { type: "GET_CAPTURE_STATUS" }
   | {
@@ -155,6 +161,7 @@ interface MessageResponseMap {
   GET_BILLING_STATUS: QuotaSnapshot | null;
   SET_PROJECT_SELECTION: void;
   START_CAPTURE: { sessionId: string; streamId: string };
+  GET_MEET_LOCAL_MIC_STATE: MeetLocalMicSnapshot;
   STOP_CAPTURE: void;
   GET_CAPTURE_STATUS: CaptureStatus;
   MIC_PERMISSION_RESULT: void;

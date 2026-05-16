@@ -30,7 +30,7 @@
     "steps": {
       "extension": {
         "title": "Cài extension",
-        "description": "Dùng extension để tạo bản ghi cuộc họp đầu tiên và đưa nó quay lại đây."
+        "description": "Dùng extension để ghi trực tiếp hoặc tải lên một file MP3 nếu bạn đã có sẵn audio cuộc họp."
       },
       "capture": {
         "title": "Ghi lại cuộc họp",
@@ -52,10 +52,12 @@
       "meetingLabel": "Tiếp tục ở đây",
       "handoffLabel": "Sẵn sàng bàn giao",
       "installTitle": "Cài extension trước khi ghi cuộc họp đầu tiên",
-      "installDescription": "Extension sẽ tạo bản ghi cuộc họp đầu tiên và đưa nó quay lại đây để review.",
+      "installDescription": "Extension sẽ tạo bản ghi cuộc họp trực tiếp đầu tiên và đưa nó quay lại đây để review.",
       "installAction": "Tải extension thử nghiệm",
       "confirmInstallAction": "Tôi đã cài xong",
       "installAdvanceHint": "Từ dashboard, Kapter không thể tự xem danh sách extension trong Chrome. Nếu vừa cài xong mà dashboard chưa tự nhận ra extension, hãy tải lại tab này hoặc dùng nút “Tôi đã cài xong” để chuyển sang bước ghi cuộc họp.",
+      "uploadAlternativeAction": "Tải MP3 thay thế",
+      "uploadAlternativeHint": "Nếu bạn đã có sẵn audio cuộc họp, hãy tải lên một file MP3 từ dashboard và Kapter sẽ đưa nó qua cùng workflow review và Notion.",
       "reviewTitle": "Duyệt cuộc họp đầu tiên đã sẵn sàng",
       "reviewDescription": "{{title}} đã sẵn sàng cho bước review của con người. Hãy mở ngay để kiểm tra tóm tắt và action item.",
       "reviewAction": "Mở không gian review",
@@ -82,7 +84,7 @@
     "recent": {
       "title": "Các cuộc họp gần đây",
       "description": "Giữ vài phiên gần nhất trong tầm mắt mà không cần mở toàn bộ workspace đầy bộ lọc.",
-      "empty": "Sau khi extension tạo cuộc họp đầu tiên, các phiên gần nhất sẽ xuất hiện tại đây."
+      "empty": "Sau khi bạn ghi bằng extension hoặc tải lên một MP3, các phiên gần nhất sẽ xuất hiện tại đây."
     }
   },
   "metrics": {
@@ -115,6 +117,33 @@
   "projectSetupAccordion": {
     "title": "Thiết lập dự án và đích Notion"
   },
+  "uploadCard": {
+    "eyebrow": "Pipeline file cục bộ",
+    "title": "Xử lý một cuộc họp đã lưu",
+    "description": "Tải lên một file MP3 từ dashboard khi cuộc họp đã diễn ra ngoài luồng ghi trực tiếp của extension.",
+    "workflowTitle": "Cùng workflow phía sau",
+    "workflowDescription": "Audio tải lên sẽ đi vào cùng trang chi tiết cuộc họp, workflow review, speaker mapping và đồng bộ Notion như luồng ghi trực tiếp.",
+    "ctaTitle": "Tải MP3",
+    "ctaDescription": "Tạo bản ghi cuộc họp từ audio cục bộ và mở nó trong workspace review."
+  },
+  "uploadDialog": {
+    "title": "Tải audio cuộc họp",
+    "description": "Gửi một file MP3 lên backend để Kapter xử lý như một cuộc họp bình thường.",
+    "supportedFormatsTitle": "Bản MVP này chỉ hỗ trợ MP3",
+    "supportedFormatsDescription": "Mỗi lần tải lên chỉ xử lý một file MP3 và đưa nó qua cùng pipeline backend và AI worker như cuộc họp ghi trực tiếp.",
+    "fileLabel": "File audio",
+    "fileHint": "Chọn một file MP3 từ máy của bạn.",
+    "fileRequired": "Hãy chọn một file MP3 trước khi tải lên.",
+    "fileTypeError": "Hiện tại chỉ hỗ trợ tải lên file MP3.",
+    "titleLabel": "Tên cuộc họp",
+    "titlePlaceholder": "Mặc định dùng tên file",
+    "projectLabel": "Dự án",
+    "projectPlaceholder": "Chọn dự án hoặc dùng dự án nháp mặc định",
+    "projectDraftOption": "Dùng dự án nháp mặc định",
+    "submit": "Tải MP3",
+    "submitting": "Đang tải MP3...",
+    "submitError": "Không thể tải file audio cuộc họp."
+  },
   "meetingPanel": {
     "title": "Danh sách cuộc họp",
     "description": "{{visible}}/{{total}} cuộc họp đang hiển thị",
@@ -133,7 +162,7 @@
     "loading": "Đang tải danh sách cuộc họp...",
     "emptyTitle": "Chưa có cuộc họp phù hợp",
     "emptyWithFilters": "Thử xóa bộ lọc để xem toàn bộ lịch sử.",
-    "emptyWithoutFilters": "Extension sẽ tạo bản ghi đầu tiên tại đây.",
+    "emptyWithoutFilters": "Bản ghi đầu tiên sẽ xuất hiện tại đây sau khi ghi bằng extension hoặc tải lên một MP3.",
     "untitledMeeting": "Cuộc họp không tên",
     "draftProject": "Dự án nháp",
     "hasRecording": "Có bản ghi",

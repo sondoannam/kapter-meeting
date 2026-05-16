@@ -39,11 +39,20 @@ export const MEETING_AUDIO_BATCH_STATUS = {
 export type MeetingAudioBatchStatus =
   (typeof MEETING_AUDIO_BATCH_STATUS)[keyof typeof MEETING_AUDIO_BATCH_STATUS];
 
+export const MEETING_INGESTION_SOURCE = {
+  LIVE_CAPTURE: "LIVE_CAPTURE",
+  FILE_UPLOAD: "FILE_UPLOAD",
+} as const;
+
+export type MeetingIngestionSource =
+  (typeof MEETING_INGESTION_SOURCE)[keyof typeof MEETING_INGESTION_SOURCE];
+
 export interface Meeting {
   id: string;
   title: string;
   description: string | null;
   status: MeetingStatus;
+  ingestionSource: MeetingIngestionSource;
   artifactReviewStatus: MeetingArtifactReviewStatus;
   artifactExtractionError: string | null;
   artifactApprovedAt: IsoDateTimeString | null;

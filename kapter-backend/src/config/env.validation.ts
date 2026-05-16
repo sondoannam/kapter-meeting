@@ -5,6 +5,10 @@ import {
   DEFAULT_AUDIO_BUFFER_IDLE_TIMEOUT_MS,
   DEFAULT_AUDIO_BUFFER_MAX_CHUNKS,
 } from "../modules/audio-stream/audio-stream.constants";
+import {
+  DEFAULT_MEETING_UPLOAD_MAX_BYTES,
+  DEFAULT_MEETING_UPLOAD_RETENTION_HOURS,
+} from "../modules/meetings/meeting-upload.constants";
 
 export const envValidationSchema = Joi.object({
   PORT: Joi.number().port().default(3001),
@@ -60,7 +64,20 @@ export const envValidationSchema = Joi.object({
   DIRECT_URL: Joi.string().uri().allow("").optional(),
   AI_WORKER_BASE_URL: Joi.string().uri().default("http://127.0.0.1:8000"),
   AI_WORKER_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
+  AI_WORKER_FILE_TIMEOUT_MS: Joi.number()
+    .integer()
+    .positive()
+    .default(600000),
   AI_WORKER_SHARED_SECRET: Joi.string().trim().allow("").optional(),
+  MEETING_UPLOAD_TMP_DIR: Joi.string().trim().allow("").optional(),
+  MEETING_UPLOAD_MAX_BYTES: Joi.number()
+    .integer()
+    .positive()
+    .default(DEFAULT_MEETING_UPLOAD_MAX_BYTES),
+  MEETING_UPLOAD_RETENTION_HOURS: Joi.number()
+    .integer()
+    .positive()
+    .default(DEFAULT_MEETING_UPLOAD_RETENTION_HOURS),
   AUDIO_BUFFER_FLUSH_MS: Joi.number()
     .integer()
     .positive()

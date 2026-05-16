@@ -13,6 +13,7 @@ import {
   type DashboardMeetingSummary,
   type DashboardMeetingTranscriptMergeStrategy,
   type MeetingArtifactReviewStatus,
+  type MeetingIngestionSource,
 } from "@kapter/contracts";
 import type { Prisma } from "prisma/generated/prisma/client";
 
@@ -27,6 +28,13 @@ interface CreateRecordingMeetingOptions {
   externalMeetingId?: string | null;
   projectId?: string;
   captureContext?: CaptureContext;
+}
+
+interface CreateUploadedMeetingOptions {
+  userId: string;
+  title: string;
+  projectId?: string;
+  audioUrl?: string | null;
 }
 
 interface UpdateRecordingMeetingCaptureStateOptions {
@@ -81,6 +89,11 @@ const toContractAudioSourceType = (
 
   return null;
 };
+
+const toContractMeetingIngestionSource = (
+  ingestionSource?: "LIVE_CAPTURE" | "FILE_UPLOAD" | null,
+): MeetingIngestionSource =>
+  ingestionSource === "FILE_UPLOAD" ? "FILE_UPLOAD" : "LIVE_CAPTURE";
 
 const toContractTranscriptMergeStrategy = (
   mergeStrategy?: "PREFERRED_SELF_MIC_DUPLICATE" | "AMBIGUOUS_OVERLAP" | null,
@@ -148,6 +161,7 @@ const dashboardMeetingSelect = {
   id: true,
   title: true,
   status: true,
+  ingestionSource: true,
   artifactReviewStatus: true,
   captureContext: true,
   degradedWithoutSelfMic: true,
@@ -172,6 +186,7 @@ const toDashboardMeetingSummary = (meeting: {
   id: string;
   title: string;
   status: string;
+  ingestionSource: "LIVE_CAPTURE" | "FILE_UPLOAD";
   artifactReviewStatus: string;
   captureContext: "GOOGLE_MEET_ROOM" | "GENERIC_TAB" | null;
   degradedWithoutSelfMic: boolean;
@@ -188,6 +203,7 @@ const toDashboardMeetingSummary = (meeting: {
   id: meeting.id,
   title: meeting.title,
   status: meeting.status as DashboardMeetingSummary["status"],
+  ingestionSource: toContractMeetingIngestionSource(meeting.ingestionSource),
   artifactReviewStatus:
     meeting.artifactReviewStatus as MeetingArtifactReviewStatus,
   captureContext: toContractCaptureContext(meeting.captureContext),
@@ -212,6 +228,7 @@ const dashboardMeetingDetailSelect = {
   id: true,
   title: true,
   status: true,
+  ingestionSource: true,
   artifactReviewStatus: true,
   artifactExtractionError: true,
   artifactApprovedAt: true,
@@ -363,6 +380,7 @@ const toDashboardMeetingDetail = (meeting: {
   id: string;
   title: string;
   status: string;
+  ingestionSource: "LIVE_CAPTURE" | "FILE_UPLOAD";
   artifactReviewStatus: string;
   artifactExtractionError: string | null;
   artifactApprovedAt: Date | null;
@@ -867,6 +885,7 @@ export class MeetingsService {
         userId,
         title: buildMeetingTitle(normalizedExternalMeetingId),
         status: "RECORDING",
+        ingestionSource: "LIVE_CAPTURE",
         captureContext: toPrismaCaptureContext(captureContext),
         externalMeetingId: normalizedExternalMeetingId,
         projectId: resolvedProjectId,
@@ -878,6 +897,48 @@ export class MeetingsService {
         title: true,
         userId: true,
         projectId: true,
+      },
+    });
+  }
+
+  async createUploadedMeeting({
+    userId,
+    title,
+    projectId,
+    audioUrl,
+  }: CreateUploadedMeetingOptions): Promise<DashboardMeetingSummary> {
+    const normalizedTitle = title.trim();
+
+    if (!normalizedTitle) {
+      throw new BadRequestException("Meeting title cannot be empty.");
+    }
+
+    const resolvedProjectId = await this.resolveProjectId(userId, projectId);
+    const meeting = await this.prisma.meeting.create({
+      data: {
+        userId,
+        title: normalizedTitle,
+        status: "PROCESSING",
+        ingestionSource: "FILE_UPLOAD",
+        captureContext: null,
+        externalMeetingId: null,
+        audioUrl: normalizeOptionalText(audioUrl),
+        projectId: resolvedProjectId,
+      },
+      select: dashboardMeetingSelect,
+    });
+
+    return toDashboardMeetingSummary(meeting);
+  }
+
+  async updateMeetingAudioUrl(
+    meetingId: string,
+    audioUrl: string | null,
+  ): Promise<void> {
+    await this.prisma.meeting.update({
+      where: { id: meetingId },
+      data: {
+        audioUrl: normalizeOptionalText(audioUrl),
       },
     });
   }

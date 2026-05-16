@@ -102,7 +102,10 @@ export class BillingService {
     return quota;
   }
 
-  async recordMeetingUsage(meetingId: string): Promise<void> {
+  async recordMeetingUsage(
+    meetingId: string,
+    source = "meeting_capture",
+  ): Promise<void> {
     const meeting = await this.prisma.meeting.findUnique({
       where: { id: meetingId },
       select: {
@@ -145,11 +148,13 @@ export class BillingService {
         periodStart,
         periodEnd,
         usedSeconds,
+        source,
       },
       update: {
         periodStart,
         periodEnd,
         usedSeconds,
+        source,
       },
     });
   }

@@ -10,6 +10,10 @@ import {
   DEFAULT_AUDIO_BUFFER_IDLE_TIMEOUT_MS,
   DEFAULT_AUDIO_BUFFER_MAX_CHUNKS,
 } from "../modules/audio-stream/audio-stream.constants";
+import {
+  DEFAULT_MEETING_UPLOAD_MAX_BYTES,
+  DEFAULT_MEETING_UPLOAD_RETENTION_HOURS,
+} from "../modules/meetings/meeting-upload.constants";
 
 export interface LlmProviderConfig {
   defaultProvider: "openai" | "gemini" | "ollama";
@@ -42,6 +46,7 @@ export interface ClerkConfig {
 export interface AiWorkerConfig {
   baseUrl: string;
   timeoutMs: number;
+  fileTimeoutMs: number;
   sharedSecret?: string;
 }
 
@@ -49,6 +54,12 @@ export interface AudioBufferConfig {
   flushMs: number;
   maxChunks: number;
   idleTimeoutMs: number;
+}
+
+export interface MeetingUploadConfig {
+  tmpDir: string;
+  maxBytes: number;
+  retentionHours: number;
 }
 
 export interface NotionConfig {
@@ -82,10 +93,12 @@ export interface ApplicationConfig {
   databaseUrl: string;
   aiWorker: AiWorkerConfig;
   audioBuffer: AudioBufferConfig;
+  meetingUpload: MeetingUploadConfig;
 }
 
 const DEFAULT_AI_WORKER_BASE_URL = "http://127.0.0.1:8000";
 const DEFAULT_AI_WORKER_TIMEOUT_MS = 30_000;
+const DEFAULT_AI_WORKER_FILE_TIMEOUT_MS = 10 * 60_000;
 const DEFAULT_LLM_PROVIDER = "ollama";
 const DEFAULT_OPENAI_LLM_MODEL = "gpt-4.1-mini";
 const DEFAULT_OPENAI_TIMEOUT_MS = 120_000;
@@ -431,6 +444,10 @@ export const buildAppConfig = (): ApplicationConfig => {
         process.env.AI_WORKER_TIMEOUT_MS,
         DEFAULT_AI_WORKER_TIMEOUT_MS,
       ),
+      fileTimeoutMs: parsePositiveInteger(
+        process.env.AI_WORKER_FILE_TIMEOUT_MS,
+        DEFAULT_AI_WORKER_FILE_TIMEOUT_MS,
+      ),
       sharedSecret: process.env.AI_WORKER_SHARED_SECRET?.trim() || undefined,
     },
     audioBuffer: {
@@ -445,6 +462,19 @@ export const buildAppConfig = (): ApplicationConfig => {
       idleTimeoutMs: parsePositiveInteger(
         process.env.AUDIO_BUFFER_IDLE_TIMEOUT_MS,
         DEFAULT_AUDIO_BUFFER_IDLE_TIMEOUT_MS,
+      ),
+    },
+    meetingUpload: {
+      tmpDir:
+        process.env.MEETING_UPLOAD_TMP_DIR?.trim() ||
+        path.join(BACKEND_ROOT_DIR, "tmp", "meeting-uploads"),
+      maxBytes: parsePositiveInteger(
+        process.env.MEETING_UPLOAD_MAX_BYTES,
+        DEFAULT_MEETING_UPLOAD_MAX_BYTES,
+      ),
+      retentionHours: parsePositiveInteger(
+        process.env.MEETING_UPLOAD_RETENTION_HOURS,
+        DEFAULT_MEETING_UPLOAD_RETENTION_HOURS,
       ),
     },
   };

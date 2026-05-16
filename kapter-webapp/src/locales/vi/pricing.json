@@ -1,0 +1,66 @@
+{
+  "hero": {
+    "badge": "Subscription",
+    "title": "Chọn gói ghi âm phù hợp cho nhịp họp của đội.",
+    "description": "Kapter tính quota theo số phút ghi âm đã hoàn tất trong tháng. Khi hết quota, Extension sẽ chặn phiên ghi mới trước khi mở recorder."
+  },
+  "quota": {
+    "title": "Quota tháng này",
+    "usedLabel": "Đã dùng",
+    "minutesUnit": "phút",
+    "canRecord": "Còn quota",
+    "exhausted": "Hết quota",
+    "remainingHint": "Còn {{minutes}} phút trước ngày {{date}}.",
+    "signedOut": "Đăng nhập để xem quota còn lại và trạng thái gói hiện tại."
+  },
+  "plans": {
+    "FREE": {
+      "name": "Free",
+      "description": "Dành cho thử nghiệm luồng ghi âm và review nội bộ.",
+      "features": [
+        "Quota cơ bản mỗi tháng",
+        "Ghi âm Google Meet",
+        "Review transcript và action item"
+      ]
+    },
+    "PRO": {
+      "name": "Pro",
+      "description": "Cho người dùng cần ghi âm đều đặn và duyệt việc sau họp.",
+      "features": [
+        "Quota mở rộng cho lịch họp dày hơn",
+        "Đồng bộ Notion sau khi duyệt",
+        "Không gian review cho từng dự án"
+      ]
+    },
+    "TEAM": {
+      "name": "Team",
+      "description": "Cho đội nhỏ muốn chuẩn hóa tri thức họp và bàn giao việc.",
+      "features": [
+        "Quota nhóm cao hơn",
+        "Thiết lập Notion theo project",
+        "Nền tảng cho workflow review nhiều thành viên"
+      ]
+    }
+  },
+  "planCard": {
+    "currentPlan": "Gói hiện tại",
+    "priceSuffix": "/ tháng",
+    "quotaLine": "{{minutes}} phút ghi âm mỗi tháng",
+    "activeButton": "Đang sử dụng",
+    "freeButton": "Gói mặc định",
+    "billingButton": "Nâng cấp sẽ sớm khả dụng",
+    "signInButton": "Đăng nhập để bắt đầu"
+  },
+  "quotaProtection": {
+    "title": "Kapter tự kiểm tra quota trước khi ghi",
+    "description": "Trước mỗi phiên ghi âm, Kapter sẽ kiểm tra số phút còn lại để bạn không vô tình tạo phiên mới khi gói đã hết quota.",
+    "dashboardLink": "Về Dashboard"
+  },
+  "errors": {
+    "sessionToken": "Phiên đăng nhập chưa sẵn sàng. Vui lòng thử đăng nhập lại.",
+    "loadPlans": "Không thể tải danh sách gói dịch vụ.",
+    "loadStatus": "Không thể tải trạng thái gói dịch vụ.",
+    "loadBilling": "Không thể tải thông tin gói dịch vụ.",
+    "network": "Chưa kết nối được tới dịch vụ gói. Vui lòng kiểm tra kết nối hoặc thử lại sau."
+  }
+}

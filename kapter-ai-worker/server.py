@@ -10,12 +10,13 @@ import secrets
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from kapter_ai_worker.config.settings import get_settings
 from kapter_ai_worker.contracts.worker_contracts import (
     WorkerAudioBatchRequest,
+    WorkerFileTranscriptionResponse,
     WorkerTranscriptionResponse,
     WorkerVoiceProfileCacheUpsertRequest,
     WorkerVoiceProfileEnrollmentRequest,
@@ -98,6 +99,37 @@ def process_audio_batch(
         logger.exception(
             "Failed to process audio batch for stream {}",
             request.stream_id,
+        )
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.post(
+    "/api/v1/process-audio-file",
+    response_model=WorkerFileTranscriptionResponse,
+)
+async def process_audio_file(
+    file: UploadFile = File(...),
+    backendMeetingId: str = Form(...),
+    streamId: str = Form(...),
+    sourceType: str = Form(...),
+    knownVoiceProfileIds: list[str] = Form(default_factory=list),
+    _: None = Depends(require_worker_auth),
+) -> WorkerFileTranscriptionResponse:
+    try:
+        return get_audio_batch_processor().process_uploaded_audio_file(
+            audio_bytes=await file.read(),
+            mime_type=file.content_type or "audio/mpeg",
+            backend_meeting_id=backendMeetingId,
+            stream_id=streamId,
+            source_type=sourceType,
+            known_voice_profile_ids=knownVoiceProfileIds,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:  # noqa: BLE001
+        logger.exception(
+            "Failed to process uploaded audio file for meeting {}",
+            backendMeetingId,
         )
         raise HTTPException(status_code=500, detail=str(error)) from error
 

@@ -13,6 +13,8 @@ import numpy as np
 from kapter_ai_worker.config.settings import WorkerSettings
 from kapter_ai_worker.contracts.worker_contracts import (
     WorkerAudioBatchRequest,
+    WorkerFileTranscriptionBatch,
+    WorkerFileTranscriptionResponse,
     WorkerTranscriptionResponse,
     WorkerVoiceProfileEnrollmentResponse,
 )
@@ -27,6 +29,7 @@ from kapter_ai_worker.models.silero_vad import SileroVAD
 from kapter_ai_worker.pipeline.streaming_pipeline import StreamingInferencePipeline
 from kapter_ai_worker.services.voice_profile_cache import VoiceProfileCache
 from kapter_ai_worker.utils.audio import (
+    generate_vad_audio_chunks,
     is_raw_pcm_mime_type,
     load_audio_file,
     load_raw_pcm_bytes,
@@ -529,6 +532,145 @@ class AudioBatchProcessor:
             quality_score=metrics.quality_score,
             sample_rate=sample_rate,
         )
+
+    def process_uploaded_audio_file(
+        self,
+        *,
+        audio_bytes: bytes,
+        mime_type: str,
+        backend_meeting_id: str,
+        stream_id: str,
+        source_type: str,
+        known_voice_profile_ids: list[str],
+    ) -> WorkerFileTranscriptionResponse:
+        if source_type != "tab_mix":
+            raise ValueError("Uploaded meeting audio must use sourceType=tab_mix.")
+
+        temporary_path: Path | None = None
+        processing_key = build_processing_key(backend_meeting_id, source_type)
+
+        try:
+            with NamedTemporaryFile(
+                suffix=infer_suffix_from_mime_type(mime_type),
+                delete=False,
+            ) as temporary_file:
+                temporary_file.write(audio_bytes)
+                temporary_path = Path(temporary_file.name)
+
+            all_samples, sample_rate = load_audio_file(
+                temporary_path,
+                target_sample_rate=requested_sample_rate(self._settings),
+            )
+            total_duration_ms = max(
+                1,
+                int(round((len(all_samples) / sample_rate) * 1000)),
+            )
+
+            self._pipeline.clear(stream_id=processing_key)
+            self._registry_by_meeting.pop(processing_key, None)
+            clear_processing_buffer_state(self, processing_key)
+
+            meeting_registry = self._get_registry(processing_key)
+            self._seed_registry_from_cache(
+                meeting_registry,
+                known_voice_profile_ids,
+            )
+
+            worker_batches: list[WorkerFileTranscriptionBatch] = []
+            audio_chunks = list(
+                generate_vad_audio_chunks(
+                    temporary_path,
+                    vad=self._health_vad,
+                    expected_sample_rate=requested_sample_rate(self._settings),
+                    chunk_duration_seconds=self._target_chunk_duration,
+                    overlap_duration_seconds=self._overlap_duration,
+                )
+            )
+
+            if not audio_chunks:
+                return WorkerFileTranscriptionResponse(
+                    stream_id=stream_id,
+                    backend_meeting_id=backend_meeting_id,
+                    source_type=source_type,
+                    batches=[
+                        WorkerFileTranscriptionBatch(
+                            sequence_start=1,
+                            sequence_end=1,
+                            stream_offset_ms=0,
+                            duration_ms=total_duration_ms,
+                            segments=[],
+                            speaker_evidence=[],
+                        )
+                    ],
+                )
+
+            from kapter_ai_worker.utils.alignment import consolidate_segments
+
+            for sequence_index, audio_chunk in enumerate(audio_chunks, start=1):
+                normalized_chunk = AudioChunk(
+                    index=sequence_index,
+                    start_time=audio_chunk.start_time,
+                    end_time=audio_chunk.end_time,
+                    sample_rate=audio_chunk.sample_rate,
+                    samples=normalize_audio(audio_chunk.samples, target_rms=TARGET_RMS),
+                    total_chunks=audio_chunk.total_chunks,
+                )
+                pipeline_result = self._pipeline.process_chunk(
+                    normalized_chunk,
+                    stream_id=processing_key,
+                    registry=meeting_registry,
+                )
+                final_segments = consolidate_segments(
+                    pipeline_result.emitted_segments,
+                    registry=meeting_registry,
+                )
+                speaker_evidence = pipeline_result.speaker_evidence or self._extract_speaker_evidence(
+                    normalized_chunk,
+                    pipeline_result.speaker_spans,
+                    source_type=source_type,
+                    registry=meeting_registry,
+                )
+                response_offset_ms = max(
+                    0,
+                    int(round(normalized_chunk.start_time * 1000)),
+                )
+                relative_segments = relativize_segments_to_batch_offset(
+                    final_segments,
+                    response_offset_ms / 1000.0,
+                )
+                relative_speaker_evidence = relativize_speaker_evidence_to_batch_offset(
+                    speaker_evidence,
+                    response_offset_ms / 1000.0,
+                )
+
+                worker_batches.append(
+                    WorkerFileTranscriptionBatch.from_entities(
+                        sequence_start=sequence_index,
+                        sequence_end=sequence_index,
+                        stream_offset_ms=response_offset_ms,
+                        duration_ms=max(
+                            1,
+                            int(round(normalized_chunk.duration_seconds * 1000)),
+                        ),
+                        segments=relative_segments,
+                        source_type=source_type,
+                        speaker_evidence=relative_speaker_evidence,
+                    )
+                )
+
+            return WorkerFileTranscriptionResponse(
+                stream_id=stream_id,
+                backend_meeting_id=backend_meeting_id,
+                source_type=source_type,
+                batches=worker_batches,
+            )
+        finally:
+            clear_processing_buffer_state(self, processing_key)
+            self._registry_by_meeting.pop(processing_key, None)
+            self._pipeline.clear(stream_id=processing_key)
+
+            if temporary_path and temporary_path.exists():
+                temporary_path.unlink(missing_ok=True)
 
     def upsert_voice_profile_cache(
         self,

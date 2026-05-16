@@ -145,20 +145,25 @@ export function ActiveSessionBanner({
   }
 
   const isRecording = activeMeeting.status === MEETING_STATUS.RECORDING
+  const isFileUpload = activeMeeting.ingestionSource === "FILE_UPLOAD"
   const stateLabel = isRecording
     ? t("activeSession.recording", { ns: "meeting" })
     : t("activeSession.processing", { ns: "meeting" })
-  const stateDescription = isRecording
-    ? t("activeSession.recordingDescription", { ns: "meeting" })
-    : t("activeSession.processingDescription", { ns: "meeting" })
-  const captureContextLabel =
-    activeMeeting.captureContext === "google_meet_room"
+  const stateDescription = isFileUpload
+    ? t("activeSession.uploadProcessingDescription", { ns: "meeting" })
+    : isRecording
+      ? t("activeSession.recordingDescription", { ns: "meeting" })
+      : t("activeSession.processingDescription", { ns: "meeting" })
+  const captureContextLabel = isFileUpload
+    ? t("activeSession.fileUpload", { ns: "meeting" })
+    : activeMeeting.captureContext === "google_meet_room"
       ? t("activeSession.googleMeet", { ns: "meeting" })
       : activeMeeting.captureContext === "generic_tab"
         ? t("activeSession.genericTab", { ns: "meeting" })
         : t("activeSession.unknownCapture", { ns: "meeting" })
-  const audioLaneLabel =
-    activeMeeting.activeSourceTypes.length > 0
+  const audioLaneLabel = isFileUpload
+    ? t("activeSession.uploadedAudio", { ns: "meeting" })
+    : activeMeeting.activeSourceTypes.length > 0
       ? activeMeeting.activeSourceTypes
           .map((sourceType) =>
             sourceType === "self_mic"

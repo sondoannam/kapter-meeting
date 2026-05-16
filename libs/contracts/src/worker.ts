@@ -76,3 +76,19 @@ export interface WorkerTranscriptionResponse {
   sourceType?: AudioSourceType;
   speakerEvidence?: WorkerSpeakerEvidence[];
 }
+
+export interface WorkerFileTranscriptionBatch {
+  sequenceStart: number;
+  sequenceEnd: number;
+  streamOffsetMs: number;
+  durationMs: number;
+  segments: WorkerTranscriptSegment[];
+  speakerEvidence?: WorkerSpeakerEvidence[];
+}
+
+export interface WorkerFileTranscriptionResponse {
+  streamId: string;
+  backendMeetingId: string;
+  sourceType?: AudioSourceType;
+  batches: WorkerFileTranscriptionBatch[];
+}
