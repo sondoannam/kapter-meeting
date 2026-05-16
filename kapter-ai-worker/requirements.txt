@@ -12,6 +12,7 @@ torchaudio==2.11.0+cu128
 torchvision==0.26.0+cu128
 loguru>=0.7.2
 fastapi>=0.115.0
+python-multipart>=0.0.20
 uvicorn>=0.32.0
 rich>=13.9.0
 sounddevice>=0.5.1

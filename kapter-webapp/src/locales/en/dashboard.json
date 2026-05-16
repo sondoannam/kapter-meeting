@@ -30,7 +30,7 @@
     "steps": {
       "extension": {
         "title": "Install the extension",
-        "description": "Use the extension to create the first meeting record and send it back here."
+        "description": "Use the extension for live capture, or upload an MP3 if you already have the meeting audio."
       },
       "capture": {
         "title": "Capture the meeting",
@@ -52,10 +52,12 @@
       "meetingLabel": "Continue here",
       "handoffLabel": "Ready for handoff",
       "installTitle": "Install the extension before your first capture",
-      "installDescription": "The extension creates the first meeting record and brings it back here for review.",
+      "installDescription": "The extension creates the first live meeting record and brings it back here for review.",
       "installAction": "Download test extension",
       "confirmInstallAction": "I have installed it",
       "installAdvanceHint": "Kapter cannot inspect Chrome's extension list from the dashboard alone. If auto-detection does not happen right after you install the extension, refresh this dashboard tab or use “I have installed it” to move to the capture step.",
+      "uploadAlternativeAction": "Upload MP3 instead",
+      "uploadAlternativeHint": "Already have the meeting audio? Upload one MP3 from the dashboard and Kapter will push it through the same review and Notion workflow.",
       "reviewTitle": "Review your first ready meeting",
       "reviewDescription": "{{title}} is ready for human review. Open it now to check the summary and action items.",
       "reviewAction": "Open review workspace",
@@ -82,7 +84,7 @@
     "recent": {
       "title": "Recent meetings",
       "description": "Keep the last few sessions nearby without opening the full filtered workspace.",
-      "empty": "Once the extension creates the first meeting, the latest sessions will appear here."
+      "empty": "Once you record with the extension or upload an MP3, the latest sessions will appear here."
     }
   },
   "metrics": {
@@ -115,6 +117,33 @@
   "projectSetupAccordion": {
     "title": "Project setup and Notion destination"
   },
+  "uploadCard": {
+    "eyebrow": "Local file pipeline",
+    "title": "Process a saved meeting",
+    "description": "Upload one MP3 from the dashboard when the meeting already happened outside the extension capture flow.",
+    "workflowTitle": "Same downstream workflow",
+    "workflowDescription": "Uploaded audio lands in the same meeting detail, review, speaker mapping, and Notion sync path as live capture.",
+    "ctaTitle": "Upload MP3",
+    "ctaDescription": "Create a meeting record from local audio and open it in the review workspace."
+  },
+  "uploadDialog": {
+    "title": "Upload meeting audio",
+    "description": "Send one MP3 to the backend and let Kapter process it as a normal meeting.",
+    "supportedFormatsTitle": "MP3 only in this MVP",
+    "supportedFormatsDescription": "Kapter will process one MP3 file per upload and route it through the same backend and AI worker pipeline as live meetings.",
+    "fileLabel": "Audio file",
+    "fileHint": "Choose one MP3 file from your machine.",
+    "fileRequired": "Choose one MP3 file before uploading.",
+    "fileTypeError": "Only MP3 uploads are supported right now.",
+    "titleLabel": "Meeting title",
+    "titlePlaceholder": "Defaults to the file name",
+    "projectLabel": "Project",
+    "projectPlaceholder": "Choose a project or keep the draft fallback",
+    "projectDraftOption": "Use draft project fallback",
+    "submit": "Upload MP3",
+    "submitting": "Uploading MP3...",
+    "submitError": "Unable to upload the meeting audio file."
+  },
   "meetingPanel": {
     "title": "Meetings",
     "description": "{{visible}}/{{total}} meetings visible",
@@ -133,7 +162,7 @@
     "loading": "Loading meetings...",
     "emptyTitle": "No matching meetings yet",
     "emptyWithFilters": "Try clearing the filters to view the full history.",
-    "emptyWithoutFilters": "The extension will create the first record here.",
+    "emptyWithoutFilters": "The first record will appear here after a live extension capture or an MP3 upload.",
     "untitledMeeting": "Untitled meeting",
     "draftProject": "Draft project",
     "hasRecording": "Has recording",

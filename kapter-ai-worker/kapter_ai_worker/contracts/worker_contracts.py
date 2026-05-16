@@ -246,3 +246,69 @@ class WorkerTranscriptionResponse(BackendContractModel):
                 for evidence in speaker_evidence
             ],
         )
+
+
+class WorkerFileTranscriptionBatch(BackendContractModel):
+    sequence_start: int = Field(..., alias="sequenceStart", ge=0)
+    sequence_end: int = Field(..., alias="sequenceEnd", ge=0)
+    stream_offset_ms: int = Field(..., alias="streamOffsetMs", ge=0)
+    duration_ms: int = Field(..., alias="durationMs", gt=0)
+    segments: list[WorkerTranscriptSegment] = Field(default_factory=list)
+    speaker_evidence: list[WorkerSpeakerEvidence] = Field(
+        default_factory=list,
+        alias="speakerEvidence",
+    )
+
+    @model_validator(mode="after")
+    def validate_sequence_window(self) -> "WorkerFileTranscriptionBatch":
+        if self.sequence_end < self.sequence_start:
+            raise ValueError(
+                "sequence_end must be greater than or equal to sequence_start."
+            )
+
+        return self
+
+    @classmethod
+    def from_entities(
+        cls,
+        *,
+        sequence_start: int,
+        sequence_end: int,
+        stream_offset_ms: int,
+        duration_ms: int,
+        segments: Sequence[DiarizedTranscriptSegment],
+        source_type: str | None = None,
+        speaker_evidence: Sequence[SpeakerEvidence] = (),
+    ) -> "WorkerFileTranscriptionBatch":
+        return cls(
+            sequence_start=sequence_start,
+            sequence_end=sequence_end,
+            stream_offset_ms=stream_offset_ms,
+            duration_ms=duration_ms,
+            segments=[
+                WorkerTranscriptSegment.from_entity(
+                    segment,
+                    source_type=source_type,
+                )
+                for segment in segments
+            ],
+            speaker_evidence=[
+                WorkerSpeakerEvidence.from_entity(
+                    evidence,
+                    source_type=source_type,
+                )
+                for evidence in speaker_evidence
+            ],
+        )
+
+
+class WorkerFileTranscriptionResponse(BackendContractModel):
+    stream_id: str = Field(..., alias="streamId", min_length=1)
+    backend_meeting_id: str = Field(
+        ...,
+        validation_alias=AliasChoices("backendMeetingId", "meetingId"),
+        serialization_alias="backendMeetingId",
+        min_length=1,
+    )
+    source_type: str | None = Field(None, alias="sourceType")
+    batches: list[WorkerFileTranscriptionBatch] = Field(default_factory=list)

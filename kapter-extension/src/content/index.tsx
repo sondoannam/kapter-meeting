@@ -9,6 +9,7 @@ import {
   BRIDGE_TOKEN_MESSAGE_TYPE,
   isBridgePageLocation,
 } from "@/shared/lib/auth-bridge";
+import { readMeetLocalMicSnapshot } from "@/shared/lib/google-meet-local-mic";
 import { isGoogleMeetUrl } from "@/shared/lib/google-meet";
 import { sendMessage } from "@/shared/lib/messaging";
 import { getStorage } from "@/shared/lib/storage";
@@ -195,6 +196,20 @@ function registerSilentRefreshListener() {
   });
 }
 
+function registerMeetLocalMicStateListener() {
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type !== "GET_MEET_LOCAL_MIC_STATE") {
+      return undefined;
+    }
+
+    sendResponse({
+      success: true,
+      data: readMeetLocalMicSnapshot(),
+    });
+    return true;
+  });
+}
+
 const currentLocation = window.location.href;
 const isWebappOrigin = (() => {
   try {
@@ -220,7 +235,9 @@ if (
   isGoogleMeetUrl(currentLocation) &&
   document.readyState === "loading"
 ) {
+  registerMeetLocalMicStateListener();
   document.addEventListener("DOMContentLoaded", mount);
 } else if (isGoogleMeetUrl(currentLocation)) {
+  registerMeetLocalMicStateListener();
   mount();
 }

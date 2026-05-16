@@ -7,17 +7,29 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import type { ClerkSessionAuth } from "../clerk/clerk-auth.service";
 import { CurrentUser } from "../clerk/current-user.decorator";
 import { NotionService } from "../notion/notion.service";
+import { CreateMeetingUploadDto } from "./dto/create-meeting-upload.dto";
 import { LinkMeetingSpeakerDto } from "./dto/link-meeting-speaker.dto";
+import { MeetingUploadService } from "./meeting-upload.service";
 import { PromoteMeetingSpeakerDto } from "./dto/promote-meeting-speaker.dto";
 import { SaveMeetingReviewDto } from "./dto/save-meeting-review.dto";
 import { UpdateMeetingMetadataDto } from "./dto/update-meeting-metadata.dto";
 import { MeetingsService } from "./meetings.service";
+
+type UploadedMeetingAudioFile = {
+  buffer: Buffer;
+  mimetype: string;
+  originalname: string;
+  size: number;
+};
 
 @ApiTags("meetings")
 @ApiBearerAuth()
@@ -25,6 +37,7 @@ import { MeetingsService } from "./meetings.service";
 export class MeetingsController {
   constructor(
     private readonly meetingsService: MeetingsService,
+    private readonly meetingUploadService: MeetingUploadService,
     private readonly notionService?: NotionService,
   ) {}
 
@@ -47,6 +60,26 @@ export class MeetingsController {
   async getActiveMeetingForUser(@CurrentUser() currentUser: ClerkSessionAuth) {
     return {
       meeting: await this.meetingsService.getActiveMeeting(currentUser.userId),
+    };
+  }
+
+  @Post("uploads")
+  @UseInterceptors(FileInterceptor("file"))
+  @ApiOperation({
+    summary: "Upload one MP3 file and process it as a dashboard meeting",
+  })
+  async uploadMeetingAudioForUser(
+    @CurrentUser() currentUser: ClerkSessionAuth,
+    @Body() body: CreateMeetingUploadDto,
+    @UploadedFile() file?: UploadedMeetingAudioFile,
+  ) {
+    return {
+      status: "accepted" as const,
+      meeting: await this.meetingUploadService.acceptUpload(
+        currentUser.userId,
+        file,
+        body,
+      ),
     };
   }
 

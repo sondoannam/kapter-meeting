@@ -187,7 +187,7 @@ export function DashboardProjectSetupSection({
           </div>
         </CardHeader>
 
-        <CardContent className="grid gap-4 px-5 pb-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <CardContent className="space-y-4">
           <div className="rounded-[1.35rem] border border-border/80 bg-muted/25 p-4 dark:border-white/10 dark:bg-white/4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1.5">

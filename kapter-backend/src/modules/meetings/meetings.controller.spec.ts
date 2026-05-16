@@ -4,6 +4,11 @@ import { describe, it, mock } from "node:test";
 import { MeetingsController } from "./meetings.controller";
 
 void describe("MeetingsController", () => {
+  const createMeetingUploadService = () =>
+    ({
+      acceptUpload: mock.fn(async () => undefined),
+    }) as never;
+
   void it("returns dashboard meeting history for the current Clerk user", async () => {
     const listMeetingHistory = mock.fn(async () => [
       {
@@ -17,10 +22,13 @@ void describe("MeetingsController", () => {
       },
     ]);
 
-    const controller = new MeetingsController({
-      listMeetingHistory,
-      getActiveMeeting: mock.fn(async () => null),
-    } as never);
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory,
+        getActiveMeeting: mock.fn(async () => null),
+      } as never,
+      createMeetingUploadService(),
+    );
 
     const response = await controller.getMeetingHistory({
       userId: "clerk_user_1",
@@ -59,10 +67,13 @@ void describe("MeetingsController", () => {
       totalDurationMs: 720000,
     }));
 
-    const controller = new MeetingsController({
-      listMeetingHistory: mock.fn(async () => []),
-      getActiveMeeting,
-    } as never);
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory: mock.fn(async () => []),
+        getActiveMeeting,
+      } as never,
+      createMeetingUploadService(),
+    );
 
     const response = await controller.getActiveMeetingForUser({
       userId: "clerk_user_1",
@@ -129,11 +140,14 @@ void describe("MeetingsController", () => {
       },
     }));
 
-    const controller = new MeetingsController({
-      listMeetingHistory: mock.fn(async () => []),
-      getActiveMeeting: mock.fn(async () => null),
-      getMeetingDetail,
-    } as never);
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory: mock.fn(async () => []),
+        getActiveMeeting: mock.fn(async () => null),
+        getMeetingDetail,
+      } as never,
+      createMeetingUploadService(),
+    );
 
     const response = await controller.getMeetingDetailForUser(
       {
@@ -196,12 +210,15 @@ void describe("MeetingsController", () => {
   void it("deletes the requested meeting for the current Clerk user", async () => {
     const deleteMeeting = mock.fn(async () => undefined);
 
-    const controller = new MeetingsController({
-      listMeetingHistory: mock.fn(async () => []),
-      getActiveMeeting: mock.fn(async () => null),
-      getMeetingDetail: mock.fn(async () => undefined),
-      deleteMeeting,
-    } as never);
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory: mock.fn(async () => []),
+        getActiveMeeting: mock.fn(async () => null),
+        getMeetingDetail: mock.fn(async () => undefined),
+        deleteMeeting,
+      } as never,
+      createMeetingUploadService(),
+    );
 
     const response = await controller.deleteMeetingForUser(
       {
@@ -237,12 +254,15 @@ void describe("MeetingsController", () => {
       totalDurationMs: 720000,
     }));
 
-    const controller = new MeetingsController({
-      listMeetingHistory: mock.fn(async () => []),
-      getActiveMeeting: mock.fn(async () => null),
-      getMeetingDetail: mock.fn(async () => undefined),
-      updateMeetingMetadata,
-    } as never);
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory: mock.fn(async () => []),
+        getActiveMeeting: mock.fn(async () => null),
+        getMeetingDetail: mock.fn(async () => undefined),
+        updateMeetingMetadata,
+      } as never,
+      createMeetingUploadService(),
+    );
 
     const response = await controller.updateMeetingMetadataForUser(
       {
@@ -330,6 +350,7 @@ void describe("MeetingsController", () => {
         getActiveMeeting: mock.fn(async () => null),
         getMeetingDetail,
       } as never,
+      createMeetingUploadService(),
       {
         syncMeetingActionItems,
       } as never,
@@ -362,5 +383,68 @@ void describe("MeetingsController", () => {
       skippedCount: 0,
     });
     assert.equal(response.meeting.id, "meeting_detail_1");
+  });
+
+  void it("accepts one uploaded MP3 meeting for the current Clerk user", async () => {
+    const acceptUpload = mock.fn(async () => ({
+      id: "meeting_upload_1",
+      title: "Customer Interview",
+      status: "PROCESSING",
+      ingestionSource: "FILE_UPLOAD",
+      artifactReviewStatus: "PENDING",
+      captureContext: null,
+      degradedWithoutSelfMic: false,
+      activeSourceTypes: ["tab_mix"],
+      externalMeetingId: null,
+      projectId: "project_1",
+      projectTitle: "Research",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      updatedAt: "2026-05-16T10:00:00.000Z",
+      totalDurationMs: 0,
+    }));
+
+    const controller = new MeetingsController(
+      {
+        listMeetingHistory: mock.fn(async () => []),
+        getActiveMeeting: mock.fn(async () => null),
+      } as never,
+      {
+        acceptUpload,
+      } as never,
+    );
+
+    const file = {
+      buffer: Buffer.from("mp3-bytes"),
+      mimetype: "audio/mpeg",
+      originalname: "customer-interview.mp3",
+      size: 1024,
+    };
+
+    const response = await controller.uploadMeetingAudioForUser(
+      {
+        userId: "clerk_user_1",
+        sessionId: null,
+        authorizedParty: null,
+        claims: {},
+      },
+      {
+        title: "Customer Interview",
+        projectId: "project_1",
+      },
+      file,
+    );
+
+    assert.equal(acceptUpload.mock.callCount(), 1);
+    assert.deepEqual(acceptUpload.mock.calls[0]?.arguments, [
+      "clerk_user_1",
+      file,
+      {
+        title: "Customer Interview",
+        projectId: "project_1",
+      },
+    ]);
+    assert.equal(response.status, "accepted");
+    assert.equal(response.meeting.id, "meeting_upload_1");
+    assert.equal(response.meeting.ingestionSource, "FILE_UPLOAD");
   });
 });

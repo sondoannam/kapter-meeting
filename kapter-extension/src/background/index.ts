@@ -13,10 +13,16 @@ import {
   BRIDGE_SILENT_TOKEN_REQUEST,
 } from "@/shared/lib/auth-bridge";
 import { isGoogleMeetDualLaneCaptureEnabled } from "@/shared/lib/feature-flags";
+import { isMeetLocalMicExplicitlyUnmuted } from "@/shared/lib/google-meet-local-mic";
 import { extractGoogleMeetId, isGoogleMeetUrl } from "@/shared/lib/google-meet";
 import { onMessage } from "@/shared/lib/messaging";
 import { getStorage, setStorage } from "@/shared/lib/storage";
-import type { CaptureStatus, MeetLocalMicState } from "@/shared/types/messages";
+import type {
+  CaptureStatus,
+  MeetLocalMicSnapshot,
+  MeetLocalMicState,
+  MessageResponse,
+} from "@/shared/types/messages";
 import type { AudioSourceType, CaptureContext } from "@kapter/contracts";
 
 import { syncBackendSession } from "./backend-auth";
@@ -375,9 +381,41 @@ function shouldRequestRecorderMicPermission(
 ): boolean {
   return (
     captureContext === "google_meet_room" &&
-    meetLocalMicState !== "muted" &&
+    isMeetLocalMicExplicitlyUnmuted(meetLocalMicState) &&
     isGoogleMeetDualLaneCaptureEnabled()
   );
+}
+
+async function queryCurrentMeetLocalMicSnapshot(
+  tabId: number,
+  fallbackStatus: CaptureStatus,
+): Promise<MeetLocalMicSnapshot> {
+  try {
+    const response = (await browser.tabs.sendMessage(tabId, {
+      type: "GET_MEET_LOCAL_MIC_STATE",
+    })) as MessageResponse<"GET_MEET_LOCAL_MIC_STATE">;
+
+    if (response.success && isMeetLocalMicState(response.data.state)) {
+      return {
+        state: response.data.state,
+        controlLabel:
+          typeof response.data.controlLabel === "string"
+            ? response.data.controlLabel
+            : undefined,
+      };
+    }
+  } catch {
+    // Fall back to the last known safe state when the content script is unavailable.
+  }
+
+  if (fallbackStatus.meetLocalMicState === "muted") {
+    return {
+      state: "muted",
+      controlLabel: fallbackStatus.meetLocalMicControlLabel,
+    };
+  }
+
+  return { state: "unknown" };
 }
 
 async function closeTabIfPresent(tabId: number): Promise<void> {
@@ -957,10 +995,14 @@ onMessage(async (message, sender) => {
           message.payload?.captureContext ??
           deriveCaptureContext(activeTab.url);
         const currentCaptureStatus = await getCaptureStatus();
-        const meetLocalMicState =
+        const meetLocalMicSnapshot =
           captureContext === "google_meet_room"
-            ? currentCaptureStatus.meetLocalMicState
-            : undefined;
+            ? await queryCurrentMeetLocalMicSnapshot(
+                activeTab.id,
+                currentCaptureStatus,
+              )
+            : null;
+        const meetLocalMicState = meetLocalMicSnapshot?.state;
         const meetingId =
           message.payload?.meetingId ?? extractGoogleMeetId(activeTab.url);
         const projectId =
@@ -973,6 +1015,14 @@ onMessage(async (message, sender) => {
             error:
               "Could not determine the current Google Meet id from the active tab.",
           };
+        }
+
+        if (meetLocalMicSnapshot) {
+          await updateStatus({
+            meetLocalMicState: meetLocalMicSnapshot.state,
+            meetLocalMicControlLabel: meetLocalMicSnapshot.controlLabel,
+            meetLocalMicUpdatedAt: Date.now(),
+          });
         }
 
         if (

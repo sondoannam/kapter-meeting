@@ -34,6 +34,7 @@ model Meeting {
   title                   String
   description             String?
   status                  MeetingStatus                  @default(RECORDING)
+  ingestionSource         MeetingIngestionSource         @default(LIVE_CAPTURE)
   captureContext          CaptureContext?
   degradedWithoutSelfMic  Boolean                        @default(false)
   recorderLabelHint       String?
@@ -419,6 +420,11 @@ enum MeetingStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum MeetingIngestionSource {
+  LIVE_CAPTURE
+  FILE_UPLOAD
 }
 
 enum MeetingArtifactReviewStatus {

@@ -6,6 +6,7 @@ import type {
 export type {
   ActionItemStatus,
   ActiveMeetingResponse,
+  CreateMeetingUploadRequest,
   DashboardMeetingActionItem,
   DashboardMeetingArtifactProcessing,
   DashboardMeetingContextProposal,
@@ -21,6 +22,8 @@ export type {
   LinkMeetingSpeakerRequest,
   MeetingArtifactReviewStatus,
   MeetingDetailResponse,
+  MeetingIngestionSource,
+  MeetingUploadAcceptedResponse,
   MeetingSpeakerMapping,
   MeetingSpeakerPromotionRequest,
   MeetingHistoryResponse,

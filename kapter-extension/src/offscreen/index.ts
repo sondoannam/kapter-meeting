@@ -2,6 +2,7 @@ import { io, type Socket } from "socket.io-client";
 import type { AudioSourceType } from "@kapter/contracts";
 
 import { isGoogleMeetDualLaneCaptureEnabled } from "@/shared/lib/feature-flags";
+import { isMeetLocalMicExplicitlyUnmuted } from "@/shared/lib/google-meet-local-mic";
 
 import type {
   MeetLocalMicState,
@@ -227,7 +228,7 @@ function shouldCaptureSelfMic(
 ): boolean {
   return (
     captureContext === "google_meet_room" &&
-    meetLocalMicState !== "muted" &&
+    isMeetLocalMicExplicitlyUnmuted(meetLocalMicState) &&
     isGoogleMeetDualLaneCaptureEnabled()
   );
 }
@@ -298,15 +299,20 @@ async function maybeStartSelfMicCapture(
     return { degradedWithoutSelfMic: false };
   }
 
-  if (meetLocalMicState === "muted") {
-    sendDebug(
-      "Google Meet local microphone is muted; continuing with shared tab audio only.",
-    );
+  if (
+    captureContext === "google_meet_room" &&
+    !isMeetLocalMicExplicitlyUnmuted(meetLocalMicState)
+  ) {
+    const degradedReason =
+      meetLocalMicState === "muted"
+        ? "Google Meet local microphone is muted. Continuing with shared tab audio only."
+        : "Google Meet local microphone is not explicitly unmuted. Continuing with shared tab audio only.";
+
+    sendDebug(degradedReason);
 
     return {
       degradedWithoutSelfMic: false,
-      degradedReason:
-        "Google Meet local microphone is muted. Continuing with shared tab audio only.",
+      degradedReason,
     };
   }
 
@@ -666,7 +672,7 @@ function handlePcmAudioProcess(
 
   if (
     sourceType === SELF_MIC_AUDIO_SOURCE_TYPE &&
-    lastKnownMeetLocalMicState === "muted"
+    !isMeetLocalMicExplicitlyUnmuted(lastKnownMeetLocalMicState)
   ) {
     pipeline.bufferedChunks = [];
     pipeline.bufferedFrameCount = 0;
@@ -698,11 +704,11 @@ async function processQueuedChunks(epoch: number): Promise<void> {
 
     if (
       nextChunk.sourceType === SELF_MIC_AUDIO_SOURCE_TYPE &&
-      lastKnownMeetLocalMicState === "muted"
+      !isMeetLocalMicExplicitlyUnmuted(lastKnownMeetLocalMicState)
     ) {
       queuedChunks.splice(nextChunkIndex, 1);
       sendDebug(
-        `Dropped queued self-mic chunk #${nextChunk.sequence} because the local Meet microphone is muted.`,
+        `Dropped queued self-mic chunk #${nextChunk.sequence} because the local Meet microphone state is ${lastKnownMeetLocalMicState}, not explicitly unmuted.`,
       );
       continue;
     }

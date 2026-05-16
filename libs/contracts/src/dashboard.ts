@@ -3,6 +3,7 @@ import type {
   ActionItemStatus,
   IsoDateTimeString,
   MeetingArtifactReviewStatus,
+  MeetingIngestionSource,
   MeetingStatus,
 } from "./domain";
 import type { MeetingSpeakerMapping } from "./voice-profiles";
@@ -17,6 +18,7 @@ export interface DashboardMeetingSummary {
   id: string;
   title: string;
   status: MeetingStatus;
+  ingestionSource: MeetingIngestionSource;
   artifactReviewStatus: MeetingArtifactReviewStatus;
   captureContext: CaptureContext | null;
   degradedWithoutSelfMic: boolean;
@@ -142,6 +144,16 @@ export interface ActiveMeetingResponse {
 
 export interface MeetingDetailResponse {
   meeting: DashboardMeetingDetail;
+}
+
+export interface CreateMeetingUploadRequest {
+  title?: string;
+  projectId?: string;
+}
+
+export interface MeetingUploadAcceptedResponse {
+  status: "accepted";
+  meeting: DashboardMeetingSummary;
 }
 
 export interface DeleteMeetingResponse {

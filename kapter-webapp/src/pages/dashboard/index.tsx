@@ -1,7 +1,8 @@
 import * as React from "react"
-import { useSearchParams } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 
 import { AppShellContainer } from "@/components/app-shell-container"
+import { DashboardMeetingUploadCard } from "@/components/dashboard/dashboard-meeting-upload-card"
 import { GuidedDashboard } from "@/components/dashboard/guided-dashboard"
 import { useActiveMeeting } from "@/features/meetings/hooks/use-active-meeting"
 import { useDashboardMeetingHistory } from "@/features/meetings/context/dashboard-meeting-history"
@@ -18,6 +19,7 @@ import { ActiveSessionBanner } from "@/features/meetings/components/active-sessi
 import { useDashboardMode } from "@/features/dashboard/hooks/use-dashboard-mode"
 
 import type { DashboardMeetingSummary } from "@/features/meetings/types"
+import { buildMeetingDetailRoute } from "@/routes/routes.constants"
 import { scrollToSection } from "@/lib/utils"
 
 type MeetingStatusFilter = "all" | DashboardMeetingSummary["status"]
@@ -26,6 +28,7 @@ type MeetingReviewFilter =
   | DashboardMeetingSummary["artifactReviewStatus"]
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const sidebarStatus = searchParams.get("sidebar_status")
   const {
@@ -38,7 +41,9 @@ export default function Dashboard() {
     meetings,
     status: historyStatus,
     activeMeetingDeleteId,
+    isUploadingMeeting,
     deleteMeeting,
+    uploadMeetingAudio,
     refresh: refreshMeetingHistory,
   } = useDashboardMeetingHistory()
   const {
@@ -302,6 +307,14 @@ export default function Dashboard() {
     setDashboardMode("standard")
   }, [dismissCoachmark, setDashboardMode])
 
+  const handleMeetingUploadAccepted = React.useCallback(
+    async (meeting: DashboardMeetingSummary) => {
+      await Promise.all([refreshMeetingHistory(), refreshActiveMeeting()])
+      navigate(buildMeetingDetailRoute(meeting.id))
+    },
+    [navigate, refreshActiveMeeting, refreshMeetingHistory]
+  )
+
   if (
     !shouldForceStandardMode &&
     !hasStoredMode &&
@@ -344,8 +357,12 @@ export default function Dashboard() {
         activeMeeting={activeMeeting}
         meetings={meetings}
         meetingsStatus={historyStatus}
+        isUploadingMeeting={isUploadingMeeting}
+        onMeetingUploadAccepted={handleMeetingUploadAccepted}
         onRefreshMeetings={refreshMeetingHistory}
         onSwitchToStandard={openStandardDashboard}
+        onUploadMeetingAudio={uploadMeetingAudio}
+        projects={projects}
       />
     )
   }
@@ -378,23 +395,35 @@ export default function Dashboard() {
         />
       ) : null}
 
-      <DashboardProjectSetupSection
-        activeNotionProjectId={activeNotionProjectId}
-        isConnectingNotion={isConnectingNotion}
-        isCreating={isCreating}
-        notionConnection={notionConnection}
-        notionErrorMessage={notionErrorMessage}
-        notionStatus={notionStatus}
-        onClearProjectNotionDestination={clearProjectNotionDestination}
-        onConfigureProjectNotionDestination={configureProjectNotionDestination}
-        onConnectNotion={connectNotion}
-        onCreateProject={createProject}
-        onRefreshNotion={refreshNotionConnection}
-        onRefreshProjects={refreshProjects}
-        onSearchNotionPages={searchNotionPages}
-        projects={projects}
-        selectedProjectId={effectiveSelectedProjectId}
-      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.8fr)]">
+        <DashboardProjectSetupSection
+          activeNotionProjectId={activeNotionProjectId}
+          isConnectingNotion={isConnectingNotion}
+          isCreating={isCreating}
+          notionConnection={notionConnection}
+          notionErrorMessage={notionErrorMessage}
+          notionStatus={notionStatus}
+          onClearProjectNotionDestination={clearProjectNotionDestination}
+          onConfigureProjectNotionDestination={configureProjectNotionDestination}
+          onConnectNotion={connectNotion}
+          onCreateProject={createProject}
+          onRefreshNotion={refreshNotionConnection}
+          onRefreshProjects={refreshProjects}
+          onSearchNotionPages={searchNotionPages}
+          projects={projects}
+          selectedProjectId={effectiveSelectedProjectId}
+        />
+
+        <DashboardMeetingUploadCard
+          defaultProjectId={
+            effectiveSelectedProjectId === "all" ? null : effectiveSelectedProjectId
+          }
+          isSubmitting={isUploadingMeeting}
+          onAccepted={handleMeetingUploadAccepted}
+          onSubmit={uploadMeetingAudio}
+          projects={projects}
+        />
+      </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-5">

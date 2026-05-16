@@ -1,5 +1,7 @@
 import type {
+  AudioSourceType,
   WorkerAudioBatchRequest,
+  WorkerFileTranscriptionResponse,
   WorkerTranscriptionResponse,
   WorkerVoiceProfileCacheUpsertRequest,
   WorkerVoiceProfileEnrollmentResponse,
@@ -17,6 +19,16 @@ export interface ProcessedAudioBatch {
   batchId: string;
   request: WorkerAudioBatchRequest;
   response: WorkerTranscriptionResponse;
+}
+
+export interface ProcessAudioFileRequest {
+  backendMeetingId: string;
+  streamId: string;
+  sourceType: AudioSourceType;
+  knownVoiceProfileIds: string[];
+  fileBuffer: Buffer;
+  fileName: string;
+  mimeType: string;
 }
 
 @Injectable()
@@ -37,9 +49,20 @@ export class AiWorkerClient {
     return this.config.aiWorker.timeoutMs;
   }
 
+  getFileTimeoutMs(): number {
+    return this.config.aiWorker.fileTimeoutMs;
+  }
+
   getProcessAudioUrl(): string {
     return new URL(
       "/api/v1/process-audio",
+      this.config.aiWorker.baseUrl,
+    ).toString();
+  }
+
+  getProcessAudioFileUrl(): string {
+    return new URL(
+      "/api/v1/process-audio-file",
       this.config.aiWorker.baseUrl,
     ).toString();
   }
@@ -112,6 +135,37 @@ export class AiWorkerClient {
 
       throw error;
     }
+  }
+
+  async processAudioFile(
+    request: ProcessAudioFileRequest,
+  ): Promise<WorkerFileTranscriptionResponse> {
+    const formData = new FormData();
+
+    formData.set("backendMeetingId", request.backendMeetingId);
+    formData.set("streamId", request.streamId);
+    formData.set("sourceType", request.sourceType);
+
+    for (const voiceProfileId of request.knownVoiceProfileIds) {
+      formData.append("knownVoiceProfileIds", voiceProfileId);
+    }
+
+    formData.set(
+      "file",
+      new Blob([Uint8Array.from(request.fileBuffer)], {
+        type: request.mimeType,
+      }),
+      request.fileName,
+    );
+
+    return this.requestMultipart<WorkerFileTranscriptionResponse>(
+      this.getProcessAudioFileUrl(),
+      {
+        method: "POST",
+        body: formData,
+        timeoutMs: this.getFileTimeoutMs(),
+      },
+    );
   }
 
   async extractVoiceProfileEnrollment(
@@ -226,6 +280,48 @@ export class AiWorkerClient {
 
       if (response.status === 204) {
         return undefined as T;
+      }
+
+      return (await response.json()) as T;
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async requestMultipart<T>(
+    url: string,
+    init: {
+      method: "POST";
+      body: FormData;
+      timeoutMs?: number;
+    },
+  ): Promise<T> {
+    const abortController = new AbortController();
+    const headers: Record<string, string> = {};
+    const sharedSecret = this.config.aiWorker.sharedSecret;
+    const timeoutHandle = setTimeout(
+      () => abortController.abort(),
+      init.timeoutMs ?? this.getTimeoutMs(),
+    );
+
+    try {
+      if (sharedSecret) {
+        headers.authorization = `Bearer ${sharedSecret}`;
+      }
+
+      const response = await fetch(url, {
+        method: init.method,
+        headers,
+        body: init.body,
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+
+        throw new Error(
+          `AI worker request failed with ${response.status}: ${errorBody}`,
+        );
       }
 
       return (await response.json()) as T;

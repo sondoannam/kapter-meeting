@@ -146,6 +146,39 @@ def test_process_audio_endpoint_requires_bearer_token_when_configured(
     assert authorized.status_code == 200
 
 
+def test_process_audio_file_endpoint_returns_batch_contract_shape(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setenv("KAPTER_AI_SHARED_SECRET", "")
+
+    with create_client(tmp_path / "voice_profile_cache.json") as client:
+        response = client.post(
+            "/api/v1/process-audio-file",
+            data={
+                "backendMeetingId": "meeting_upload_1",
+                "streamId": "upload:meeting_upload_1",
+                "sourceType": "tab_mix",
+                "knownVoiceProfileIds": ["vp_1"],
+            },
+            files={
+                "file": ("meeting.wav", build_wav_bytes(), "audio/wav"),
+            },
+        )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+
+    assert payload["streamId"] == "upload:meeting_upload_1"
+    assert payload["backendMeetingId"] == "meeting_upload_1"
+    assert payload["sourceType"] == "tab_mix"
+    assert isinstance(payload["batches"], list)
+    assert payload["batches"]
+    assert "durationMs" in payload["batches"][0]
+    assert "segments" in payload["batches"][0]
+
+
 def test_voice_profile_cache_admin_endpoints_persist_profiles(
     monkeypatch,
     tmp_path,

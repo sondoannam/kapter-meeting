@@ -9,6 +9,7 @@ import {
   Link2,
   Radio,
   Sparkles,
+  Upload,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
@@ -28,6 +29,7 @@ import {
   setGuidedExtensionConfirmed,
 } from "@/features/dashboard/lib/dashboard-mode"
 import { useExtensionPresence } from "@/features/dashboard/hooks/use-extension-presence"
+import { MeetingUploadDialog } from "@/features/meetings/components/meeting-upload-dialog"
 import { MeetingStatusBadge } from "@/features/meetings/components/meeting-status-badge"
 import { ReviewStatusBadge } from "@/features/meetings/components/review-status-badge"
 import { formatMeetingDate } from "@/features/meetings/lib/formatters"
@@ -35,6 +37,7 @@ import type {
   DashboardMeetingSummary,
   MeetingsRequestStatus,
 } from "@/features/meetings/types"
+import type { DashboardProjectSummary } from "@/features/projects/types"
 import { ROUTES, buildMeetingDetailRoute } from "@/routes/routes.constants"
 import { cn } from "@/lib/utils"
 
@@ -42,8 +45,16 @@ type GuidedDashboardProps = {
   activeMeeting: DashboardMeetingSummary | null
   meetings: DashboardMeetingSummary[]
   meetingsStatus: MeetingsRequestStatus
+  isUploadingMeeting: boolean
+  projects: DashboardProjectSummary[]
+  onMeetingUploadAccepted: (meeting: DashboardMeetingSummary) => void | Promise<void>
   onRefreshMeetings: () => Promise<void>
   onSwitchToStandard: () => void
+  onUploadMeetingAudio: (input: {
+    file: File
+    title?: string
+    projectId?: string
+  }) => Promise<DashboardMeetingSummary>
 }
 
 type GuidedPrimaryAction =
@@ -81,8 +92,12 @@ export function GuidedDashboard({
   activeMeeting,
   meetings,
   meetingsStatus,
+  isUploadingMeeting,
+  projects,
+  onMeetingUploadAccepted,
   onRefreshMeetings,
   onSwitchToStandard,
+  onUploadMeetingAudio,
 }: GuidedDashboardProps) {
   const { t } = useTranslation(["dashboard", "common"])
   const [extensionConfirmed, setExtensionConfirmed] = React.useState(() =>
@@ -462,6 +477,22 @@ export function GuidedDashboard({
                 >
                   {t("actions.refresh", { ns: "common" })}
                 </Button>
+
+                <MeetingUploadDialog
+                  defaultProjectId={null}
+                  isSubmitting={isUploadingMeeting}
+                  onAccepted={onMeetingUploadAccepted}
+                  onSubmit={onUploadMeetingAudio}
+                  projects={projects}
+                  trigger={
+                    <Button type="button" variant="outline">
+                      <Upload />
+                      {t("guided.primary.uploadAlternativeAction", {
+                        ns: "dashboard",
+                      })}
+                    </Button>
+                  }
+                />
               </div>
             </div>
 
@@ -502,6 +533,10 @@ export function GuidedDashboard({
                 )}
               </div>
             ) : null}
+
+            <div className="rounded-[1.2rem] border border-border/80 bg-muted/25 px-4 py-4 text-sm leading-7 text-muted-foreground dark:border-white/10 dark:bg-white/4">
+              {t("guided.primary.uploadAlternativeHint", { ns: "dashboard" })}
+            </div>
 
             <div className="rounded-[1.2rem] border border-border/80 bg-muted/25 px-4 py-4 dark:border-white/10 dark:bg-white/4">
               <p className="text-sm font-medium text-foreground">
