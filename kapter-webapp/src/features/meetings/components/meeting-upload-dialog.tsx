@@ -71,9 +71,8 @@ export function MeetingUploadDialog({
   const [file, setFile] = React.useState<File | null>(null)
   const [title, setTitle] = React.useState("")
   const [titleDirty, setTitleDirty] = React.useState(false)
-  const [selectedProjectId, setSelectedProjectId] = React.useState(
-    EMPTY_PROJECT_VALUE
-  )
+  const [selectedProjectId, setSelectedProjectId] =
+    React.useState(EMPTY_PROJECT_VALUE)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
 
   const resetForm = React.useCallback(() => {
@@ -81,18 +80,31 @@ export function MeetingUploadDialog({
     setTitle("")
     setTitleDirty(false)
     setSelectedProjectId(
-      defaultProjectId && projects.some((project) => project.id === defaultProjectId)
+      defaultProjectId &&
+        projects.some((project) => project.id === defaultProjectId)
         ? defaultProjectId
         : EMPTY_PROJECT_VALUE
     )
     setSubmitError(null)
   }, [defaultProjectId, projects])
 
-  React.useEffect(() => {
-    if (open) {
-      resetForm()
-    }
-  }, [open, resetForm])
+  // Commented: instead of using useEffect with state, using useCallback to reset form
+  // React.useEffect(() => {
+  //   if (open) {
+  //     resetForm()
+  //   }
+  // }, [open, resetForm])
+
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      setOpen(nextOpen)
+
+      if (nextOpen) {
+        resetForm()
+      }
+    },
+    [resetForm]
+  )
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0] ?? null
@@ -135,7 +147,9 @@ export function MeetingUploadDialog({
         file,
         title: title.trim() || undefined,
         projectId:
-          selectedProjectId === EMPTY_PROJECT_VALUE ? undefined : selectedProjectId,
+          selectedProjectId === EMPTY_PROJECT_VALUE
+            ? undefined
+            : selectedProjectId,
       })
 
       setOpen(false)
@@ -150,7 +164,7 @@ export function MeetingUploadDialog({
   }
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -259,8 +273,16 @@ export function MeetingUploadDialog({
           >
             {t("actions.cancel", { ns: "common" })}
           </Button>
-          <Button disabled={isSubmitting} onClick={() => void handleSubmit()} type="button">
-            {isSubmitting ? <LoaderCircle className="animate-spin" /> : <Upload />}
+          <Button
+            disabled={isSubmitting}
+            onClick={() => void handleSubmit()}
+            type="button"
+          >
+            {isSubmitting ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <Upload />
+            )}
             {isSubmitting
               ? t("uploadDialog.submitting", { ns: "dashboard" })
               : t("uploadDialog.submit", { ns: "dashboard" })}
