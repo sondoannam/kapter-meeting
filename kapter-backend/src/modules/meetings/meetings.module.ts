@@ -5,6 +5,7 @@ import { BillingModule } from "../billing/billing.module";
 import { ClerkModule } from "../clerk/clerk.module";
 import { LlmModule } from "../llm/llm.module";
 import { NotionModule } from "../notion/notion.module";
+import { StorageModule } from "../storage/storage.module";
 import { VoiceProfilesModule } from "../voice-profiles/voice-profiles.module";
 import { MeetingArtifactExtractionService } from "./meeting-artifact-extraction.service";
 import { MeetingsController } from "./meetings.controller";
@@ -22,6 +23,7 @@ import { TranscriptPersistenceService } from "./transcript-persistence.service";
     ClerkModule,
     LlmModule,
     NotionModule,
+    StorageModule,
     VoiceProfilesModule,
   ],
   controllers: [MeetingsController],

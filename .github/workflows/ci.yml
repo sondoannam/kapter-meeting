@@ -40,3 +40,8 @@ jobs:
   ai-worker:
     uses: ./.github/workflows/ai-worker-ci.yml
     secrets: inherit
+
+  validation-report:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/validation-report-ci.yml
+    secrets: inherit

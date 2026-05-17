@@ -3,12 +3,23 @@ import { describe, it, mock } from "node:test";
 
 import { TranscriptPersistenceService } from "./transcript-persistence.service";
 
+type SpeakerProfileUpsertArgs = {
+  where: {
+    meetingId_aiLabel: {
+      aiLabel: string;
+    };
+  };
+  create: {
+    meetingId: string;
+  };
+};
+
 const createService = () => {
   const findUnique = mock.fn(async (_args: unknown) => ({
     status: "PROCESSING",
   }));
   const findMany = mock.fn(async (_args: unknown) => [] as unknown[]);
-  const upsert = mock.fn(async ({ where, create }: any) => ({
+  const upsert = mock.fn(async ({ where, create }: SpeakerProfileUpsertArgs) => ({
     id: `${where.meetingId_aiLabel.aiLabel}_id`,
     aiLabel: where.meetingId_aiLabel.aiLabel,
     meetingId: create.meetingId,

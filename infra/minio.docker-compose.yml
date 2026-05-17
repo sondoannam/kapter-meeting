@@ -1,0 +1,53 @@
+services:
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: kapter-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      # Required for correct presigned URLs behind Cloudflare tunnel
+      MINIO_SERVER_URL: https://kapter-minio.sondndev.id.vn
+      MINIO_BROWSER_REDIRECT_URL: https://kapter-minio-dashboard.sondndev.id.vn
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - sondn_net
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: kapter-minio-init
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - sondn_net
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://kapter-minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing myminio/$${MINIO_MEETING_BUCKET};
+      mc anonymous set download myminio/$${MINIO_MEETING_BUCKET};
+      echo 'Buckets created successfully!';
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_MEETING_BUCKET: ${MINIO_MEETING_BUCKET}
+
+volumes:
+  minio_data:
+
+networks:
+  sondn_net:
+    external: true

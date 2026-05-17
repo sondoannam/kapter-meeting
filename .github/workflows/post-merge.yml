@@ -40,3 +40,7 @@ jobs:
   ai-worker:
     uses: ./.github/workflows/ai-worker-ci.yml
     secrets: inherit
+
+  validation-report:
+    uses: ./.github/workflows/validation-report-ci.yml
+    secrets: inherit

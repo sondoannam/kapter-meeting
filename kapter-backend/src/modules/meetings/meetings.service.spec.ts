@@ -32,8 +32,15 @@ const createService = () => {
     getOwnedVoiceProfileSummary: mock.fn(),
     promoteMeetingSpeakerToVoiceProfile: mock.fn(),
   };
+  const meetingMediaStorage = {
+    deleteMeetingAudio: mock.fn(async () => true),
+  };
 
-  const service = new MeetingsService(prisma as never, voiceProfilesService as never);
+  const service = new MeetingsService(
+    prisma as never,
+    voiceProfilesService as never,
+    meetingMediaStorage as never,
+  );
 
   return {
     service,
@@ -49,6 +56,7 @@ const createService = () => {
       findUnique: projectFindUnique,
       create: projectCreate,
     },
+    meetingMediaStorage,
   };
 };
 
@@ -286,10 +294,11 @@ void describe("MeetingsService", () => {
   });
 
   void it("deletes an owned meeting and its persisted artifacts", async () => {
-    const { service, meeting } = createService();
+    const { service, meeting, meetingMediaStorage } = createService();
 
     meeting.findFirst.mock.mockImplementation(async () => ({
       id: "meeting_1",
+      audioUrl: "minio://kapter-meetings/meetings/meeting_1/source.mp3",
     }));
 
     await service.deleteMeeting("clerk_user_1", "meeting_1");
@@ -307,6 +316,7 @@ void describe("MeetingsService", () => {
       },
       select: {
         id: true,
+        audioUrl: true,
       },
     });
     assert.equal(meeting.delete.mock.callCount(), 1);
@@ -315,6 +325,7 @@ void describe("MeetingsService", () => {
         id: "meeting_1",
       },
     });
+    assert.equal(meetingMediaStorage.deleteMeetingAudio.mock.callCount(), 1);
   });
 
   void it("throws when deleting a meeting that does not belong to the current Clerk user", async () => {
@@ -772,6 +783,9 @@ void describe("MeetingsService", () => {
       {
         getOwnedVoiceProfileSummary: mock.fn(),
         promoteMeetingSpeakerToVoiceProfile: mock.fn(),
+      } as never,
+      {
+        deleteMeetingAudio: mock.fn(async () => true),
       } as never,
       undefined,
       {

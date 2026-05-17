@@ -51,6 +51,12 @@ jobs:
       - name: Typecheck extension
         run: pnpm --filter ./kapter-extension typecheck
 
+      - name: Test extension auth flow
+        run: pnpm --filter ./kapter-extension test
+
+      - name: Test extension packaging helper
+        run: pnpm --filter ./kapter-extension test:package
+
       - name: Build extension
         run: pnpm --filter ./kapter-extension build
 

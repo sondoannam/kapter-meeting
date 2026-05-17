@@ -4,7 +4,12 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      ".test-dist/**",
+      "node_modules/**",
+      "scripts/test-bootstrap.cjs",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

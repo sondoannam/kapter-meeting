@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
   CreateProjectInput,
   DashboardProjectDetail as ProjectDetail,
-  DashboardProjectMeetingSummary as ProjectMeetingSummary,
   DashboardProjectSummary as ProjectSummary,
   MeetingStatus,
   NotionProjectDestinationMode,
@@ -10,6 +9,7 @@ import type {
 } from "@kapter/contracts";
 
 import { PrismaService } from "src/database/prisma.service";
+import { MeetingMediaStorageService } from "../storage/meeting-media-storage.service";
 
 const normalizeOptionalText = (value?: string | null): string | null => {
   const trimmed = value?.trim();
@@ -125,7 +125,10 @@ const toProjectDetail = (project: {
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly meetingMediaStorage: MeetingMediaStorageService,
+  ) {}
 
   async listProjects(clerkUserId: string): Promise<ProjectSummary[]> {
     const projects = await this.prisma.project.findMany({
@@ -321,6 +324,15 @@ export class ProjectsService {
       );
     }
 
+    const linkedMeetings = await this.prisma.meeting.findMany({
+      where: {
+        projectId: project.id,
+      },
+      select: {
+        audioUrl: true,
+      },
+    });
+
     await this.prisma.$transaction(async (tx) => {
       await tx.meeting.deleteMany({
         where: {
@@ -334,5 +346,13 @@ export class ProjectsService {
         },
       });
     });
+
+    for (const meeting of linkedMeetings) {
+      if (!meeting.audioUrl) {
+        continue;
+      }
+
+      await this.meetingMediaStorage.deleteMeetingAudio(meeting.audioUrl);
+    }
   }
 }

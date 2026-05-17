@@ -1,0 +1,269 @@
+{
+  "run": {
+    "generatedAt": "2026-05-17T07:48:14.964Z",
+    "mode": "local",
+    "host": "win32"
+  },
+  "git": {
+    "branch": "sondoannam/feat/improve-wf",
+    "commitSha": "ed06c2f332995e233105e52ff772d554d364e763"
+  },
+  "workspace": {
+    "commands": [
+      {
+        "label": "build-contracts",
+        "kind": "report-only",
+        "status": "passed",
+        "exitCode": 0,
+        "durationMs": 1291,
+        "ciEnforced": true,
+        "cwd": ".",
+        "command": "pnpm --filter @kapter/contracts build",
+        "logPath": "reports/tests/logs/latest/workspace-build-contracts.log",
+        "excerpt": "\u001b[34mCLI\u001b[39m Target: es2022\n\u001b[34mCLI\u001b[39m Cleaning output folder\n\u001b[34mESM\u001b[39m Build start\n\u001b[34mCJS\u001b[39m Build start\n\u001b[32mESM\u001b[39m \u001b[1mdist\\audio-stream.js       \u001b[22m\u001b[32m209.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\domain.js             \u001b[22m\u001b[32m347.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\index.js              \u001b[22m\u001b[32m1010.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-4BDEWTX5.js     \u001b[22m\u001b[32m433.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-OKX32X5I.js     \u001b[22m\u001b[32m774.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\worker.js             \u001b[22m\u001b[32m64.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-X3LPAQI4.js     \u001b[22m\u001b[32m42.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\audio-stream.js.map   \u001b[22m\u001b[32m71.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\domain.js.map         \u001b[22m\u001b[32m71.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\index.js.map          \u001b[22m\u001b[32m1.88 KB\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-4BDEWTX5.js.map \u001b[22m\u001b[32m2.73 KB\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-OKX32X5I.js.map \u001b[22m\u001b[32m4.43 KB\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\worker.js.map         \u001b[22m\u001b[32m71.00 B\u001b[39m\n\u001b[32mESM\u001b[39m \u001b[1mdist\\chunk-X3LPAQI4.js.map \u001b[22m\u001b[32m71.00 B\u001b[39m\n\u001b[32mESM\u001b[39m ⚡️ Build success in 15ms\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\audio-stream.cjs     \u001b[22m\u001b[32m1.52 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\domain.cjs           \u001b[22m\u001b[32m1.98 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\index.cjs            \u001b[22m\u001b[32m3.13 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\worker.cjs           \u001b[22m\u001b[32m796.00 B\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\audio-stream.cjs.map \u001b[22m\u001b[32m2.78 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\domain.cjs.map       \u001b[22m\u001b[32m4.49 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\worker.cjs.map       \u001b[22m\u001b[32m2.65 KB\u001b[39m\n\u001b[32mCJS\u001b[39m \u001b[1mdist\\index.cjs.map        \u001b[22m\u001b[32m9.23 KB\u001b[39m\n\u001b[32mCJS\u001b[39m ⚡️ Build success in 15ms\n\u001b[34mDTS\u001b[39m Build start\n\u001b[32mDTS\u001b[39m ⚡️ Build success in 483ms\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\index.d.ts             \u001b[22m\u001b[32m13.15 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\audio-stream.d.ts      \u001b[22m\u001b[32m2.62 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\domain.d.ts            \u001b[22m\u001b[32m4.15 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\worker.d.ts            \u001b[22m\u001b[32m2.65 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\capture-DhV2RF2V.d.ts  \u001b[22m\u001b[32m514.00 B\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\index.d.cts            \u001b[22m\u001b[32m13.16 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\audio-stream.d.cts     \u001b[22m\u001b[32m2.62 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\domain.d.cts           \u001b[22m\u001b[32m4.15 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\worker.d.cts           \u001b[22m\u001b[32m2.65 KB\u001b[39m\n\u001b[32mDTS\u001b[39m \u001b[1mdist\\capture-DhV2RF2V.d.cts \u001b[22m\u001b[32m514.00 B\u001b[39m"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "id": "backend",
+      "name": "kapter-backend",
+      "validationPosture": "lint + typecheck + build + automated specs",
+      "ciNotes": "Backend CI enforces lint, typecheck, build, and test.",
+      "inventory": {
+        "testFileCount": 26,
+        "testCaseCount": 105,
+        "runnerType": "node-test-compiled",
+        "notes": "Compiled Node test runner via kapter-backend/scripts/run-tests.mjs."
+      },
+      "summary": {
+        "automatedTestPresence": true,
+        "gapFlags": [],
+        "status": "passed"
+      },
+      "commands": [
+        {
+          "label": "lint",
+          "kind": "lint",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 4743,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-backend lint",
+          "logPath": "reports/tests/logs/latest/backend-lint.log",
+          "excerpt": "> kapter-backend@0.1.0 lint C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-backend\n> eslint ."
+        },
+        {
+          "label": "typecheck",
+          "kind": "typecheck",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2423,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-backend typecheck",
+          "logPath": "reports/tests/logs/latest/backend-typecheck.log",
+          "excerpt": "> kapter-backend@0.1.0 typecheck C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-backend\n> tsc --noEmit"
+        },
+        {
+          "label": "build",
+          "kind": "build",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 4006,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-backend build",
+          "logPath": "reports/tests/logs/latest/backend-build.log",
+          "excerpt": "> kapter-backend@0.1.0 build C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-backend\n> nest build"
+        },
+        {
+          "label": "test",
+          "kind": "test",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 17246,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-backend test",
+          "logPath": "reports/tests/logs/latest/backend-test.log",
+          "excerpt": "  ✔ returns immediately after scheduling retry extraction in the background (0.2283ms)\n✔ MeetingsService (5.2805ms)\n▶ TranscriptPersistenceService\n  ✔ upserts speakers, writes absolute transcript timestamps, and completes the owning batch (1.6968ms)\n  ✔ returns early for an already completed batch without duplicating transcript state (0.1849ms)\n  ✔ suppresses overlapping tab_mix duplicates when self_mic is authoritative (0.3811ms)\n  ✔ keeps ambiguous cross-source overlaps without suppressing either side (0.2614ms)\n✔ TranscriptPersistenceService (3.1043ms)\n▶ NotionService\n  ✔ inserts unsynced approved action items into an existing project Notion database (3.7567ms)\n  ✔ adds the sync-key property to an existing data source before creating the Notion page (1.236ms)\n  ✔ rejects sync before meeting artifacts are approved (0.5273ms)\n  ✔ reconciles an already-created Notion page before creating a duplicate (0.5347ms)\n✔ NotionService (6.5782ms)\n▶ ProjectsController\n  ✔ returns project summaries for the current Clerk user (0.9045ms)\n  ✔ creates a project for the current Clerk user (0.1988ms)\n  ✔ returns project detail for the requested project (0.1737ms)\n  ✔ updates a project for the current Clerk user (0.1455ms)\n  ✔ deletes a project for the current Clerk user (0.1354ms)\n✔ ProjectsController (2.1066ms)\n▶ ProjectsService\n  ✔ lists dashboard project summaries for the current Clerk user (1.1259ms)\n  ✔ creates a project with optional context seed data (0.2914ms)\n  ✔ returns project detail for the current Clerk user (0.198ms)\n  ✔ updates a project owned by the current Clerk user (0.2171ms)\n  ✔ updates project context fields while preserving omitted values (0.1815ms)\n  ✔ deletes a project and all linked meetings owned by the current Clerk user (0.2616ms)\n  ✔ throws when the requested project does not belong to the current Clerk user (0.3786ms)\n✔ ProjectsService (3.2864ms)\nℹ tests 105\nℹ suites 28\nℹ pass 101\nℹ fail 0\nℹ cancelled 0\nℹ skipped 4\nℹ todo 0\nℹ duration_ms 13069.807\n(node:41564) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.\n(Use `node --trace-deprecation ...` to show where the warning was created)"
+        }
+      ]
+    },
+    {
+      "id": "webapp",
+      "name": "kapter-webapp",
+      "validationPosture": "lint + typecheck + build + manual feature validation",
+      "ciNotes": "Webapp CI enforces lint, typecheck, and build only.",
+      "inventory": {
+        "testFileCount": 0,
+        "testCaseCount": 0,
+        "runnerType": "none",
+        "notes": "No automated frontend tests are configured; validation relies on lint, typecheck, build, and manual feature checks."
+      },
+      "summary": {
+        "automatedTestPresence": false,
+        "gapFlags": [
+          "no automated tests",
+          "manual-only"
+        ],
+        "status": "passed"
+      },
+      "commands": [
+        {
+          "label": "lint",
+          "kind": "lint",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 6019,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-webapp lint",
+          "logPath": "reports/tests/logs/latest/webapp-lint.log",
+          "excerpt": "> webapp@0.0.1 lint C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-webapp\n> eslint .\nC:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-webapp\\src\\components\\ui\\button.tsx\n  65:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components\nC:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-webapp\\src\\components\\ui\\sidebar.tsx\n  704:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components\n✖ 2 problems (0 errors, 2 warnings)"
+        },
+        {
+          "label": "typecheck",
+          "kind": "typecheck",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 300,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-webapp typecheck",
+          "logPath": "reports/tests/logs/latest/webapp-typecheck.log",
+          "excerpt": "> webapp@0.0.1 typecheck C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-webapp\n> tsc --noEmit"
+        },
+        {
+          "label": "build",
+          "kind": "build",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 8142,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-webapp build",
+          "logPath": "reports/tests/logs/latest/webapp-build.log",
+          "excerpt": "> webapp@0.0.1 build C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-webapp\n> tsc -b && vite build\n\u001b[36mvite v7.3.2 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 3142 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                                                  \u001b[39m\u001b[1m\u001b[2m    0.76 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:   0.44 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-vietnamese-wght-normal-o378VNJM.woff2    \u001b[39m\u001b[1m\u001b[2m    9.98 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/figtree-latin-ext-wght-normal-DCwSJGxG.woff2         \u001b[39m\u001b[1m\u001b[2m   10.28 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-greek-wght-normal-CGMhFIa2.woff2         \u001b[39m\u001b[1m\u001b[2m   14.86 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/figtree-latin-wght-normal-D_ZTVpCC.woff2             \u001b[39m\u001b[1m\u001b[2m   20.16 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-latin-ext-wght-normal-DFXT9gkm.woff2     \u001b[39m\u001b[1m\u001b[2m   21.19 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-cyrillic-wght-normal-BzUUW08o.woff2      \u001b[39m\u001b[1m\u001b[2m   21.42 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-cyrillic-ext-wght-normal-BH54svm2.woff2  \u001b[39m\u001b[1m\u001b[2m   32.34 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[32massets/roboto-slab-latin-wght-normal-NGSZfXMW.woff2         \u001b[39m\u001b[1m\u001b[2m   34.24 kB\u001b[22m\u001b[1m\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-DES7M-kL.css                                   \u001b[39m\u001b[1m\u001b[2m  185.06 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  29.30 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-Cv1Elvbe.js                                    \u001b[39m\u001b[1m\u001b[33m1,178.81 kB\u001b[39m\u001b[22m\u001b[2m │ gzip: 344.46 kB\u001b[22m\n\u001b[32m✓ built in 4.35s\u001b[39m\n\u001b[33m\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001b[39m"
+        }
+      ]
+    },
+    {
+      "id": "extension",
+      "name": "kapter-extension",
+      "validationPosture": "lint + typecheck + build + auth spec + packaging test",
+      "ciNotes": "Extension CI enforces lint, typecheck, build, auth test, and packaging test.",
+      "inventory": {
+        "testFileCount": 2,
+        "testCaseCount": 3,
+        "runnerType": "node-test-direct",
+        "notes": "Direct Node test runner for the auth spec plus packaging verification."
+      },
+      "summary": {
+        "automatedTestPresence": true,
+        "gapFlags": [],
+        "status": "passed"
+      },
+      "commands": [
+        {
+          "label": "lint",
+          "kind": "lint",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2110,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-extension lint",
+          "logPath": "reports/tests/logs/latest/extension-lint.log",
+          "excerpt": "> extension@0.0.0 lint C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-extension\n> eslint ."
+        },
+        {
+          "label": "typecheck",
+          "kind": "typecheck",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1283,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-extension typecheck",
+          "logPath": "reports/tests/logs/latest/extension-typecheck.log",
+          "excerpt": "> extension@0.0.0 typecheck C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-extension\n> tsc -b --pretty false"
+        },
+        {
+          "label": "build",
+          "kind": "build",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 3956,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-extension build",
+          "logPath": "reports/tests/logs/latest/extension-build.log",
+          "excerpt": "Building \u001b[96msrc/background/index.js\u001b[0m (2/5)\n\u001b[36mvite v8.0.9 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\n\u001b[2K\rtransforming...✓ 12 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/src/background/index.js  29.00 kB │ gzip: 8.77 kB\n\u001b[32m✓ built in 53ms\u001b[39m\nBuilding \u001b[96msrc/content/index.js\u001b[0m (3/5)\n\u001b[36mvite v8.0.9 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\n\u001b[2K\rtransforming...✓ 19 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/src/content/index.js  208.82 kB │ gzip: 66.49 kB\n\u001b[32m✓ built in 109ms\u001b[39m\nBuilding \u001b[96msrc/background/index.ts\u001b[0m (4/5)\n\u001b[36mvite v8.0.9 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\n\u001b[2K\rtransforming...✓ 12 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/src/background/index.js  29.00 kB │ gzip: 8.77 kB\n\u001b[32m✓ built in 52ms\u001b[39m\nBuilding \u001b[96msrc/content/index.tsx\u001b[0m (5/5)\n\u001b[36mvite v8.0.9 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\n\u001b[2K\rtransforming...✓ 19 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/src/content/index.js  208.82 kB │ gzip: 66.49 kB\n\u001b[32m✓ built in 106ms\u001b[39m\n\u001b[92m✓\u001b[0m All steps completed.\n\u001b[2K\rtransforming...✓ 2 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/manifest.json  0.90 kB │ gzip: 0.49 kB\n\u001b[32m✓ built in 943ms\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m\n\u001b[33mThe plugin \"vite-tsconfig-paths\" is detected. Vite now supports tsconfig paths resolution natively via the \u001b[1mresolve.tsconfigPaths\u001b[22m option. You can remove the plugin and set \u001b[1mresolve.tsconfigPaths: true\u001b[22m in your Vite config instead.\u001b[39m"
+        },
+        {
+          "label": "test",
+          "kind": "test",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 298,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-extension test",
+          "logPath": "reports/tests/logs/latest/extension-test.log",
+          "excerpt": "> extension@0.0.0 test C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-extension\n> node --test --test-isolation=none ./src/background/backend-auth.spec.ts\n▶ syncBackendSession\n  ✔ calls the backend auth endpoint and returns the synced local user (11.9242ms)\n  ✔ throws when the backend does not return a synced local user (0.4945ms)\n✔ syncBackendSession (12.9081ms)\nℹ tests 2\nℹ suites 1\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 43.4919"
+        },
+        {
+          "label": "test-package",
+          "kind": "test",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 290,
+          "ciEnforced": true,
+          "cwd": ".",
+          "command": "pnpm --filter ./kapter-extension test:package",
+          "logPath": "reports/tests/logs/latest/extension-test-package.log",
+          "excerpt": "> extension@0.0.0 test:package C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-extension\n> node --test --test-isolation=none ./scripts/package-extension.test.mjs\n✔ createExtensionArchive packages dist under a dist/ directory (13.6093ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 34.3127"
+        }
+      ]
+    },
+    {
+      "id": "ai-worker",
+      "name": "kapter-ai-worker",
+      "validationPosture": "automated pytest regressions and endpoint tests",
+      "ciNotes": "AI worker CI enforces the maintained pytest suite.",
+      "inventory": {
+        "testFileCount": 6,
+        "testCaseCount": 37,
+        "runnerType": "pytest-wrapper",
+        "notes": "Pytest regression and endpoint tests via kapter-ai-worker/scripts/run_tests.py."
+      },
+      "summary": {
+        "automatedTestPresence": true,
+        "gapFlags": [],
+        "status": "passed"
+      },
+      "commands": [
+        {
+          "label": "test",
+          "kind": "test",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 7184,
+          "ciEnforced": true,
+          "cwd": "kapter-ai-worker",
+          "command": "C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-ai-worker\\.venv\\Scripts\\python.exe scripts/run_tests.py",
+          "logPath": "reports/tests/logs/latest/ai-worker-test.log",
+          "excerpt": ".....................................                                    [100%]\n============================== warnings summary ===============================\ntests/test_audio_batch_processor.py: 9 warnings\ntests/test_process_audio_endpoint.py: 6 warnings\n  C:\\Users\\sondo\\my_projects\\A20-App-015\\kapter-ai-worker\\.venv\\Lib\\site-packages\\torch\\jit\\_serialization.py:176: DeprecationWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.\n    warnings.warn(\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n37 passed, 15 warnings in 5.45s"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "status": "passed",
+    "moduleCount": 4,
+    "failedCommands": 0
+  }
+}
