@@ -57,6 +57,11 @@ const config = {
 const encodeChunk = (value: string) =>
   Buffer.from(value, "utf8").toString("base64");
 
+const compareAudioBatchSourceType = (
+  left: { sourceType: string | null },
+  right: { sourceType: string | null },
+) => String(left.sourceType).localeCompare(String(right.sourceType));
+
 let prisma: PrismaClient | undefined;
 let integrationSetupError: Error | undefined;
 
@@ -562,31 +567,29 @@ void describe("AudioStreamService integration", () => {
     });
 
     assert.equal(meeting.audioBatches.length, 2);
-    assert.deepEqual(
-      meeting.audioBatches
-        .map((batch) => ({
-          sourceType: batch.sourceType,
-          sequenceStart: batch.sequenceStart,
-          sequenceEnd: batch.sequenceEnd,
-          status: batch.status,
-        }))
-        .sort((left, right) =>
-          String(left.sourceType).localeCompare(String(right.sourceType)),
-        ),
-      [
-        {
-          sourceType: "TAB_MIX",
-          sequenceStart: 1,
-          sequenceEnd: 5,
-          status: "COMPLETED",
-        },
-        {
-          sourceType: "SELF_MIC",
-          sequenceStart: 1,
-          sequenceEnd: 5,
-          status: "COMPLETED",
-        },
-      ],
-    );
+    const persistedBatches = meeting.audioBatches
+      .map((batch) => ({
+        sourceType: batch.sourceType,
+        sequenceStart: batch.sequenceStart,
+        sequenceEnd: batch.sequenceEnd,
+        status: batch.status,
+      }))
+      .sort(compareAudioBatchSourceType);
+    const expectedBatches = [
+      {
+        sourceType: "TAB_MIX",
+        sequenceStart: 1,
+        sequenceEnd: 5,
+        status: "COMPLETED",
+      },
+      {
+        sourceType: "SELF_MIC",
+        sequenceStart: 1,
+        sequenceEnd: 5,
+        status: "COMPLETED",
+      },
+    ].sort(compareAudioBatchSourceType);
+
+    assert.deepEqual(persistedBatches, expectedBatches);
   });
 });
