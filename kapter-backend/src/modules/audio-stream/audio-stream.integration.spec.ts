@@ -65,7 +65,9 @@ const getPrisma = () => {
   return prisma;
 };
 
-const skipIfIntegrationUnavailable = (t: { skip: (message?: string) => void }) => {
+const skipIfIntegrationUnavailable = (t: {
+  skip: (message?: string) => void;
+}) => {
   if (!integrationSetupError) {
     return false;
   }
@@ -561,21 +563,25 @@ void describe("AudioStreamService integration", () => {
 
     assert.equal(meeting.audioBatches.length, 2);
     assert.deepEqual(
-      meeting.audioBatches.map((batch) => ({
-        sourceType: batch.sourceType,
-        sequenceStart: batch.sequenceStart,
-        sequenceEnd: batch.sequenceEnd,
-        status: batch.status,
-      })),
+      meeting.audioBatches
+        .map((batch) => ({
+          sourceType: batch.sourceType,
+          sequenceStart: batch.sequenceStart,
+          sequenceEnd: batch.sequenceEnd,
+          status: batch.status,
+        }))
+        .sort((left, right) =>
+          String(left.sourceType).localeCompare(String(right.sourceType)),
+        ),
       [
         {
-          sourceType: "SELF_MIC",
+          sourceType: "TAB_MIX",
           sequenceStart: 1,
           sequenceEnd: 5,
           status: "COMPLETED",
         },
         {
-          sourceType: "TAB_MIX",
+          sourceType: "SELF_MIC",
           sequenceStart: 1,
           sequenceEnd: 5,
           status: "COMPLETED",

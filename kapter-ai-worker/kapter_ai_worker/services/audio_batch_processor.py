@@ -24,8 +24,8 @@ from kapter_ai_worker.core.entities import (
     SpeakerEvidence,
     SpeakerSpan,
 )
+from kapter_ai_worker.core.base_vad import BaseVoiceActivityDetector
 from kapter_ai_worker.logging.logger import get_logger
-from kapter_ai_worker.models.silero_vad import SileroVAD
 from kapter_ai_worker.pipeline.streaming_pipeline import StreamingInferencePipeline
 from kapter_ai_worker.services.voice_profile_cache import VoiceProfileCache
 from kapter_ai_worker.utils.audio import (
@@ -255,12 +255,24 @@ class AudioBatchProcessor:
         self._voice_profile_cache = voice_profile_cache
         self._overlap_duration = settings.real_model_overlap_duration_seconds
         self._target_chunk_duration = settings.real_model_chunk_duration_seconds
-        self._health_vad = SileroVAD(threshold=settings.silero_vad_threshold)
+        self._health_vad = self._build_health_vad()
 
         self._buffers_by_meeting: OrderedDict[str, np.ndarray] = OrderedDict()
         self._buffer_starts_by_meeting: dict[str, float] = {}
         self._sample_rates_by_meeting: dict[str, int] = {}
         self._registry_by_meeting: OrderedDict[str, SpeakerRegistry] = OrderedDict()
+
+    def _build_health_vad(self) -> BaseVoiceActivityDetector:
+        if self._settings.use_real_models:
+            from kapter_ai_worker.models.silero_vad import SileroVAD
+
+            return SileroVAD(threshold=self._settings.silero_vad_threshold)
+
+        from kapter_ai_worker.models.mock_vad import MockVoiceActivityDetector
+
+        return MockVoiceActivityDetector(
+            energy_threshold=self._settings.vad_energy_threshold,
+        )
 
     def process_request(
         self,

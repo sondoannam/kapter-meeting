@@ -4,7 +4,6 @@ from collections import defaultdict
 import re
 
 import torch
-from pyannote.audio import Pipeline
 
 from kapter_ai_worker.core.base_diarizer import BaseDiarizer
 from kapter_ai_worker.core.entities import AudioChunk, SpeakerSpan
@@ -32,6 +31,8 @@ class PyannoteDiarizer(BaseDiarizer):
         min_cluster_size: int = 1,
         embedding_model: SpeakerEmbedding | None = None,
     ) -> None:
+        from pyannote.audio import Pipeline
+
         self._embedding_model = embedding_model
         _logger.info(f"Loading pyannote pipeline '{model_name}' (device={device})...")
         self._pipeline = Pipeline.from_pretrained(
