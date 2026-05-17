@@ -11,6 +11,11 @@ const MEET_MIC_CONTROL_SELECTOR = [
   'div[role="button"][data-tooltip]',
   'div[role="button"][title]',
 ].join(", ");
+const MEET_MIC_STATE_SELECTOR = [
+  "[data-mute-button][data-is-muted]",
+  'button[data-is-muted]',
+  'div[role="button"][data-is-muted]',
+].join(", ");
 
 function normalizeMeetControlLabel(value: string): string {
   return value
@@ -39,7 +44,14 @@ function getMeetControlLabels(element: Element): string[] {
 }
 
 function isMeetMicControlLabel(label: string): boolean {
-  return /\bmicro(phone)?\b|\bmic\b/.test(label);
+  if (/\bmicro(phone)?\b|\bmic\b/.test(label)) {
+    return true;
+  }
+
+  return (
+    /\b(mute|unmute)\b/.test(label) &&
+    /(ctrl\s*\+\s*d|cmd\s*\+\s*d|command\s*\+\s*d|⌘\s*\+\s*d)/.test(label)
+  );
 }
 
 function resolveMeetLocalMicStateFromLabel(label: string): MeetLocalMicState {
@@ -47,6 +59,8 @@ function resolveMeetLocalMicStateFromLabel(label: string): MeetLocalMicState {
     "turn on microphone",
     "turn on mic",
     "unmute",
+    "microphone off",
+    "mic off",
     "bat mic",
     "bat micro",
     "join with audio",
@@ -55,6 +69,8 @@ function resolveMeetLocalMicStateFromLabel(label: string): MeetLocalMicState {
     "turn off microphone",
     "turn off mic",
     "mute",
+    "microphone on",
+    "mic on",
     "tat mic",
     "tat micro",
   ];
@@ -70,6 +86,20 @@ function resolveMeetLocalMicStateFromLabel(label: string): MeetLocalMicState {
   return "unknown";
 }
 
+function resolveMeetLocalMicStateFromAttributeValue(
+  value: string | null,
+): MeetLocalMicState {
+  if (value === "true") {
+    return "muted";
+  }
+
+  if (value === "false") {
+    return "unmuted";
+  }
+
+  return "unknown";
+}
+
 export function isMeetLocalMicExplicitlyUnmuted(
   state?: MeetLocalMicState,
 ): boolean {
@@ -79,6 +109,23 @@ export function isMeetLocalMicExplicitlyUnmuted(
 export function readMeetLocalMicSnapshot(
   doc: Document = document,
 ): MeetLocalMicSnapshot {
+  const explicitStateControl = doc.querySelector(MEET_MIC_STATE_SELECTOR);
+
+  if (explicitStateControl) {
+    const explicitState = resolveMeetLocalMicStateFromAttributeValue(
+      explicitStateControl.getAttribute("data-is-muted"),
+    );
+
+    if (explicitState !== "unknown") {
+      const labels = getMeetControlLabels(explicitStateControl);
+
+      return {
+        state: explicitState,
+        controlLabel: labels[0],
+      };
+    }
+  }
+
   const micControls = Array.from(doc.querySelectorAll(MEET_MIC_CONTROL_SELECTOR));
   let fallbackSnapshot: MeetLocalMicSnapshot | null = null;
 

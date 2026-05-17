@@ -219,6 +219,35 @@ async function getCaptureStatus(): Promise<CaptureStatus> {
   return (await getStorage("captureStatus")) ?? DEFAULT_CAPTURE_STATUS;
 }
 
+async function refreshMeetLocalMicStatusFromActiveTab(): Promise<CaptureStatus> {
+  const currentCaptureStatus = await getCaptureStatus();
+  const [activeTab] = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  if (
+    typeof activeTab?.id !== "number" ||
+    !isGoogleMeetUrl(activeTab.url ?? "")
+  ) {
+    return currentCaptureStatus;
+  }
+
+  const snapshot = await queryCurrentMeetLocalMicSnapshot(
+    activeTab.id,
+    currentCaptureStatus,
+  );
+  const nextCaptureStatus: CaptureStatus = {
+    ...currentCaptureStatus,
+    meetLocalMicState: snapshot.state,
+    meetLocalMicControlLabel: snapshot.controlLabel,
+    meetLocalMicUpdatedAt: Date.now(),
+  };
+
+  await setStorage("captureStatus", nextCaptureStatus);
+  return nextCaptureStatus;
+}
+
 async function getRecorderMicPermissionGranted(): Promise<boolean> {
   return (await getStorage("recorderMicPermissionGranted")) ?? false;
 }
@@ -288,6 +317,22 @@ async function updateStatus(patch: Partial<CaptureStatus>): Promise<void> {
 
 function isMeetLocalMicState(value: unknown): value is MeetLocalMicState {
   return value === "muted" || value === "unmuted" || value === "unknown";
+}
+
+function isMissingContentScriptError(error: unknown): boolean {
+  const message =
+    error instanceof Error ? error.message : typeof error === "string" ? error : "";
+
+  return /receiving end does not exist|could not establish connection/i.test(
+    message,
+  );
+}
+
+async function ensureMeetContentScriptInjected(tabId: number): Promise<void> {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ["src/content/index.js"],
+  });
 }
 
 async function getSelectedProjectId(): Promise<string | null> {
@@ -404,8 +449,27 @@ async function queryCurrentMeetLocalMicSnapshot(
             : undefined,
       };
     }
-  } catch {
-    // Fall back to the last known safe state when the content script is unavailable.
+  } catch (error) {
+    if (isMissingContentScriptError(error)) {
+      try {
+        await ensureMeetContentScriptInjected(tabId);
+        const retryResponse = (await browser.tabs.sendMessage(tabId, {
+          type: "GET_MEET_LOCAL_MIC_STATE",
+        })) as MessageResponse<"GET_MEET_LOCAL_MIC_STATE">;
+
+        if (retryResponse.success && isMeetLocalMicState(retryResponse.data.state)) {
+          return {
+            state: retryResponse.data.state,
+            controlLabel:
+              typeof retryResponse.data.controlLabel === "string"
+                ? retryResponse.data.controlLabel
+                : undefined,
+          };
+        }
+      } catch {
+        // Fall through to safe fallback below.
+      }
+    }
   }
 
   if (fallbackStatus.meetLocalMicState === "muted") {
@@ -860,7 +924,10 @@ onMessage(async (message, sender) => {
     }
 
     case "GET_CAPTURE_STATUS": {
-      return { success: true, data: await getCaptureStatus() };
+      return {
+        success: true,
+        data: await refreshMeetLocalMicStatusFromActiveTab(),
+      };
     }
 
     case "MIC_PERMISSION_RESULT": {
