@@ -32,6 +32,19 @@ type ExistingTranscriptSegment = {
   sourceType: "TAB_MIX" | "SELF_MIC" | null;
 };
 
+type SanitizedSpeakerEvidenceSample = {
+  speakerId: string;
+  embedding: number[];
+  startTime: number;
+  endTime: number;
+  durationSeconds: number;
+  sourceType: "TAB_MIX" | "SELF_MIC" | undefined;
+  rmsDb: number | null;
+  speechRatio: number | null;
+  qualityScore: number | null;
+  sampleRate: number | null;
+};
+
 const DUPLICATE_OVERLAP_RATIO_THRESHOLD = 0.6;
 const DUPLICATE_TEXT_OVERLAP_THRESHOLD = 0.8;
 
@@ -83,6 +96,29 @@ const calculateTokenOverlapRatio = (left: string, right: string): number => {
 
   return intersectionCount / Math.max(leftTokens.length, rightTokens.length);
 };
+
+const toFiniteNumberOrNull = (
+  value: number | null | undefined,
+): number | null => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return value;
+};
+
+const toFinitePositiveIntegerOrNull = (
+  value: number | null | undefined,
+): number | null => {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return Math.round(value);
+};
+
+const sanitizeEmbeddingVector = (embedding: number[]): number[] =>
+  embedding.filter((value) => Number.isFinite(value));
 
 const areStrongDuplicateCandidates = (
   left: { content: string; startTime: number; endTime: number },
@@ -227,36 +263,61 @@ export class TranscriptPersistenceService {
           [
             ...response.segments.map((segment) => segment.voiceProfileId),
             ...speakerEvidence.map((evidence) => evidence.voiceProfileId),
-          ].filter((voiceProfileId): voiceProfileId is string => !!voiceProfileId),
+          ].filter(
+            (voiceProfileId): voiceProfileId is string => !!voiceProfileId,
+          ),
         ),
       ];
-      const voiceProfileNameById =
+      const knownVoiceProfiles =
         voiceProfileIds.length > 0
-          ? new Map(
-              (
-                await tx.voiceProfile.findMany({
-                  where: {
-                    id: {
-                      in: voiceProfileIds,
-                    },
-                  },
-                  select: {
-                    id: true,
-                    displayName: true,
-                  },
-                })
-              ).map((voiceProfile) => [voiceProfile.id, voiceProfile.displayName]),
-            )
-          : new Map<string, string>();
+          ? await tx.voiceProfile.findMany({
+              where: {
+                id: {
+                  in: voiceProfileIds,
+                },
+              },
+              select: {
+                id: true,
+                displayName: true,
+              },
+            })
+          : [];
+      const voiceProfileNameById = new Map(
+        knownVoiceProfiles.map((voiceProfile) => [
+          voiceProfile.id,
+          voiceProfile.displayName,
+        ]),
+      );
+      const knownVoiceProfileIds = new Set(voiceProfileNameById.keys());
+      const droppedVoiceProfileIds = voiceProfileIds.filter(
+        (voiceProfileId) => !knownVoiceProfileIds.has(voiceProfileId),
+      );
+
+      if (droppedVoiceProfileIds.length > 0) {
+        this.logger.warn(
+          "Dropping unknown worker voice profile references during transcript persistence",
+          {
+            meetingId: request.backendMeetingId,
+            batchId,
+            droppedVoiceProfileIds,
+          },
+        );
+      }
 
       for (const segment of response.segments) {
-        if (segment.voiceProfileId) {
+        if (
+          segment.voiceProfileId &&
+          knownVoiceProfileIds.has(segment.voiceProfileId)
+        ) {
           voiceProfileIdByLabel.set(segment.aiLabel, segment.voiceProfileId);
         }
       }
 
       for (const evidence of speakerEvidence) {
-        if (evidence.voiceProfileId) {
+        if (
+          evidence.voiceProfileId &&
+          knownVoiceProfileIds.has(evidence.voiceProfileId)
+        ) {
           voiceProfileIdByLabel.set(evidence.aiLabel, evidence.voiceProfileId);
         }
       }
@@ -408,33 +469,72 @@ export class TranscriptPersistenceService {
       }
 
       if (speakerEvidence.length > 0) {
+        const sanitizedSamples = speakerEvidence
+          .map((evidence): SanitizedSpeakerEvidenceSample | null => {
+            const speakerId = speakerIdByLabel.get(evidence.aiLabel);
+
+            if (!speakerId) {
+              return null;
+            }
+
+            const embedding = sanitizeEmbeddingVector(evidence.embedding);
+
+            if (embedding.length === 0) {
+              this.logger.warn(
+                "Skipping speaker evidence sample with non-finite embedding values",
+                {
+                  meetingId: request.backendMeetingId,
+                  batchId,
+                  aiLabel: evidence.aiLabel,
+                },
+              );
+              return null;
+            }
+
+            return {
+              speakerId,
+              embedding,
+              startTime: response.streamOffsetMs / 1000 + evidence.startTime,
+              endTime: response.streamOffsetMs / 1000 + evidence.endTime,
+              durationSeconds: evidence.durationSeconds,
+              sourceType: toPrismaAudioSourceType(
+                evidence.sourceType ??
+                  response.sourceType ??
+                  request.sourceType,
+              ),
+              rmsDb: toFiniteNumberOrNull(evidence.rmsDb),
+              speechRatio: toFiniteNumberOrNull(evidence.speechRatio),
+              qualityScore: toFiniteNumberOrNull(evidence.qualityScore),
+              sampleRate: toFinitePositiveIntegerOrNull(evidence.sampleRate),
+            };
+          })
+          .filter(
+            (sample): sample is SanitizedSpeakerEvidenceSample =>
+              sample !== null,
+          );
+
+        if (sanitizedSamples.length !== speakerEvidence.length) {
+          this.logger.warn("Skipped malformed speaker evidence samples", {
+            meetingId: request.backendMeetingId,
+            batchId,
+            receivedCount: speakerEvidence.length,
+            persistedCount: sanitizedSamples.length,
+          });
+        }
+
         await tx.meetingSpeakerSample.createMany({
-          data: speakerEvidence
-            .map((evidence) => {
-              const speakerId = speakerIdByLabel.get(evidence.aiLabel);
-
-              if (!speakerId) {
-                return null;
-              }
-
-              return {
-                speakerProfileId: speakerId,
-                embedding: evidence.embedding,
-                startTime: response.streamOffsetMs / 1000 + evidence.startTime,
-                endTime: response.streamOffsetMs / 1000 + evidence.endTime,
-                durationSeconds: evidence.durationSeconds,
-                sourceType: toPrismaAudioSourceType(
-                  evidence.sourceType ??
-                    response.sourceType ??
-                    request.sourceType,
-                ),
-                rmsDb: evidence.rmsDb ?? null,
-                speechRatio: evidence.speechRatio ?? null,
-                qualityScore: evidence.qualityScore ?? null,
-                sampleRate: evidence.sampleRate ?? null,
-              };
-            })
-            .filter((sample): sample is NonNullable<typeof sample> => sample !== null),
+          data: sanitizedSamples.map((sample) => ({
+            speakerProfileId: sample.speakerId,
+            embedding: sample.embedding,
+            startTime: sample.startTime,
+            endTime: sample.endTime,
+            durationSeconds: sample.durationSeconds,
+            sourceType: sample.sourceType,
+            rmsDb: sample.rmsDb,
+            speechRatio: sample.speechRatio,
+            qualityScore: sample.qualityScore,
+            sampleRate: sample.sampleRate,
+          })),
         });
       }
 
