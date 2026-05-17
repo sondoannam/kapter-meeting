@@ -42,6 +42,32 @@ type UploadedMeetingAudioFile = {
   size: number;
 };
 
+const serializeError = (error: unknown): Record<string, unknown> => {
+  if (error instanceof Error) {
+    const errorWithExtras = error as Error & {
+      code?: unknown;
+      meta?: unknown;
+      cause?: unknown;
+    };
+
+    return {
+      error: error.message,
+      name: error.name,
+      stack: error.stack,
+      code: errorWithExtras.code,
+      meta: errorWithExtras.meta,
+      cause:
+        errorWithExtras.cause instanceof Error
+          ? errorWithExtras.cause.message
+          : errorWithExtras.cause,
+    };
+  }
+
+  return {
+    error: String(error),
+  };
+};
+
 const ACCEPTED_MP3_MIME_TYPES = new Set(["audio/mpeg", "audio/mp3"]);
 const PLACEHOLDER_AUDIO_BASE64 = Buffer.from(
   "uploaded-file-batch",
@@ -218,9 +244,21 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         meetingId: options.meetingId,
         streamId: options.streamId,
         batchCount: workerResponse.batches.length,
+        sourceType: workerResponse.sourceType ?? "tab_mix",
       });
 
       for (const batch of workerResponse.batches) {
+        this.logger.info("Meeting upload batch persistence started", {
+          meetingId: options.meetingId,
+          streamId: options.streamId,
+          sequenceStart: batch.sequenceStart,
+          sequenceEnd: batch.sequenceEnd,
+          streamOffsetMs: batch.streamOffsetMs,
+          durationMs: batch.durationMs,
+          segmentCount: batch.segments.length,
+          speakerEvidenceCount: batch.speakerEvidence?.length ?? 0,
+        });
+
         const batchRecord = await this.prisma.meetingAudioBatch.create({
           data: {
             meetingId: options.meetingId,
@@ -267,6 +305,13 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
             request,
             response,
           } satisfies ProcessedAudioBatch);
+          this.logger.info("Meeting upload batch persistence completed", {
+            meetingId: options.meetingId,
+            streamId: options.streamId,
+            batchId: batchRecord.id,
+            sequenceStart: batch.sequenceStart,
+            sequenceEnd: batch.sequenceEnd,
+          });
         } catch (error) {
           await this.prisma.meetingAudioBatch.update({
             where: {
@@ -276,6 +321,16 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
               status: "FAILED",
               error: error instanceof Error ? error.message : String(error),
             },
+          });
+          this.logger.error("Meeting upload batch persistence failed", {
+            meetingId: options.meetingId,
+            streamId: options.streamId,
+            batchId: batchRecord.id,
+            sequenceStart: batch.sequenceStart,
+            sequenceEnd: batch.sequenceEnd,
+            segmentCount: batch.segments.length,
+            speakerEvidenceCount: batch.speakerEvidence?.length ?? 0,
+            ...serializeError(error),
           });
           throw error;
         }
@@ -290,8 +345,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
       ).catch((error: unknown) => {
         this.logger.error("Meeting artifact extraction failed after upload.", {
           meetingId: options.meetingId,
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
+          ...serializeError(error),
         });
       });
     } catch (error) {
@@ -299,8 +353,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
       this.logger.error("Meeting upload worker failed", {
         meetingId: options.meetingId,
         streamId: options.streamId,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+        ...serializeError(error),
       });
       this.logger.info("Meeting upload cleanup skipped", {
         meetingId: options.meetingId,
