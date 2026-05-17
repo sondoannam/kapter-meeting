@@ -134,7 +134,8 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    const localUser = await this.clerkAuthService.getOrSyncLocalUser(clerkUserId);
+    const localUser =
+      await this.clerkAuthService.getOrSyncLocalUser(clerkUserId);
     await this.billingService.ensureCanStartRecording(localUser.id);
 
     const meeting = await this.meetingsService.createUploadedMeeting({
@@ -144,11 +145,15 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
     });
 
     try {
-      const storedAudioUrl = await this.meetingMediaStorage.storeUploadedMeetingAudio(
+      const storedAudioUrl =
+        await this.meetingMediaStorage.storeUploadedMeetingAudio(
+          meeting.id,
+          file,
+        );
+      await this.meetingsService.updateMeetingAudioUrl(
         meeting.id,
-        file,
+        storedAudioUrl,
       );
-      await this.meetingsService.updateMeetingAudioUrl(meeting.id, storedAudioUrl);
 
       const knownVoiceProfileIds =
         await this.voiceProfilesService.listActiveVoiceProfileIdsForUser(
@@ -286,6 +291,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         this.logger.error("Meeting artifact extraction failed after upload.", {
           meetingId: options.meetingId,
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
       });
     } catch (error) {
@@ -294,6 +300,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         meetingId: options.meetingId,
         streamId: options.streamId,
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       this.logger.info("Meeting upload cleanup skipped", {
         meetingId: options.meetingId,
@@ -390,5 +397,4 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
       );
     }
   }
-
 }

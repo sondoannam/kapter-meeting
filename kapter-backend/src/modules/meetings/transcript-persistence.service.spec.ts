@@ -19,24 +19,33 @@ const createService = () => {
     status: "PROCESSING",
   }));
   const findMany = mock.fn(async (_args: unknown) => [] as unknown[]);
-  const upsert = mock.fn(async ({ where, create }: SpeakerProfileUpsertArgs) => ({
-    id: `${where.meetingId_aiLabel.aiLabel}_id`,
-    aiLabel: where.meetingId_aiLabel.aiLabel,
-    meetingId: create.meetingId,
-  }));
+  const findVoiceProfiles = mock.fn(async (_args: unknown) => [] as unknown[]);
+  const upsert = mock.fn(
+    async ({ where, create }: SpeakerProfileUpsertArgs) => ({
+      id: `${where.meetingId_aiLabel.aiLabel}_id`,
+      aiLabel: where.meetingId_aiLabel.aiLabel,
+      meetingId: create.meetingId,
+    }),
+  );
   const createMany = mock.fn(async (_args: unknown) => ({ count: 2 }));
+  const createSpeakerSamples = mock.fn(async (_args: unknown) => ({
+    count: 1,
+  }));
   const updateMany = mock.fn(async (_args: unknown) => ({ count: 0 }));
   const update = mock.fn(async (_args: unknown) => undefined as unknown);
   const notifyTranscriptPersisted = mock.fn(() => undefined);
   const logger = {
     info: mock.fn(() => undefined),
+    warn: mock.fn(() => undefined),
   };
 
   const prisma = {
     $transaction: mock.fn(async (callback) =>
       callback({
+        voiceProfile: { findMany: findVoiceProfiles },
         speakerProfile: { upsert },
         transcriptSegment: { createMany, findMany, updateMany },
+        meetingSpeakerSample: { createMany: createSpeakerSamples },
         meetingAudioBatch: { findUnique, update },
       }),
     ),
@@ -51,8 +60,10 @@ const createService = () => {
   return {
     service,
     prisma,
+    voiceProfile: { findMany: findVoiceProfiles },
     speakerProfile: { upsert },
     transcriptSegment: { createMany, findMany, updateMany },
+    meetingSpeakerSample: { createMany: createSpeakerSamples },
     meetingAudioBatch: { findUnique, update },
     meetingArtifactExtraction: { notifyTranscriptPersisted },
     logger,
@@ -371,5 +382,165 @@ void describe("TranscriptPersistenceService", () => {
         suppressedAt: undefined,
       },
     ]);
+  });
+
+  void it("drops unknown voice profile references from the worker response instead of failing transcript persistence", async () => {
+    const {
+      service,
+      voiceProfile,
+      speakerProfile,
+      transcriptSegment,
+      meetingSpeakerSample,
+      logger,
+    } = createService();
+
+    voiceProfile.findMany.mock.mockImplementation(async () => []);
+
+    await service.persistWorkerBatch({
+      batchId: "batch_unknown_voice_profile",
+      request: {
+        streamId: "stream_1",
+        backendMeetingId: "meeting_backend_1",
+        sequenceStart: 1,
+        sequenceEnd: 1,
+        streamOffsetMs: 0,
+        durationMs: 5_000,
+        mimeType: "audio/mpeg",
+        audioBase64: "Y2h1bms=",
+        sourceType: "tab_mix",
+      },
+      response: {
+        streamId: "stream_1",
+        backendMeetingId: "meeting_backend_1",
+        sequenceStart: 1,
+        sequenceEnd: 1,
+        streamOffsetMs: 0,
+        sourceType: "tab_mix",
+        segments: [
+          {
+            aiLabel: "Sơn",
+            content: "Hello team.",
+            startTime: 0,
+            endTime: 1,
+            confidence: 0.98,
+            voiceProfileId: "missing_profile_id",
+          },
+        ],
+        speakerEvidence: [
+          {
+            aiLabel: "Sơn",
+            startTime: 0,
+            endTime: 2.5,
+            durationSeconds: 2.5,
+            embedding: [0.1, 0.2, 0.3],
+            voiceProfileId: "missing_profile_id",
+            rmsDb: -22,
+            speechRatio: 0.9,
+            qualityScore: 0.88,
+            sampleRate: 16000,
+            sourceType: "tab_mix",
+          },
+        ],
+      },
+    });
+
+    assert.equal(speakerProfile.upsert.mock.callCount(), 1);
+    const upsertCall = speakerProfile.upsert.mock.calls[0];
+    assert.ok(upsertCall);
+    assert.equal(
+      (
+        upsertCall.arguments[0] as unknown as {
+          create: { voiceProfileId: string | null };
+        }
+      ).create.voiceProfileId,
+      null,
+    );
+    assert.equal(transcriptSegment.createMany.mock.callCount(), 1);
+    assert.equal(meetingSpeakerSample.createMany.mock.callCount(), 1);
+    assert.equal(logger.warn.mock.callCount(), 1);
+  });
+
+  void it("skips malformed speaker evidence samples with non-finite embedding values", async () => {
+    const { service, meetingSpeakerSample, logger } = createService();
+
+    await service.persistWorkerBatch({
+      batchId: "batch_bad_evidence",
+      request: {
+        streamId: "stream_1",
+        backendMeetingId: "meeting_backend_1",
+        sequenceStart: 1,
+        sequenceEnd: 1,
+        streamOffsetMs: 0,
+        durationMs: 5_000,
+        mimeType: "audio/mpeg",
+        audioBase64: "Y2h1bms=",
+        sourceType: "tab_mix",
+      },
+      response: {
+        streamId: "stream_1",
+        backendMeetingId: "meeting_backend_1",
+        sequenceStart: 1,
+        sequenceEnd: 1,
+        streamOffsetMs: 0,
+        sourceType: "tab_mix",
+        segments: [
+          {
+            aiLabel: "SPEAKER_00",
+            content: "Hello team.",
+            startTime: 0,
+            endTime: 1,
+            confidence: 0.98,
+          },
+        ],
+        speakerEvidence: [
+          {
+            aiLabel: "SPEAKER_00",
+            startTime: 0,
+            endTime: 2.5,
+            durationSeconds: 2.5,
+            embedding: [Number.NaN, Number.POSITIVE_INFINITY],
+            rmsDb: Number.NEGATIVE_INFINITY,
+            speechRatio: Number.NaN,
+            qualityScore: 0.88,
+            sampleRate: Number.POSITIVE_INFINITY,
+            sourceType: "tab_mix",
+          },
+          {
+            aiLabel: "SPEAKER_00",
+            startTime: 2.5,
+            endTime: 5,
+            durationSeconds: 2.5,
+            embedding: [0.1, 0.2, 0.3],
+            rmsDb: -22,
+            speechRatio: 0.9,
+            qualityScore: 0.88,
+            sampleRate: 16000,
+            sourceType: "tab_mix",
+          },
+        ],
+      },
+    });
+
+    assert.equal(meetingSpeakerSample.createMany.mock.callCount(), 1);
+    const createSpeakerSamplesCall =
+      meetingSpeakerSample.createMany.mock.calls[0];
+    assert.ok(createSpeakerSamplesCall);
+    assert.deepEqual(createSpeakerSamplesCall.arguments[0], {
+      data: [
+        {
+          speakerProfileId: "SPEAKER_00_id",
+          embedding: [0.1, 0.2, 0.3],
+          startTime: 2.5,
+          endTime: 5,
+          durationSeconds: 2.5,
+          sourceType: "TAB_MIX",
+          rmsDb: -22,
+          speechRatio: 0.9,
+          qualityScore: 0.88,
+          sampleRate: 16000,
+        },
+      ],
+    });
+    assert.equal(logger.warn.mock.callCount(), 2);
   });
 });
