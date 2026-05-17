@@ -19,6 +19,7 @@ import type { Prisma } from "prisma/generated/prisma/client";
 
 import { PrismaService } from "../../database/prisma.service";
 import { LlmService } from "../llm/llm.service";
+import { MeetingMediaStorageService } from "../storage/meeting-media-storage.service";
 import { VoiceProfilesService } from "../voice-profiles/voice-profiles.service";
 import { MeetingArtifactExtractionService } from "./meeting-artifact-extraction.service";
 import type { SaveMeetingReviewDto } from "./dto/save-meeting-review.dto";
@@ -617,6 +618,7 @@ export class MeetingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly voiceProfilesService: VoiceProfilesService,
+    private readonly meetingMediaStorage: MeetingMediaStorageService,
     private readonly llmService?: LlmService,
     private readonly meetingArtifactExtraction?: MeetingArtifactExtractionService,
   ) {}
@@ -1208,6 +1210,7 @@ export class MeetingsService {
       },
       select: {
         id: true,
+        audioUrl: true,
       },
     });
 
@@ -1220,6 +1223,10 @@ export class MeetingsService {
         id: meeting.id,
       },
     });
+
+    if (meeting.audioUrl) {
+      await this.meetingMediaStorage.deleteMeetingAudio(meeting.audioUrl);
+    }
   }
 
   async updateMeetingMetadata(

@@ -9,6 +9,8 @@
   "scripts": {
     "build": "pnpm --filter @kapter/contracts build && pnpm --filter ./kapter-backend build && pnpm --filter ./kapter-webapp build && pnpm --filter ./kapter-extension build",
     "lint": "pnpm --filter ./kapter-backend lint && pnpm --filter ./kapter-webapp lint && pnpm --filter ./kapter-extension lint",
+    "test:report": "node ./scripts/generate-test-report.mjs",
+    "test:report:ci": "node ./scripts/generate-test-report.mjs --ci",
     "typecheck": "pnpm --filter @kapter/contracts typecheck && pnpm --filter ./kapter-backend typecheck && pnpm --filter ./kapter-webapp typecheck && pnpm --filter ./kapter-extension typecheck",
     "build:backend": "pnpm --filter ./kapter-backend build",
     "heroku-postbuild": "pnpm --filter @kapter/contracts build && pnpm build:backend && cd kapter-backend && npx prisma migrate deploy",

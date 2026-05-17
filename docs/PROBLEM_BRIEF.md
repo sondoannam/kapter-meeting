@@ -2,7 +2,7 @@
 
 ## 1. Context (Bối cảnh)
 
-Trong môi trường làm việc hiện đại, đặc biệt là tại các tổ đội kỹ thuật (tech teams), hoặc các nhóm indie developers, các team khởi nghiệp nhỏ, các buổi họp diễn ra liên tục để giải quyết vấn đề và đưa ra quyết định. Tuy nhiên, sau mỗi buổi luận đạo, một lượng lớn thông tin quan trọng thường bị thất thoát.
+Trong môi trường làm việc hiện đại, đặc biệt là tại các tổ đội kỹ thuật (tech teams), hoặc các nhóm indie developers, các team khởi nghiệp nhỏ, các buổi họp diễn ra liên tục để giải quyết vấn đề và đưa ra quyết định. Tuy nhiên, sau mỗi buổi họp, một lượng lớn thông tin quan trọng thường bị thất thoát.
 
 ## 2. Problem Statement (Vấn đề cốt lõi)
 

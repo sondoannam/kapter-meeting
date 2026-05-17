@@ -2,15 +2,17 @@ from __future__ import annotations
 
 from collections import defaultdict
 import re
+from typing import TYPE_CHECKING
 
 import torch
-from pyannote.audio import Pipeline
 
 from kapter_ai_worker.core.base_diarizer import BaseDiarizer
 from kapter_ai_worker.core.entities import AudioChunk, SpeakerSpan
 from kapter_ai_worker.core.speaker_registry import SpeakerRegistry
-from kapter_ai_worker.models.speaker_embedding import SpeakerEmbedding
 from kapter_ai_worker.logging.logger import get_logger
+
+if TYPE_CHECKING:
+    from kapter_ai_worker.models.speaker_embedding import SpeakerEmbedding
 
 _logger = get_logger("PyannoteDiarizer")
 LOCAL_SPEAKER_MERGE_SIMILARITY = 0.84
@@ -32,6 +34,8 @@ class PyannoteDiarizer(BaseDiarizer):
         min_cluster_size: int = 1,
         embedding_model: SpeakerEmbedding | None = None,
     ) -> None:
+        from pyannote.audio import Pipeline
+
         self._embedding_model = embedding_model
         _logger.info(f"Loading pyannote pipeline '{model_name}' (device={device})...")
         self._pipeline = Pipeline.from_pretrained(
@@ -47,7 +51,7 @@ class PyannoteDiarizer(BaseDiarizer):
             "clustering": {
                 "method": "centroid",
                 "min_cluster_size": min_cluster_size,
-                "threshold": threshold, # This threshold (default 0.4) controls local over-segmentation
+                "threshold": threshold,  # This threshold (default 0.4) controls local over-segmentation
             }
         }
         self._pipeline.instantiate(params)
@@ -152,13 +156,18 @@ class PyannoteDiarizer(BaseDiarizer):
 
         return merge_map
 
-    def diarize(self, audio_chunk: AudioChunk, registry: SpeakerRegistry | None = None, process_duration: float | None = None) -> list[SpeakerSpan]:
+    def diarize(
+        self,
+        audio_chunk: AudioChunk,
+        registry: SpeakerRegistry | None = None,
+        process_duration: float | None = None,
+    ) -> list[SpeakerSpan]:
         """Perform diarization on the chunk and register speaker identities."""
         _logger.info(
             f"Diarizing chunk {audio_chunk.index} ({audio_chunk.duration_seconds:.1f}s) "
             f"with process_duration={process_duration}"
         )
-        
+
         # Incremental Diarization: If process_duration is set, we only care about the end of the audio.
         # However, Pyannote works best with some context (at least 15-20s).
         # We handle the offset to return absolute timestamps correctly.
@@ -177,7 +186,7 @@ class PyannoteDiarizer(BaseDiarizer):
 
         # Pyannote Pipeline v3.1 may return annotation directly or under
         # .speaker_diarization depending on the exact model version
-        if hasattr(output, 'speaker_diarization'):
+        if hasattr(output, "speaker_diarization"):
             annotation = output.speaker_diarization
         else:
             annotation = output
@@ -192,7 +201,7 @@ class PyannoteDiarizer(BaseDiarizer):
         spans: list[SpeakerSpan] = []
         # Cache local-to-global mapping for this chunk to honor Pyannote's internal clustering
         local_to_global: dict[str, str] = {}
-        
+
         # Hygiene: Pre-calculate overlaps within this chunk to avoid using mixed embeddings for profile updates
         turns = list(annotation.itertracks(yield_label=True))
         local_merge_map = self._build_local_merge_map(turns, audio_chunk)
@@ -204,20 +213,27 @@ class PyannoteDiarizer(BaseDiarizer):
             len(local_speaker_labels),
             local_speaker_labels,
         )
-        
+
         for i, (turn_i, _track_i, local_speaker_i) in enumerate(turns):
-            canonical_local_speaker = local_merge_map.get(local_speaker_i, local_speaker_i)
+            canonical_local_speaker = local_merge_map.get(
+                local_speaker_i, local_speaker_i
+            )
             # Check if this turn overlaps significantly with any other turn in the same chunk
             is_mixed = False
             for j, (turn_j, _track_j, local_speaker_j) in enumerate(turns):
                 if i == j:
                     continue
 
-                if local_merge_map.get(local_speaker_j, local_speaker_j) == canonical_local_speaker:
+                if (
+                    local_merge_map.get(local_speaker_j, local_speaker_j)
+                    == canonical_local_speaker
+                ):
                     continue
-                
+
                 # Calculate overlap
-                overlap = max(0, min(turn_i.end, turn_j.end) - max(turn_i.start, turn_j.start))
+                overlap = max(
+                    0, min(turn_i.end, turn_j.end) - max(turn_i.start, turn_j.start)
+                )
                 if overlap > 0.1:  # More than 100ms overlap is risky
                     is_mixed = True
                     break
@@ -225,24 +241,26 @@ class PyannoteDiarizer(BaseDiarizer):
             # 1. Skip spans that end before our target process window
             if turn_i.end <= time_offset:
                 continue
-                
+
             # 2. Clip start time to our process window to avoid duplicating old segments
             start_in_chunk = max(turn_i.start, time_offset)
             end_in_chunk = turn_i.end
             duration = end_in_chunk - start_in_chunk
-            
-            if duration < 0.1: # Skip tiny fragments
+
+            if duration < 0.1:  # Skip tiny fragments
                 continue
 
             speaker_label = "UNKNOWN"
             embedding = None
-            
+
             if registry and self._embedding_model:
                 if canonical_local_speaker in local_to_global:
                     speaker_label = local_to_global[canonical_local_speaker]
                 else:
                     # Extract embedding for this specific turn
-                    embedding = self._embedding_model.get_embedding(audio_chunk, turn_i.start, turn_i.end)
+                    embedding = self._embedding_model.get_embedding(
+                        audio_chunk, turn_i.start, turn_i.end
+                    )
                     if embedding is not None:
                         # Identify or Register
                         match_result = registry.match_speaker(
@@ -302,7 +320,10 @@ class PyannoteDiarizer(BaseDiarizer):
                             last_global_speaker = registry.get_last_active_speaker()
                             if last_global_speaker:
                                 abs_turn_start = audio_chunk.start_time + turn_i.start
-                                gap = abs_turn_start - last_global_speaker.last_active_time
+                                gap = (
+                                    abs_turn_start
+                                    - last_global_speaker.last_active_time
+                                )
                                 canonical_last_speaker = registry.get_canonical_id(
                                     last_global_speaker.speaker_id
                                 )
@@ -314,7 +335,9 @@ class PyannoteDiarizer(BaseDiarizer):
                                     )
                                 ):
                                     speaker_label = canonical_last_speaker
-                                    local_to_global[canonical_local_speaker] = speaker_label
+                                    local_to_global[canonical_local_speaker] = (
+                                        speaker_label
+                                    )
                                     _logger.debug(
                                         "Global fallback match: {} (gap: {:.1f}s, duration: {:.1f}s)",
                                         speaker_label,

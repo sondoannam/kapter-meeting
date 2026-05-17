@@ -11,7 +11,9 @@
     "package:zip": "pnpm build && node ./scripts/package-extension.mjs",
     "start": "node ws-test-server.js",
     "lint": "eslint .",
-    "test:package": "node --test ./scripts/package-extension.test.mjs",
+    "test": "node --test --test-isolation=none ./src/background/backend-auth.spec.ts",
+    "test:package": "node --test --test-isolation=none ./scripts/package-extension.test.mjs",
+    "test:all": "pnpm test && pnpm test:package",
     "typecheck": "tsc -b --pretty false",
     "preview": "vite preview",
     "clean": "rimraf dist"

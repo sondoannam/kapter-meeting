@@ -69,6 +69,20 @@ export const envValidationSchema = Joi.object({
     .positive()
     .default(600000),
   AI_WORKER_SHARED_SECRET: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_STORAGE_DRIVER: Joi.string()
+    .trim()
+    .lowercase()
+    .valid("local", "minio")
+    .default("local"),
+  MEETING_MEDIA_LOCAL_DIR: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_MINIO_ENDPOINT: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_MINIO_PORT: Joi.number().integer().positive().default(9000),
+  MEETING_MEDIA_MINIO_USE_SSL: Joi.boolean().default(false),
+  MEETING_MEDIA_MINIO_ACCESS_KEY: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_MINIO_SECRET_KEY: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_MINIO_BUCKET: Joi.string().trim().allow("").optional(),
+  MEETING_MEDIA_MINIO_REGION: Joi.string().trim().allow("").optional(),
+  // Backward-compatible alias for older local-upload config.
   MEETING_UPLOAD_TMP_DIR: Joi.string().trim().allow("").optional(),
   MEETING_UPLOAD_MAX_BYTES: Joi.number()
     .integer()

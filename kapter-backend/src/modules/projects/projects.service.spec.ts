@@ -10,6 +10,7 @@ const createService = () => {
   const create = mock.fn(async (_args: unknown) => undefined as unknown);
   const update = mock.fn(async (_args: unknown) => undefined as unknown);
   const remove = mock.fn(async (_args: unknown) => undefined as unknown);
+  const meetingFindMany = mock.fn(async (_args: unknown) => [] as unknown[]);
   const deleteManyMeetings = mock.fn(async (_args: unknown) => ({ count: 0 }));
   const upsert = mock.fn(async (_args: unknown) => undefined as unknown);
 
@@ -25,14 +26,21 @@ const createService = () => {
       delete: remove,
     },
     meeting: {
+      findMany: meetingFindMany,
       deleteMany: deleteManyMeetings,
     },
     projectContext: {
       upsert,
     },
   };
+  const meetingMediaStorage = {
+    deleteMeetingAudio: mock.fn(async () => true),
+  };
 
-  const service = new ProjectsService(prisma as never);
+  const service = new ProjectsService(
+    prisma as never,
+    meetingMediaStorage as never,
+  );
 
   return {
     service,
@@ -44,11 +52,13 @@ const createService = () => {
       delete: remove,
     },
     meeting: {
+      findMany: meetingFindMany,
       deleteMany: deleteManyMeetings,
     },
     projectContext: {
       upsert,
     },
+    meetingMediaStorage,
     prisma,
   };
 };
@@ -405,15 +415,22 @@ void describe("ProjectsService", () => {
   });
 
   void it("deletes a project and all linked meetings owned by the current Clerk user", async () => {
-    const { service, project, meeting, prisma } = createService();
+    const { service, project, meeting, meetingMediaStorage, prisma } =
+      createService();
 
     project.findFirst.mock.mockImplementation(async () => ({
       id: "project_1",
     }));
+    meeting.findMany.mock.mockImplementation(async () => [
+      {
+        audioUrl: "minio://kapter-meetings/meetings/meeting_1/source.mp3",
+      },
+    ]);
 
     await service.deleteProject("clerk_user_1", "project_1");
 
     assert.equal(project.findFirst.mock.callCount(), 1);
+    assert.equal(meeting.findMany.mock.callCount(), 1);
     assert.equal(prisma.$transaction.mock.callCount(), 1);
     assert.equal(meeting.deleteMany.mock.callCount(), 1);
     assert.deepEqual(meeting.deleteMany.mock.calls[0]?.arguments[0], {
@@ -427,6 +444,7 @@ void describe("ProjectsService", () => {
         id: "project_1",
       },
     });
+    assert.equal(meetingMediaStorage.deleteMeetingAudio.mock.callCount(), 1);
   });
 
   void it("throws when the requested project does not belong to the current Clerk user", async () => {

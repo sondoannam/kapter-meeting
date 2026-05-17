@@ -30,15 +30,6 @@ type RecurringCandidate = {
   evidenceSamples: NormalizedSample[];
 };
 
-type ExistingRecurringProfile = {
-  id: string;
-  meetingCount: number;
-  sampleCount: number;
-  status: "CANDIDATE" | "STABLE" | "PROMOTED";
-  lastSeenAt: Date;
-  samples: NormalizedSample[];
-};
-
 export type MeetingSpeakerMemoryResult = {
   materialChanges: boolean;
   linkedSpeakers: number;

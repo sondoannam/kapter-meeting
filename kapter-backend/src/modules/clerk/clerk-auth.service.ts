@@ -21,6 +21,10 @@ export interface ClerkSessionAuth {
   claims: Record<string, unknown>;
 }
 
+type ClerkHydrationError = {
+  errors?: unknown;
+};
+
 @Injectable()
 export class ClerkAuthService {
   private readonly clerkClient;
@@ -97,7 +101,10 @@ export class ClerkAuthService {
       return syncedUser;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      const details = error && typeof error === 'object' && 'errors' in error ? JSON.stringify((error as any).errors) : '';
+      const details =
+        error && typeof error === "object" && "errors" in error
+          ? JSON.stringify((error as ClerkHydrationError).errors)
+          : "";
 
       this.logger.warn("Failed to hydrate missing local user from Clerk", {
         clerkUserId,

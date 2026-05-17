@@ -106,7 +106,7 @@ and returns a `WorkerTranscriptionResponse` with worker-relative segments that t
 
 ```powershell
 cd kapter-ai-worker
-.venv\Scripts\python.exe -m pytest tests/test_process_audio_endpoint.py -q
+.venv\Scripts\python.exe scripts\run_tests.py
 ```
 
 ## Implementation notes

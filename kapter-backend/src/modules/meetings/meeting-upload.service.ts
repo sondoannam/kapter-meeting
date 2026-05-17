@@ -1,4 +1,3 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import {
@@ -26,6 +25,7 @@ import {
 } from "../ai-worker/ai-worker.client";
 import { BillingService } from "../billing/billing.service";
 import { ClerkAuthService } from "../clerk/clerk-auth.service";
+import { MeetingMediaStorageService } from "../storage/meeting-media-storage.service";
 import { VoiceProfilesService } from "../voice-profiles/voice-profiles.service";
 import {
   DEFAULT_MEETING_UPLOAD_RETENTION_HOURS,
@@ -89,6 +89,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
     private readonly meetingsService: MeetingsService,
     private readonly aiWorkerClient: AiWorkerClient,
     private readonly billingService: BillingService,
+    private readonly meetingMediaStorage: MeetingMediaStorageService,
     private readonly transcriptPersistence: TranscriptPersistenceService,
     private readonly meetingArtifactExtraction: MeetingArtifactExtractionService,
     private readonly voiceProfilesService: VoiceProfilesService,
@@ -143,8 +144,11 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
     });
 
     try {
-      const stagedFilePath = await this.stageUploadFile(meeting.id, file);
-      await this.meetingsService.updateMeetingAudioUrl(meeting.id, stagedFilePath);
+      const storedAudioUrl = await this.meetingMediaStorage.storeUploadedMeetingAudio(
+        meeting.id,
+        file,
+      );
+      await this.meetingsService.updateMeetingAudioUrl(meeting.id, storedAudioUrl);
 
       const knownVoiceProfileIds =
         await this.voiceProfilesService.listActiveVoiceProfileIdsForUser(
@@ -157,14 +161,14 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         bytes: file.size,
         mimeType: file.mimetype,
         originalName: file.originalname,
-        stagedFilePath,
+        storedAudioUrl,
       });
 
       setImmediate(() => {
         void this.processUploadedMeeting({
           meetingId: meeting.id,
           streamId: `upload:${meeting.id}`,
-          stagedFilePath,
+          storedAudioUrl,
           fileName: file.originalname,
           mimeType: file.mimetype,
           knownVoiceProfileIds,
@@ -181,7 +185,7 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
   private async processUploadedMeeting(options: {
     meetingId: string;
     streamId: string;
-    stagedFilePath: string;
+    storedAudioUrl: string;
     fileName: string;
     mimeType: string;
     knownVoiceProfileIds: string[];
@@ -192,7 +196,9 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         streamId: options.streamId,
       });
 
-      const fileBuffer = await fs.readFile(options.stagedFilePath);
+      const fileBuffer = await this.meetingMediaStorage.readMeetingAudio(
+        options.storedAudioUrl,
+      );
       const workerResponse = await this.aiWorkerClient.processAudioFile({
         backendMeetingId: options.meetingId,
         streamId: options.streamId,
@@ -282,7 +288,6 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
           error: error instanceof Error ? error.message : String(error),
         });
       });
-      await this.cleanupMeetingUploadFile(options.meetingId, options.stagedFilePath);
     } catch (error) {
       await this.meetingsService.markMeetingFailed(options.meetingId);
       this.logger.error("Meeting upload worker failed", {
@@ -294,47 +299,9 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
         meetingId: options.meetingId,
         streamId: options.streamId,
         reason: "retained_failed_upload",
-        stagedFilePath: options.stagedFilePath,
+        storedAudioUrl: options.storedAudioUrl,
       });
     }
-  }
-
-  private async stageUploadFile(
-    meetingId: string,
-    file: UploadedMeetingAudioFile,
-  ): Promise<string> {
-    const uploadDirectory = path.join(this.config.meetingUpload.tmpDir, meetingId);
-    const stagedFilePath = path.join(uploadDirectory, "source.mp3");
-
-    await fs.mkdir(uploadDirectory, { recursive: true });
-    await fs.writeFile(stagedFilePath, file.buffer);
-
-    return stagedFilePath;
-  }
-
-  private async cleanupMeetingUploadFile(
-    meetingId: string,
-    stagedFilePath: string,
-  ): Promise<void> {
-    if (!this.isManagedUploadPath(stagedFilePath)) {
-      this.logger.info("Meeting upload cleanup skipped", {
-        meetingId,
-        stagedFilePath,
-        reason: "path_outside_upload_tmp_dir",
-      });
-      return;
-    }
-
-    await fs.rm(path.dirname(stagedFilePath), {
-      recursive: true,
-      force: true,
-    });
-    await this.meetingsService.updateMeetingAudioUrl(meetingId, null);
-
-    this.logger.info("Meeting upload cleanup succeeded", {
-      meetingId,
-      stagedFilePath,
-    });
   }
 
   private async cleanupExpiredFailedUploads(): Promise<void> {
@@ -365,11 +332,23 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
       }
 
       try {
-        await this.cleanupMeetingUploadFile(failedUpload.id, failedUpload.audioUrl);
+        const deleted = await this.meetingMediaStorage.deleteMeetingAudio(
+          failedUpload.audioUrl,
+        );
+
+        if (!deleted) {
+          continue;
+        }
+
+        await this.meetingsService.updateMeetingAudioUrl(failedUpload.id, null);
+        this.logger.info("Meeting upload cleanup succeeded", {
+          meetingId: failedUpload.id,
+          storedAudioUrl: failedUpload.audioUrl,
+        });
       } catch (error) {
         this.logger.warn("Meeting upload cleanup sweep failed", {
           meetingId: failedUpload.id,
-          stagedFilePath: failedUpload.audioUrl,
+          storedAudioUrl: failedUpload.audioUrl,
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -412,13 +391,4 @@ export class MeetingUploadService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private isManagedUploadPath(candidatePath: string): boolean {
-    const normalizedRoot = path.resolve(this.config.meetingUpload.tmpDir);
-    const normalizedCandidate = path.resolve(candidatePath);
-
-    return (
-      normalizedCandidate === normalizedRoot ||
-      normalizedCandidate.startsWith(`${normalizedRoot}${path.sep}`)
-    );
-  }
 }

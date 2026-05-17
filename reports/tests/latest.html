@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kapter Test Validation Report</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1ea;
+        --card: #fffdf7;
+        --text: #1f2933;
+        --muted: #56606b;
+        --border: #d8d2c4;
+        --passed: #1f7a47;
+        --failed: #b54708;
+        --flag: #efe6d1;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: linear-gradient(180deg, #ece6d8 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      h1, h2 { margin: 0 0 12px; }
+      p, li { color: var(--muted); line-height: 1.5; }
+      .meta {
+        margin-bottom: 24px;
+        padding: 16px 18px;
+        background: rgba(255, 253, 247, 0.86);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+      }
+      .grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 12px 24px rgba(31, 41, 51, 0.06);
+      }
+      .flags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 16px;
+      }
+      .flag {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--flag);
+        color: var(--text);
+        font-size: 13px;
+      }
+      .flag.ok {
+        background: #ddeee3;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        padding: 10px 8px;
+        border-top: 1px solid var(--border);
+        text-align: left;
+      }
+      th { color: var(--muted); }
+      .passed { color: var(--passed); font-weight: 600; }
+      .failed { color: var(--failed); font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="meta">
+        <h1>Kapter Test Validation Report</h1>
+        <p>Generated: 2026-05-17T07:48:14.964Z</p>
+        <p>Mode: local | Branch: sondoannam/feat/improve-wf | Commit: ed06c2f332995e233105e52ff772d554d364e763</p>
+        <h2>Workspace Preconditions</h2><ul>
+        <li>
+          <strong>build-contracts</strong>:
+          <span class="passed">passed</span>
+          (1.29s)
+        </li></ul>
+      </section>
+      <section class="grid">
+        
+        <section class="card">
+          <h2>kapter-backend</h2>
+          <p><strong>Status:</strong> <span class="passed">passed</span></p>
+          <p><strong>Validation posture:</strong> lint + typecheck + build + automated specs</p>
+          <p><strong>Inventory:</strong> 26 files / 105 cases (node-test-compiled)</p>
+          <p><strong>Notes:</strong> Compiled Node test runner via kapter-backend/scripts/run-tests.mjs.</p>
+          <p><strong>CI:</strong> Backend CI enforces lint, typecheck, build, and test.</p>
+          <div class="flags"><span class="flag ok">none</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Kind</th>
+                <th>Status</th>
+                <th>CI</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>lint</td>
+              <td>lint</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>4.74s</td>
+            </tr>
+            <tr>
+              <td>typecheck</td>
+              <td>typecheck</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>2.42s</td>
+            </tr>
+            <tr>
+              <td>build</td>
+              <td>build</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>4.01s</td>
+            </tr>
+            <tr>
+              <td>test</td>
+              <td>test</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>17.25s</td>
+            </tr></tbody>
+          </table>
+        </section>
+        <section class="card">
+          <h2>kapter-webapp</h2>
+          <p><strong>Status:</strong> <span class="passed">passed</span></p>
+          <p><strong>Validation posture:</strong> lint + typecheck + build + manual feature validation</p>
+          <p><strong>Inventory:</strong> 0 files / 0 cases (none)</p>
+          <p><strong>Notes:</strong> No automated frontend tests are configured; validation relies on lint, typecheck, build, and manual feature checks.</p>
+          <p><strong>CI:</strong> Webapp CI enforces lint, typecheck, and build only.</p>
+          <div class="flags"><span class="flag">no automated tests</span> <span class="flag">manual-only</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Kind</th>
+                <th>Status</th>
+                <th>CI</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>lint</td>
+              <td>lint</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>6.02s</td>
+            </tr>
+            <tr>
+              <td>typecheck</td>
+              <td>typecheck</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>300ms</td>
+            </tr>
+            <tr>
+              <td>build</td>
+              <td>build</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>8.14s</td>
+            </tr></tbody>
+          </table>
+        </section>
+        <section class="card">
+          <h2>kapter-extension</h2>
+          <p><strong>Status:</strong> <span class="passed">passed</span></p>
+          <p><strong>Validation posture:</strong> lint + typecheck + build + auth spec + packaging test</p>
+          <p><strong>Inventory:</strong> 2 files / 3 cases (node-test-direct)</p>
+          <p><strong>Notes:</strong> Direct Node test runner for the auth spec plus packaging verification.</p>
+          <p><strong>CI:</strong> Extension CI enforces lint, typecheck, build, auth test, and packaging test.</p>
+          <div class="flags"><span class="flag ok">none</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Kind</th>
+                <th>Status</th>
+                <th>CI</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>lint</td>
+              <td>lint</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>2.11s</td>
+            </tr>
+            <tr>
+              <td>typecheck</td>
+              <td>typecheck</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>1.28s</td>
+            </tr>
+            <tr>
+              <td>build</td>
+              <td>build</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>3.96s</td>
+            </tr>
+            <tr>
+              <td>test</td>
+              <td>test</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>298ms</td>
+            </tr>
+            <tr>
+              <td>test-package</td>
+              <td>test</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>290ms</td>
+            </tr></tbody>
+          </table>
+        </section>
+        <section class="card">
+          <h2>kapter-ai-worker</h2>
+          <p><strong>Status:</strong> <span class="passed">passed</span></p>
+          <p><strong>Validation posture:</strong> automated pytest regressions and endpoint tests</p>
+          <p><strong>Inventory:</strong> 6 files / 37 cases (pytest-wrapper)</p>
+          <p><strong>Notes:</strong> Pytest regression and endpoint tests via kapter-ai-worker/scripts/run_tests.py.</p>
+          <p><strong>CI:</strong> AI worker CI enforces the maintained pytest suite.</p>
+          <div class="flags"><span class="flag ok">none</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Kind</th>
+                <th>Status</th>
+                <th>CI</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>test</td>
+              <td>test</td>
+              <td class="passed">passed</td>
+              <td>enforced</td>
+              <td>7.18s</td>
+            </tr></tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

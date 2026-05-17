@@ -40,7 +40,10 @@ void describe("ClerkWebhookService", () => {
     assert.equal(syncNormalizedUser.mock.callCount(), 1);
     const syncNormalizedUserCall = syncNormalizedUser.mock.calls[0];
     assert.ok(syncNormalizedUserCall);
-    assert.deepEqual(syncNormalizedUserCall.arguments, {
+    const [normalizedUser] = syncNormalizedUserCall.arguments as unknown as [
+      unknown,
+    ];
+    assert.deepEqual(normalizedUser, {
       clerkId: "user_deleted_missing_locally",
       email: "deleted+user_deleted_missing_locally@clerk.local",
       name: null,

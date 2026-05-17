@@ -5,6 +5,20 @@ import { describe, it, mock } from "node:test";
 import { InMemoryStreamSessionStore } from "./in-memory-stream-session.store";
 import { AudioStreamService } from "./audio-stream.service";
 
+type WorkerBatchRequest = {
+  streamId: string;
+  backendMeetingId: string;
+  sourceType?: string;
+  sequenceStart: number;
+  sequenceEnd: number;
+  streamOffsetMs: number;
+  durationMs?: number;
+  mimeType?: string;
+  audioBase64?: string;
+  knownVoiceProfileIds?: string[];
+  authoritativeSpeakerLabel?: string;
+};
+
 const createService = () => {
   const createRecordingMeeting = mock.fn(
     async ({
@@ -36,7 +50,7 @@ const createService = () => {
   const listActiveVoiceProfileIdsForUser = mock.fn(
     async (_userId: string) => ["vp_1", "vp_2"],
   );
-  const processAudioBatch = mock.fn(async (request: any) => ({
+  const processAudioBatch = mock.fn(async (request: WorkerBatchRequest) => ({
     batchId: "batch_1",
     request,
     response: {
@@ -227,6 +241,7 @@ void describe("AudioStreamService", () => {
 
     const request =
       aiWorkerClient.processAudioBatch.mock.calls[0]?.arguments[0];
+    assert.ok(request);
     assert.equal(request.streamId, "stream_1");
     assert.equal(request.backendMeetingId, "meeting_backend_1");
     assert.equal(request.sourceType, "tab_mix");
@@ -236,8 +251,10 @@ void describe("AudioStreamService", () => {
     assert.equal(request.durationMs, 10_000);
     assert.equal(request.mimeType, "audio/webm;codecs=opus");
     assert.deepEqual(request.knownVoiceProfileIds, ["vp_1", "vp_2"]);
+    const audioBase64 = request.audioBase64;
+    assert.ok(audioBase64);
     assert.equal(
-      Buffer.from(request.audioBase64, "base64").toString("utf8"),
+      Buffer.from(audioBase64, "base64").toString("utf8"),
       "chunk-1chunk-2chunk-3chunk-4chunk-5",
     );
 
@@ -378,6 +395,7 @@ void describe("AudioStreamService", () => {
 
     const request =
       aiWorkerClient.processAudioBatch.mock.calls[0]?.arguments[0];
+    assert.ok(request);
     assert.equal(request.sourceType, "self_mic");
     assert.equal(request.authoritativeSpeakerLabel, "RECORDER");
   });

@@ -56,8 +56,19 @@ export interface AudioBufferConfig {
   idleTimeoutMs: number;
 }
 
+export interface MeetingMediaStorageConfig {
+  driver: "local" | "minio";
+  localDir: string;
+  minioEndPoint: string;
+  minioPort: number;
+  minioUseSSL: boolean;
+  minioAccessKey?: string;
+  minioSecretKey?: string;
+  minioBucket: string;
+  minioRegion?: string;
+}
+
 export interface MeetingUploadConfig {
-  tmpDir: string;
   maxBytes: number;
   retentionHours: number;
 }
@@ -93,12 +104,18 @@ export interface ApplicationConfig {
   databaseUrl: string;
   aiWorker: AiWorkerConfig;
   audioBuffer: AudioBufferConfig;
+  meetingMedia: MeetingMediaStorageConfig;
   meetingUpload: MeetingUploadConfig;
 }
 
 const DEFAULT_AI_WORKER_BASE_URL = "http://127.0.0.1:8000";
 const DEFAULT_AI_WORKER_TIMEOUT_MS = 30_000;
 const DEFAULT_AI_WORKER_FILE_TIMEOUT_MS = 10 * 60_000;
+const DEFAULT_MEETING_MEDIA_STORAGE_DRIVER = "local";
+const DEFAULT_MEETING_MEDIA_MINIO_END_POINT = "127.0.0.1";
+const DEFAULT_MEETING_MEDIA_MINIO_PORT = 9000;
+const DEFAULT_MEETING_MEDIA_MINIO_USE_SSL = false;
+const DEFAULT_MEETING_MEDIA_MINIO_BUCKET = "kapter-meetings";
 const DEFAULT_LLM_PROVIDER = "ollama";
 const DEFAULT_OPENAI_LLM_MODEL = "gpt-4.1-mini";
 const DEFAULT_OPENAI_TIMEOUT_MS = 120_000;
@@ -310,6 +327,32 @@ const parseLlmProvider = (value?: string): "openai" | "gemini" | "ollama" => {
   return DEFAULT_LLM_PROVIDER;
 };
 
+const parseMeetingMediaStorageDriver = (
+  value?: string,
+): "local" | "minio" => {
+  const normalizedValue = value?.trim().toLowerCase();
+
+  if (normalizedValue === "minio") {
+    return "minio";
+  }
+
+  return DEFAULT_MEETING_MEDIA_STORAGE_DRIVER;
+};
+
+const parseBoolean = (value: string | undefined, fallback: boolean): boolean => {
+  const normalizedValue = value?.trim().toLowerCase();
+
+  if (normalizedValue === "true") {
+    return true;
+  }
+
+  if (normalizedValue === "false") {
+    return false;
+  }
+
+  return fallback;
+};
+
 const parseOllamaStructuredOutputMode = (
   value?: string,
 ): "auto" | "reasoning" | "schema" => {
@@ -464,10 +507,35 @@ export const buildAppConfig = (): ApplicationConfig => {
         DEFAULT_AUDIO_BUFFER_IDLE_TIMEOUT_MS,
       ),
     },
-    meetingUpload: {
-      tmpDir:
+    meetingMedia: {
+      driver: parseMeetingMediaStorageDriver(
+        process.env.MEETING_MEDIA_STORAGE_DRIVER,
+      ),
+      localDir:
+        process.env.MEETING_MEDIA_LOCAL_DIR?.trim() ||
         process.env.MEETING_UPLOAD_TMP_DIR?.trim() ||
-        path.join(BACKEND_ROOT_DIR, "tmp", "meeting-uploads"),
+        path.join(BACKEND_ROOT_DIR, "tmp", "meeting-media"),
+      minioEndPoint:
+        process.env.MEETING_MEDIA_MINIO_ENDPOINT?.trim() ||
+        DEFAULT_MEETING_MEDIA_MINIO_END_POINT,
+      minioPort: parsePositiveInteger(
+        process.env.MEETING_MEDIA_MINIO_PORT,
+        DEFAULT_MEETING_MEDIA_MINIO_PORT,
+      ),
+      minioUseSSL: parseBoolean(
+        process.env.MEETING_MEDIA_MINIO_USE_SSL,
+        DEFAULT_MEETING_MEDIA_MINIO_USE_SSL,
+      ),
+      minioAccessKey:
+        process.env.MEETING_MEDIA_MINIO_ACCESS_KEY?.trim() || undefined,
+      minioSecretKey:
+        process.env.MEETING_MEDIA_MINIO_SECRET_KEY?.trim() || undefined,
+      minioBucket:
+        process.env.MEETING_MEDIA_MINIO_BUCKET?.trim() ||
+        DEFAULT_MEETING_MEDIA_MINIO_BUCKET,
+      minioRegion: process.env.MEETING_MEDIA_MINIO_REGION?.trim() || undefined,
+    },
+    meetingUpload: {
       maxBytes: parsePositiveInteger(
         process.env.MEETING_UPLOAD_MAX_BYTES,
         DEFAULT_MEETING_UPLOAD_MAX_BYTES,
